@@ -28,6 +28,8 @@ export class PlayerPlane {
     this.crashed = false;
     this.cargoSpeed = 1;
     this.cargoClimb = 1;
+    this.turbulence = 0; // 0..1, set by the game while flying through a thundercloud
+    this.t = 0;
     this.input = { left: false, right: false, up: false, down: false, boost: false };
 
     const g = (this.group = new THREE.Group());
@@ -64,6 +66,13 @@ export class PlayerPlane {
     this.boost = clamp(this.boost + (boosting ? -st.drain : st.regen) * dt, 0, 1);
 
     this.fwd.applyAxisAngle(this.up, turn * TURN * st.turn * dt);             // steer
+    this.t += dt;
+    if (this.turbulence > 0) { // storm buffeting: the nose wanders and the plane bobs
+      const k = this.turbulence, t = this.t;
+      this.fwd.applyAxisAngle(this.up, (Math.sin(t * 7.3) + Math.sin(t * 12.1) * 0.6) * 0.9 * k * dt);
+      this.alt += (Math.sin(t * 5.1) + Math.sin(t * 9.7) * 0.5) * 0.7 * k * dt;
+      this.shake = Math.max(this.shake, 0.3 * k);
+    }
     const axis = _a.crossVectors(this.up, this.fwd).normalize();
     const ang = ((boosting ? BOOST : SPEED) * st.speed * this.cargoSpeed * dt) / this.alt; // fly along a great circle
     this.up.applyAxisAngle(axis, ang).normalize();

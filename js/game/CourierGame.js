@@ -7,7 +7,7 @@ import { rollCargo } from './Cargo.js';
 import { Progress } from './Progress.js';
 import { Hangar } from './Hangar.js';
 
-const DELIVERY_BONUS = 20, RING_BONUS = 5, RING_COINS = 5, CRASH_PENALTY = 8, RINGS = 7;
+const DELIVERY_BONUS = 20, RING_BONUS = 5, RING_COINS = 5, CRASH_PENALTY = 8, LIGHTNING_PENALTY = 5, RINGS = 7;
 const KEYMAP = {
   ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up',
   ArrowDown: 'down', KeyS: 'down', Space: 'boost', ShiftLeft: 'boost', ShiftRight: 'boost',
@@ -88,6 +88,7 @@ export class CourierGame {
     this.stats = this.progress.stats;
     Object.assign(this, {
       active: true, over: false, planet: p, score: 0, combo: 1, time: this.stats.startTime, deliveries: 0, anim: 0, runCoins: 0,
+      stormT: 1.2, warnedStorm: false,
     });
     this.from = sites[Math.floor(Math.random() * sites.length)];
     this.pickDest(true);
@@ -211,6 +212,7 @@ export class CourierGame {
         app.sfx.pop(pl.pos.clone(), 'BONK!', '#ff4d4d');
       }
     }
+    this.updateStorm(dt);
     for (const ring of this.rings) {
       if (ring.position.distanceTo(pl.pos) > this.stats.magnet) continue;
       this.time += RING_BONUS;
@@ -248,6 +250,33 @@ export class CourierGame {
     }
     this.from = this.dest;
     this.pickDest();
+  }
+
+  /** Inside a thundercloud the plane is buffeted, and every few seconds lightning may hit it. */
+  updateStorm(dt) {
+    const pl = this.player, app = this.app, weather = this.planet.weather, storm = weather.stormAt(pl.pos);
+    pl.turbulence = storm ? 1 : 0;
+    if (!storm) { this.stormT = 1.2; return; } // a short grace period after flying in
+    if (!this.warnedStorm) {
+      this.warnedStorm = true;
+      app.hud.toast('⛈️ Thunderstorm! Get out before lightning strikes.');
+    }
+    if ((this.stormT -= dt) > 0) return;
+    this.stormT = 2 + Math.random() * 1.5;
+    const hit = pl.invuln <= 0 && Math.random() < 0.5;
+    const aim = pl.pos.clone();
+    if (!hit) { // a near miss crackles past the wing
+      const [u, v] = tangentBasis(pl.up), a = Math.random() * TAU;
+      aim.addScaledVector(u, Math.cos(a) * 0.8).addScaledVector(v, Math.sin(a) * 0.8);
+    }
+    weather.strike(storm, aim);
+    if (!hit) return;
+    this.time -= LIGHTNING_PENALTY;
+    pl.boost = 0;
+    pl.shake = 1;
+    pl.invuln = 1;
+    app.sfx.pop(pl.pos.clone(), 'ZAP!', '#ffd23f', 'crash');
+    app.achievements.unlock('lightningrod');
   }
 
   /** Coins are banked as they're earned, so quitting mid-run keeps them. */

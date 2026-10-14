@@ -2,7 +2,10 @@
 
 A cartoony, comic-book 3D planet built with Three.js: day/night cycle, cities, traffic with signals,
 a train with a tunnel, boats, balloons, planes, bird flocks, weather, a rocket pad, satellites, a space
-station, a moon — plus the **Sky Courier** mini-game and 15 trophies.
+station, a moon — plus the **Sky Courier** mini-game and 17 trophies.
+
+Every planet is generated from a seed. The address bar always holds the current planet
+(`?seed=…&land=…&cities=…`), and **🔗 Share this planet** copies the link.
 
 ## Run it
 
@@ -32,6 +35,13 @@ Fly city to city and swoop low through the pink beacon to deliver. Blue rings ad
 boost; fast deliveries build a combo up to x5; crashing costs 8 s.
 Keyboard: arrows / WASD steer and climb, Space / Shift boost, Esc quit. Touch screens get an on-screen pad.
 
+- **Cargo:** 📦 parcels, ⚡ urgent (tight timer, double pay), 🥚 fragile (a crash breaks it: no pay),
+  🏋️ heavy (slower plane, 1.5× pay).
+- **Thunderstorms:** flying through a dark cloud shakes the plane, and lightning can hit you
+  (−5 s, empty boost tank).
+- **Hangar:** coins from deliveries and rings buy engine, wings, boost tank, ring magnet and head-start
+  upgrades, plus six paint jobs. Progress is saved in your browser.
+
 ## Structure
 
 ```
@@ -48,5 +58,5 @@ planet-pop/
    ├─ life/                Trails, Traffic, Boats, Balloons, Planes, Birds, Space
    ├─ ui/                  Hud, Sfx (bubbles + synthesized sound), Achievements
    ├─ camera/              CameraRig (orbit, fly-to, follow, chase, terrain collision)
-   └─ game/                CourierGame, PlayerPlane
+   └─ game/                CourierGame, PlayerPlane, Cargo, Progress (coins/upgrades), Hangar
 ```

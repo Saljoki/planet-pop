@@ -14,6 +14,7 @@ const DEFS = [
   ['combo', '🔥', 'On Fire', 'Reach a x4 delivery combo'],
   ['ace', '🏆', 'Sky Ace', 'Score 1500 in one Sky Courier run'],
   ['mechanic', '🔧', 'Mechanic', 'Buy your first upgrade in the hangar'],
+  ['lightningrod', '🌩️', 'Lightning Rod', 'Get struck by lightning in Sky Courier'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
 const KEY = 'planetpop.trophies';

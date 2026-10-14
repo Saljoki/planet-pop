@@ -32,10 +32,18 @@ export class Weather {
     this.buildSnow();
     const g = this.group;
     this.entities = this.storms.map((s, i) => ({
-      kind: 'storm', name: `Thunder Cloud ${i + 1}`, moving: true,
-      getPos: (out) => g.localToWorld(out.copy(s.d).multiplyScalar(s.alt)),
+      kind: 'storm', name: `Thunder Cloud ${i + 1}`, moving: true, storm: s,
+      getPos: (out) => this.stormCenter(s, out),
       getFwd: (out) => out.copy(s.u).applyQuaternion(g.quaternion),
     }));
+  }
+
+  /** World position of a thundercloud's core (the clouds drift, so this changes over time). */
+  stormCenter(s, out) { return this.group.localToWorld(out.copy(s.d).multiplyScalar(s.alt)); }
+
+  /** The thundercloud whose core contains `pos`, if any. */
+  stormAt(pos, radius = 1.15) {
+    return this.storms.find((s) => this.stormCenter(s, _p).distanceTo(pos) < radius) || null;
   }
 
   buildClouds() {
@@ -99,17 +107,21 @@ export class Weather {
     this.snow = addInstanced(p.root, new THREE.IcosahedronGeometry(0.02, 0), toon('#ffffff', { flatShading: true }), this.flakes.length, 0, { cast: false });
   }
 
-  strike(s) {
+  /** Lightning from storm `s` down to the ground. With `aim`, the bolt passes exactly through that point. */
+  strike(s, aim = null) {
     const p = this.planet, app = p.app;
     this.group.updateMatrixWorld(true);
-    const top = this.group.localToWorld(_a.copy(s.d).multiplyScalar(s.alt - 0.3));
-    const up = top.clone().normalize(), [u, v] = tangentBasis(up);
+    const topR = aim ? Math.max(s.alt + 0.15, aim.length() + 0.35) : s.alt - 0.3;
+    const top = this.group.localToWorld(_a.copy(s.d).multiplyScalar(s.alt)).setLength(topR);
+    const up = (aim || top).clone().normalize(), [u, v] = tangentBasis(up);
     const bottom = _b.copy(up).addScaledVector(u, (Math.random() - 0.5) * 0.06).addScaledVector(v, (Math.random() - 0.5) * 0.06).normalize();
     bottom.multiplyScalar(p.groundR(bottom));
     const pts = [];
     for (let k = 0; k <= 8; k++) {
-      const q = new THREE.Vector3().lerpVectors(top, bottom, k / 8);
-      if (k > 0 && k < 8) q.addScaledVector(u, (Math.random() - 0.5) * 0.24).addScaledVector(v, (Math.random() - 0.5) * 0.24);
+      const q = !aim ? new THREE.Vector3().lerpVectors(top, bottom, k / 8)
+        : k <= 4 ? new THREE.Vector3().lerpVectors(top, aim, k / 4)
+        : new THREE.Vector3().lerpVectors(aim, bottom, (k - 4) / 4);
+      if (k > 0 && k < 8 && !(aim && k === 4)) q.addScaledVector(u, (Math.random() - 0.5) * 0.24).addScaledVector(v, (Math.random() - 0.5) * 0.24);
       pts.push(q);
     }
     this.segs.forEach((m, k) => {
