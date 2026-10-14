@@ -11,10 +11,24 @@ import { Achievements } from './ui/Achievements.js';
 import { CameraRig } from './camera/CameraRig.js';
 import { CourierGame } from './game/CourierGame.js';
 
+/** Planet settings from the address bar (?seed=…&land=…&cities=…), with defaults for anything missing. */
+function paramsFromUrl() {
+  const q = new URLSearchParams(location.search);
+  const num = (key, fallback, lo, hi) => {
+    const v = Number(q.get(key));
+    return q.has(key) && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
+  };
+  return {
+    seed: Math.floor(num('seed', 20261014, 0, 1e9)),
+    land: num('land', 45, 25, 70) / 100,
+    cities: Math.round(num('cities', 5, 2, 8)),
+  };
+}
+
 /** Owns the renderer, the frame loop, and swaps planets in and out. */
 export class App {
   constructor() {
-    this.params = { seed: 20261014, land: 0.45, cities: 5, traffic: 5 };
+    this.params = { ...paramsFromUrl(), traffic: 5 };
     this.timeScale = 1;
     this.paused = false;
     this.simTime = 0;
@@ -70,11 +84,13 @@ export class App {
     try {
       const planet = new Planet(this, this.params);
       await planet.build();
+      await this.warmUp();
       if (this.game.active) this.game.stop();
       this.rig.release(true);
       this.planet?.dispose();
       this.planet = planet;
       if (!initial) this.achievements.unlock('newworld');
+      this.updateUrl();
     } catch (err) {
       console.error(err);
       this.hud.toast('💥 Planet build failed (see console)');
@@ -86,6 +102,34 @@ export class App {
       const s = this.pendingSeed;
       this.pendingSeed = null;
       this.newPlanet(s);
+    }
+  }
+
+  /** Compile every shader while the loading screen is up, so nothing stutters the first time it appears. */
+  async warmUp() {
+    try {
+      const compiling = this.renderer.compileAsync(this.scene, this.camera);
+      await Promise.race([compiling, new Promise((res) => setTimeout(res, 5000))]);
+    } catch (err) {
+      console.warn('Shader warm-up skipped', err);
+    }
+  }
+
+  /** Keep the address bar pointing at the current planet, so the link can be shared. */
+  updateUrl() {
+    const p = this.params;
+    const q = new URLSearchParams({ seed: p.seed, land: Math.round(p.land * 100), cities: p.cities });
+    try { history.replaceState(null, '', `${location.pathname}?${q}`); } catch { /* e.g. sandboxed iframe */ }
+  }
+
+  async sharePlanet() {
+    this.updateUrl();
+    const url = location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      this.hud.toast('🔗 Link copied! Anyone who opens it gets this exact planet.');
+    } catch {
+      prompt('Copy this link to share the planet:', url);
     }
   }
 

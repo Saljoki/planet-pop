@@ -11,6 +11,7 @@ export class Hud {
       <button id="panelToggle">☰ Controls</button>
       <div id="panel" class="panel">
         <div class="row"><button id="pauseBtn">⏸ Pause</button><button id="newBtn">🌍 New planet</button></div>
+        <button id="shareBtn">🔗 Share this planet</button>
         <label>Time speed <b id="speedVal"></b><input id="speed" type="range" min="0" max="4" step="1" value="1"></label>
         <label>Land <b id="landVal"></b><input id="land" type="range" min="25" max="70" step="5" value="${Math.round(p.land * 100)}"></label>
         <label>Cities <b id="citiesVal"></b><input id="cities" type="range" min="2" max="8" step="1" value="${p.cities}"></label>
@@ -38,6 +39,7 @@ export class Hud {
     $('panelToggle').onclick = () => this.panel.classList.toggle('hidden');
     $('pauseBtn').onclick = () => app.togglePause();
     $('newBtn').onclick = () => app.newPlanet();
+    $('shareBtn').onclick = () => app.sharePlanet();
     this.slider('speed', (v) => `${SPEEDS[v]}x`, (v) => app.setTimeScale(SPEEDS[v]), true);
     this.slider('land', (v) => `${v}%`, (v) => app.setWorldParam('land', v / 100));
     this.slider('cities', (v) => `${v}`, (v) => app.setWorldParam('cities', v));
