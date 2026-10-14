@@ -15,6 +15,8 @@ const DEFS = [
   ['ace', '🏆', 'Sky Ace', 'Score 1500 in one Sky Courier run'],
   ['mechanic', '🔧', 'Mechanic', 'Buy your first upgrade in the hangar'],
   ['lightningrod', '🌩️', 'Lightning Rod', 'Get struck by lightning in Sky Courier'],
+  ['outrun', '😈', 'Outrun', 'Beat Rival Rex to 5 cities in a row'],
+  ['daily', '📅', 'Daily Flyer', 'Finish a daily challenge'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
 const KEY = 'planetpop.trophies';

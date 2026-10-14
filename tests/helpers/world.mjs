@@ -50,19 +50,6 @@ export function run(app, seconds, { dt = 1 / 20, camera = false, game = false, e
   }
 }
 
-/** Steer a plane toward a target direction; dive near the target, otherwise cruise above the ground. */
-export function autopilot(plane, target, planet, cruise = 1.5) {
-  const tgt = target.clone().addScaledVector(plane.up, -target.dot(plane.up));
-  const side = new THREE.Vector3().crossVectors(plane.up, plane.fwd);
-  const ang = Math.atan2(tgt.dot(side), tgt.dot(plane.fwd));
-  plane.input.left = ang > 0.05;
-  plane.input.right = ang < -0.05;
-  const near = plane.up.angleTo(target) < 0.25;
-  const want = near ? planet.surfR(target) + 2.3 : planet.groundR(plane.up) + cruise;
-  plane.input.up = plane.alt < want - 0.1;
-  plane.input.down = plane.alt > want + 0.1;
-}
-
 /** Throws if any instance matrix in the planet contains NaN or Infinity. */
 export function assertFiniteInstances(root, label) {
   const m = new THREE.Matrix4();

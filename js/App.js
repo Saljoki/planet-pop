@@ -11,10 +11,12 @@ import { Achievements } from './ui/Achievements.js';
 import { CameraRig } from './camera/CameraRig.js';
 import { CourierGame } from './game/CourierGame.js';
 import { DebugStats } from './ui/DebugStats.js';
+import { dailyParams } from './game/Daily.js';
 
-/** Planet settings from the address bar (?seed=…&land=…&cities=…), with defaults for anything missing. */
+/** Planet settings from the address bar (?seed=…&land=…&cities=…), with defaults for anything missing. ?daily means today's planet. */
 function paramsFromUrl() {
   const q = new URLSearchParams(location.search);
+  if (q.has('daily')) return dailyParams();
   const num = (key, fallback, lo, hi) => {
     const v = Number(q.get(key));
     return q.has(key) && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
@@ -30,6 +32,7 @@ function paramsFromUrl() {
 export class App {
   constructor() {
     this.params = { ...paramsFromUrl(), traffic: 5 };
+    this.dailyLink = new URLSearchParams(location.search).has('daily'); // opened from a shared daily result
     this.timeScale = 1;
     this.paused = false;
     this.simTime = 0;
@@ -100,6 +103,11 @@ export class App {
     this.hud.setLoading(false);
     this.quality.pauseFor(3);
     this.building = false;
+    if (initial && this.dailyLink) {
+      this.dailyLink = false;
+      this.hud.toast("📅 Today's daily challenge is ready. Press Daily challenge to fly it!");
+      this.game.openHangar();
+    }
     if (this.pendingSeed !== null) {
       const s = this.pendingSeed;
       this.pendingSeed = null;

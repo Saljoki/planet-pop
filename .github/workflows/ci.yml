@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # pinned, so a runner image upgrade can't silently change the headless Chrome setup
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4

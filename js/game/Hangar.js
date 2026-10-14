@@ -1,25 +1,31 @@
 import { UPGRADES, SKINS } from './Progress.js';
+import { todayKey } from './Daily.js';
 
-/** Between-run screen: spend coins on upgrades and paint jobs, then take off. */
+/** Between-run screen: spend coins on upgrades and paint jobs, then take off (free flight or today's challenge). */
 export class Hangar {
-  constructor(app, progress, onTakeOff) {
+  constructor(app, progress, { onFly, onDaily }) {
     this.app = app;
     this.progress = progress;
     const el = (this.el = document.createElement('div'));
     el.id = 'hangar';
     el.className = 'overlay hidden';
     el.innerHTML = `<div class="panel">
+      <button id="hClose" class="close" title="Close">✕</button>
       <h2>🛠️ Hangar</h2>
       <div class="coins" id="hCoins"></div>
       <div id="hUpgrades"></div>
       <h3>Paint jobs</h3>
       <div id="hSkins" class="skins"></div>
-      <div class="hrow"><button id="hGo" class="big">✈️ Take off!</button><button id="hClose">Close</button></div>
+      <div class="hfoot">
+        <div class="hrow"><button id="hGo" class="big">✈️ Free flight</button><button id="hDaily" class="big daily">📅 Daily challenge</button></div>
+        <p class="note" id="hDailyNote"></p>
+      </div>
     </div>`;
     document.getElementById('ui').append(el);
     const $ = (id) => el.querySelector('#' + id);
-    this.dom = { coins: $('hCoins'), ups: $('hUpgrades'), skins: $('hSkins') };
-    $('hGo').addEventListener('click', () => { this.hide(); onTakeOff(); });
+    this.dom = { coins: $('hCoins'), ups: $('hUpgrades'), skins: $('hSkins'), dailyNote: $('hDailyNote') };
+    $('hGo').addEventListener('click', () => { this.hide(); onFly(); });
+    $('hDaily').addEventListener('click', () => { this.hide(); onDaily(); });
     $('hClose').addEventListener('click', () => this.hide());
     el.addEventListener('click', (e) => {
       const b = e.target.closest?.('button[data-buy], button[data-skin]');
@@ -48,8 +54,10 @@ export class Hangar {
   }
 
   render() {
-    const p = this.progress, trophies = this.app.achievements.done;
+    const p = this.progress, trophies = this.app.achievements.done, today = p.dailyBest(todayKey());
     this.dom.coins.innerHTML = `🪙 <b>${p.coins}</b> coins · best run ⭐ ${p.best}`;
+    this.dom.dailyNote.textContent = `Daily: today's planet and route, same for everyone, flown in the stock plane. ${
+      today === null ? 'Not flown yet today.' : `Your best today: ⭐ ${today}`}`;
     this.dom.ups.innerHTML = UPGRADES.map((u) => {
       const lvl = p.level(u.id), cost = p.nextCost(u.id);
       const pips = u.costs.map((_, i) => (i < lvl ? '●' : '○')).join('');

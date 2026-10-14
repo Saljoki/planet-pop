@@ -1,7 +1,8 @@
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { makeWorld, run, autopilot, assertFiniteInstances } from './helpers/world.mjs';
+import { makeWorld, run, assertFiniteInstances } from './helpers/world.mjs';
+import { todayKey, dailySeed } from '../js/game/Daily.js';
 
 const PLANETS = [
   { seed: 20261014, land: 0.45, cities: 5 },
@@ -91,7 +92,7 @@ for (const params of PLANETS) {
         dt: 1 / 60, camera: true, game: true,
         each: () => {
           if (game.over) return;
-          autopilot(game.player, game.dest.c, planet);
+          game.player.steerToward(game.dest.c, 1.5);
           cargo.add(game.cargo.id);
           delivered = game.deliveries;
         },
@@ -100,6 +101,33 @@ for (const params of PLANETS) {
       assert.ok(prog.coins > coins, 'no coins earned');
       assert.ok(cargo.size >= 2, 'cargo never varied');
       assert.equal(app.rig.mode, 'game');
+    });
+
+    it('Sky Courier: Rival Rex races you, steals parcels, and can be outrun', () => {
+      const game = app.game, rex = game.rival;
+      assert.ok(rex, 'no rival after the first delivery');
+      assert.ok(Number.isFinite(rex.pos.x));
+      assert.ok(rex.plane.stats.speed > 0.8 && rex.plane.stats.speed <= 1.1, 'the rival speeds up with each delivery, within limits');
+      game.over = false;
+      game.time = 100;
+      const pl = game.player, dest = game.dest, combo = (game.combo = 3), stolen = game.stolen;
+      pl.up.copy(dest.c).negate(); // the player is on the far side of the planet
+      pl.alt = planet.groundR(pl.up) + 3;
+      rex.rest = 0;
+      rex.loaded = false;
+      rex.plane.up.copy(dest.c);
+      rex.plane.alt = planet.surfR(dest.c) + 1.5;
+      game.update(1 / 60);
+      assert.equal(game.stolen, stolen, 'the rival stole a parcel he never picked up');
+      rex.loaded = true; // now he has collected it
+      game.update(1 / 60);
+      assert.equal(game.stolen, stolen + 1, 'the rival reached the city but nothing was stolen');
+      assert.ok(game.combo < combo);
+      assert.equal(game.from, dest);
+      assert.notEqual(game.dest, dest);
+      assert.ok(rex.rest > 0, 'the rival should circle for a moment after stealing');
+      for (let i = 0; i < 5; i++) game.deliver();
+      assert.ok(app.unlocked.includes('outrun'));
     });
 
     it('Sky Courier: a crash breaks fragile cargo, and it pays nothing', () => {
@@ -147,8 +175,46 @@ for (const params of PLANETS) {
       game.start();
       assert.ok(game.active);
       game.stop();
+      assert.equal(game.rival, null);
       run(app, 2, { dt: 1 / 60, camera: true });
       assert.equal(app.rig.mode, 'orbit');
+    });
+
+    it('Daily challenge: same route every time, stock plane, its own best score', () => {
+      const game = app.game, prog = game.progress;
+      assert.ok(prog.level('engine') > 0, 'the free-flight test should have bought an engine upgrade');
+      const route = () => {
+        game.start({ daily: true });
+        const legs = [`${game.from.name}>${game.dest.name}:${game.cargo.id}`];
+        for (let i = 0; i < 8; i++) {
+          game.deliver();
+          legs.push(`${game.dest.name}:${game.cargo.id}`);
+        }
+        return legs;
+      };
+      const first = route();
+      assert.equal(game.player.stats.speed, 1, 'daily runs use the stock plane');
+      const best = prog.best;
+      game.gameOver(); // not via update(): the instant deliveries may leave the plane over its next city
+      assert.ok(game.over);
+      assert.equal(prog.dailyBest(todayKey()), game.score);
+      assert.equal(prog.best, best, 'a daily run should not change the free-flight best');
+      assert.ok(!game.dom.share.classList.contains('hidden'), 'share button hidden after a daily run');
+      assert.ok(app.unlocked.includes('daily'));
+      game.stop();
+      assert.deepEqual(route(), first, 'two daily runs on the same day got different routes');
+      game.stop();
+    });
+
+    it("Daily challenge: builds today's planet first when another one is loaded", async () => {
+      const game = app.game;
+      let built = null;
+      app.newPlanet = async (seed) => { built = seed; };
+      await game.startDaily();
+      assert.equal(built, dailySeed());
+      assert.equal(app.params.seed, dailySeed());
+      assert.ok(game.active && game.daily);
+      game.stop();
     });
   });
 }

@@ -262,8 +262,8 @@ export class CameraRig {
   }
 
   chasePose(out) {
-    const pl = this.player;
-    out.pos.copy(pl.pos).addScaledVector(pl.fwd, -1.6).addScaledVector(pl.up, 0.6);
+    const pl = this.player, k = Math.min(2, Math.max(1, 1.1 / this.camera.aspect)); // pull back on portrait screens
+    out.pos.copy(pl.pos).addScaledVector(pl.fwd, -1.6 * k).addScaledVector(pl.up, 0.6 * k);
     out.look.copy(pl.pos).addScaledVector(pl.fwd, 1.2);
     out.up.copy(pl.up);
     return out;

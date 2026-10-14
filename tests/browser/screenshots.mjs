@@ -164,17 +164,48 @@ await scene('08-lightning', 'Lightning striking the plane inside a thundercloud'
   });
   await frames(2);
 });
-await scene('09-game-over', 'End-of-run summary', async () => {
-  await page.evaluate(() => { app.togglePause(); app.game.time = 0.01; });
+await scene('09-rival', 'Rival Rex racing just ahead, with his name tag', async () => {
+  await page.evaluate(() => { // still paused: one delivery spawns Rex, then park him ahead and to the left
+    const { game, planet } = app, pl = game.player;
+    game.deliver();
+    pl.up.copy(game.from.c); // out of the storm: just took off from the city we delivered to
+    pl.alt = planet.groundR(pl.up) + 1.8;
+    pl.fwd.copy(game.dest.c).addScaledVector(pl.up, -game.dest.c.dot(pl.up)).normalize();
+    pl.sync();
+    const rex = game.rival.plane, left = pl.up.clone().cross(pl.fwd).normalize();
+    rex.up.copy(pl.up).applyAxisAngle(left, 0.1).addScaledVector(left, 0.02).normalize(); // +angle about left = forward
+    rex.fwd.copy(pl.fwd).addScaledVector(rex.up, -pl.fwd.dot(rex.up)).normalize();
+    rex.alt = pl.alt + 0.15;
+    rex.sync();
+    game.updateHud();
+  });
+  await frames(12); // let the chase camera settle, then pin the name tag (paused, so the game loop doesn't)
+  await page.evaluate(() => app.game.rival.placeTag());
+  await frames(2);
+});
+await scene('10-daily-over', 'End of a daily challenge run, with the share button', async () => {
+  await page.evaluate(() => {
+    const { game } = app;
+    game.stop();
+    game.start({ daily: true });
+    game.deliver();
+    game.deliver();
+    game.time = 0.01; // start() already unpaused the world
+  });
   await until(() => app.game.over);
   await frames(2);
 });
-await scene('10-mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
+await scene('11-mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
   await page.evaluate(() => app.game.stop());
   await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await page.goto(`${base}index.html?${PLANET}&debug`, { waitUntil: 'domcontentloaded' });
   await until(() => window.app?.planet && !window.app.building, 240000);
   await frames(4);
+});
+await scene('12-mobile-courier', 'Daily challenge HUD on a phone', async () => {
+  await page.evaluate(() => { app.game.start({ daily: true }); app.game.deliver(); });
+  await until(() => app.rig.mode === 'game');
+  await frames(6);
 });
 
 const report = {

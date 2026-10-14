@@ -73,6 +73,14 @@ export class Hud {
     show();
   }
 
+  /** Move the world sliders to match params changed from code (e.g. the daily challenge planet). */
+  syncParams(p) {
+    for (const [id, v] of [['land', Math.round(p.land * 100)], ['cities', p.cities]]) {
+      this.$(id).value = v;
+      this.$(id).dispatchEvent(new Event('input'));
+    }
+  }
+
   setLoading(on) { this.$('loading').classList.toggle('hidden', !on); }
   setPaused(p) { this.$('pauseBtn').textContent = p ? '▶ Play' : '⏸ Pause'; }
   setInk(on) { this.$('ink').checked = on; }
@@ -93,6 +101,7 @@ export class Hud {
     this.panel.classList.toggle('hidden', on || !this.panelOpen);
     this.$('panelToggle').classList.toggle('hidden', on);
     this.$('hint').classList.toggle('hidden', on);
+    document.body.classList.toggle('in-game', on); // lets phones drop the title to make room for the game HUD
     this.hideLabel();
   }
 

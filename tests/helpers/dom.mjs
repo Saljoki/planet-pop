@@ -14,7 +14,7 @@ export function fakeEl(tag = 'div') {
       toggle(c, on) { (on ?? !this._s.has(c)) ? this._s.add(c) : this._s.delete(c); },
       contains(c) { return this._s.has(c); },
     },
-    addEventListener() {}, setPointerCapture() {}, prepend() {},
+    addEventListener() {}, dispatchEvent() {}, setPointerCapture() {}, prepend() {},
     append(c) { c.parent = this; this.children.push(c); },
     remove() { if (this.parent) { this.parent.children = this.parent.children.filter((x) => x !== this); this.parent = null; } },
     querySelector: () => fakeEl(), querySelectorAll: () => [], _first: null,

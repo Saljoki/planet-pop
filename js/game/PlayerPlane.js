@@ -57,6 +57,19 @@ export class PlayerPlane {
     this.crateMat.color.set(cargo.color);
   }
 
+  /** Autopilot (the rival uses it): turn toward `target`, cruise above the ground, dive near the target. */
+  steerToward(target, cruise = 1.4) {
+    const inp = this.input, p = this.planet;
+    _a.copy(target).addScaledVector(this.up, -target.dot(this.up));
+    _f.crossVectors(this.up, this.fwd);
+    const ang = Math.atan2(_a.dot(_f), _a.dot(this.fwd));
+    inp.left = ang > 0.05;
+    inp.right = ang < -0.05;
+    const want = this.up.angleTo(target) < 0.25 ? p.surfR(target) + 2.3 : p.groundR(this.up) + cruise;
+    inp.up = this.alt < want - 0.1;
+    inp.down = this.alt > want + 0.1;
+  }
+
   update(dt) {
     const inp = this.input;
     const turn = (inp.left ? 1 : 0) - (inp.right ? 1 : 0);

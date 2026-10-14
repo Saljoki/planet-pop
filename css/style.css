@@ -73,10 +73,16 @@ input[type=checkbox] { accent-color: var(--pink); width: 18px; height: 18px; }
 #gPad button { height: 62px; font-size: 26px; padding: 0; touch-action: none; }
 #gPad .boost { background: #3fa7ff; font-size: 16px; }
 #gOver { pointer-events: auto; }
+#gDaily { background: var(--blue); }
+#gStats .badge { white-space: nowrap; }
+.tag { position: fixed; z-index: 3; pointer-events: none; background: #8f5cff; color: #fff; font-size: 15px; white-space: nowrap;
+  border: 3px solid var(--ink); border-radius: 10px; box-shadow: 2px 2px 0 var(--ink); padding: 2px 8px 0; text-shadow: 1px 1px 0 var(--ink);
+  transform: translate(-50%, calc(-100% - 10px)); }
 
 /* ---------- Hangar ---------- */
 button:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: 3px 3px 0 var(--ink); }
-#hangar .panel { width: 440px; text-align: left; }
+#hangar .panel { width: 480px; text-align: left; position: relative; padding-bottom: 0; }
+#hangar .close { position: absolute; top: 12px; right: 12px; background: #fff; font-size: 15px; padding: 3px 8px 0; }
 #hangar h2, #hangar .coins { text-align: center; }
 #hangar h3 { margin: 14px 0 6px; font-weight: normal; font-size: 22px; }
 .coins { font-size: 20px; margin-bottom: 6px; }
@@ -91,6 +97,11 @@ button:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: 3
 .skin.equipped { background: var(--blue); }
 .swatch { width: 36px; height: 20px; border: 4px solid; border-radius: 10px; box-shadow: 2px 2px 0 var(--ink); }
 .hrow { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+button.daily { background: #3fa7ff; }
+#hangar .hrow .big { font-size: 20px; }
+/* the take-off buttons stay in view while the upgrade list scrolls */
+.hfoot { position: sticky; bottom: 0; margin: 14px -26px 0; padding: 0 26px 14px; background: #fff; border-top: 3px solid var(--ink); }
+#hangar .note { margin: 8px 0 0; text-align: center; font-family: system-ui, sans-serif; font-size: 13px; letter-spacing: 0; opacity: 0.75; }
 
 @keyframes pop {
   0%   { transform: translate(-50%, -50%) scale(0.2) rotate(-12deg); opacity: 0; }
@@ -102,6 +113,9 @@ button:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: 3
 @keyframes slidein { from { transform: translateX(-120%); } to { transform: none; } }
 @keyframes fadeout { to { opacity: 0; transform: translateY(10px); } }
 @media (max-width: 640px) {
-  #title { font-size: 22px; } #hint { font-size: 13px; } #panel { width: 210px; } #gStats .badge { font-size: 17px; }
+  #title { font-size: 22px; } #hint { font-size: 13px; } #panel { width: 210px; }
+  #gStats { gap: 6px; } #gStats .badge { font-size: 16px; padding: 4px 8px 2px; } #gStats .wide { display: none; }
+  .in-game #title { display: none; }
+  #gGoal { font-size: 16px; white-space: normal; width: max-content; max-width: calc(100vw - 32px); text-align: center; }
   .skins { grid-template-columns: repeat(2, 1fr); }
 }

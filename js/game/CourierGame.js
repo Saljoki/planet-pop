@@ -2,10 +2,13 @@ import * as THREE from 'three';
 import { R, TAU, LAYER_FX, frame, tangentBasis } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addMesh } from '../render/Outline.js';
+import { mulberry32 } from '../core/Noise.js';
 import { PlayerPlane, SPEED } from './PlayerPlane.js';
 import { rollCargo } from './Cargo.js';
-import { Progress } from './Progress.js';
+import { Progress, BASE_STATS } from './Progress.js';
 import { Hangar } from './Hangar.js';
+import { Rival, RIVAL } from './Rival.js';
+import { todayKey, dailySeed, dailyParams } from './Daily.js';
 
 const DELIVERY_BONUS = 20, RING_BONUS = 5, RING_COINS = 5, CRASH_PENALTY = 8, LIGHTNING_PENALTY = 5, RINGS = 7;
 const KEYMAP = {
@@ -30,8 +33,23 @@ export class CourierGame {
     this.onKeyDown = (e) => this.key(e, true);
     this.onKeyUp = (e) => this.key(e, false);
     this.progress = new Progress();
+    this.rival = null;
     this.buildDom();
-    this.hangar = new Hangar(app, this.progress, () => this.start());
+    this.hangar = new Hangar(app, this.progress, { onFly: () => this.start(), onDaily: () => this.startDaily() });
+  }
+
+  /** Today's challenge: build today's planet if needed, then fly the stock plane on the shared route. */
+  async startDaily() {
+    const app = this.app, want = dailyParams(), p = app.params;
+    if (this.active) return;
+    if (app.building) { app.hud.toast('🌍 The planet is still being built. Try again in a moment.'); return; }
+    if (!app.planet || p.seed !== want.seed || p.land !== want.land || p.cities !== want.cities) {
+      Object.assign(app.params, want);
+      app.hud.syncParams?.(app.params);
+      app.hud.toast("📅 Building today's planet…");
+      await app.newPlanet(want.seed);
+    }
+    this.start({ daily: true });
   }
 
   openHangar() {
@@ -44,7 +62,8 @@ export class CourierGame {
     el.id = 'game';
     el.className = 'hidden';
     el.innerHTML = `
-      <div id="gStats"><div class="badge" id="gScore"></div><div class="badge" id="gTime"></div><div class="badge" id="gCombo"></div><div class="badge" id="gCoins"></div></div>
+      <div id="gStats"><div class="badge hidden" id="gDaily">📅<span class="wide"> Daily</span></div><div class="badge" id="gScore"></div><div class="badge" id="gTime"></div><div class="badge" id="gCombo"></div><div class="badge" id="gCoins"></div></div>
+      <div id="gRival" class="tag hidden">😈 Rex</div>
       <svg id="gArrow" viewBox="0 0 70 70"><polygon points="35,5 61,58 35,45 9,58" fill="#ff5fa2" stroke="#1b1530" stroke-width="5" stroke-linejoin="round"/></svg>
       <div id="gGoal" class="badge"></div>
       <div id="gBoost" class="badge"><div></div></div>
@@ -56,12 +75,14 @@ export class CourierGame {
       <div id="gOver" class="overlay hidden"><div class="panel">
         <h2>⏰ Time's up!</h2><p id="gResult"></p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button id="gAgain" class="big">✈️ Fly again</button><button id="gHangar">🛠️ Hangar</button><button id="gExit">🌍 Back to planet</button>
+          <button id="gAgain" class="big">✈️ Fly again</button><button id="gShare" class="hidden">🔗 Share result</button>
+          <button id="gHangar">🛠️ Hangar</button><button id="gExit">🌍 Back to planet</button>
         </div>
       </div></div>`;
     document.getElementById('ui').append(el);
     const $ = (id) => el.querySelector('#' + id);
     this.dom = {
+      daily: $('gDaily'), rival: $('gRival'), share: $('gShare'),
       score: $('gScore'), time: $('gTime'), combo: $('gCombo'), coins: $('gCoins'), arrow: $('gArrow'), goal: $('gGoal'),
       boost: $('gBoost').firstElementChild, over: $('gOver'), result: $('gResult'), pad: $('gPad'), help: $('gHelp'),
     };
@@ -73,24 +94,29 @@ export class CourierGame {
       b.addEventListener('pointerdown', set(true));
       for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, set(false));
     });
-    $('gAgain').addEventListener('click', () => { this.stop(); this.start(); });
+    $('gAgain').addEventListener('click', () => { const daily = this.daily; this.stop(); this.start({ daily }); });
+    $('gShare').addEventListener('click', () => this.shareDaily());
     $('gHangar').addEventListener('click', () => { this.stop(); this.openHangar(); });
     $('gExit').addEventListener('click', () => this.stop());
   }
 
-  start() {
+  /** daily: stock plane and a route seeded by today's date, so every player gets the same run. */
+  start({ daily = false } = {}) {
     const app = this.app, p = app.planet;
     if (this.active) return;
     if (!p || app.building) { app.hud.toast('🌍 The planet is still being built. Try again in a moment.'); return; }
     const sites = p.cities.sites;
     if (sites.length < 2) { app.hud.toast('📦 Sky Courier needs at least 2 cities. Try a new planet!'); return; }
     if (app.paused) app.togglePause();
-    this.stats = this.progress.stats;
+    this.daily = daily;
+    this.dailyDate = todayKey();
+    this.rand = daily ? mulberry32(dailySeed(this.dailyDate) ^ 0x9e3779b9) : Math.random;
+    this.stats = daily ? BASE_STATS : this.progress.stats;
     Object.assign(this, {
       active: true, over: false, planet: p, score: 0, combo: 1, time: this.stats.startTime, deliveries: 0, anim: 0, runCoins: 0,
-      stormT: 1.2, warnedStorm: false,
+      stormT: 1.2, warnedStorm: false, stolen: 0, rivalStreak: 0,
     });
-    this.from = sites[Math.floor(Math.random() * sites.length)];
+    this.from = sites[Math.floor(this.rand() * sites.length)];
     this.pickDest(true);
     const heading = _t.copy(this.dest.c).addScaledVector(this.from.c, -this.dest.c.dot(this.from.c));
     if (heading.lengthSq() < 1e-6) heading.copy(this.from.u);
@@ -102,10 +128,13 @@ export class CourierGame {
     app.hud.setGameMode(true);
     this.el.classList.remove('hidden');
     this.dom.over.classList.add('hidden');
+    this.dom.daily.classList.toggle('hidden', !daily);
     addEventListener('keydown', this.onKeyDown);
     addEventListener('keyup', this.onKeyUp);
     app.sfx.play('start');
-    app.hud.toast('📦 Deliver parcels between cities! Swoop low through the pink beacon.');
+    app.hud.toast(daily
+      ? '📅 Daily challenge: stock plane, same route as everyone today. Good luck!'
+      : '📦 Deliver parcels between cities! Swoop low through the pink beacon.');
     this.updateHud();
   }
 
@@ -116,6 +145,9 @@ export class CourierGame {
     removeEventListener('keyup', this.onKeyUp);
     this.player.dispose();
     this.player = null;
+    this.rival?.dispose();
+    this.rival = null;
+    this.dom.rival.classList.add('hidden');
     this.props.removeFromParent();
     this.props.traverse((o) => { o.geometry?.dispose(); [].concat(o.material || []).forEach((m) => m.dispose()); });
     this.props = this.beacon = this.rings = null;
@@ -136,12 +168,14 @@ export class CourierGame {
   /** Next destination and a fresh parcel for it. */
   pickDest(first = false) {
     const others = this.planet.cities.sites.filter((s) => s !== this.from);
-    this.dest = others[Math.floor(Math.random() * others.length)];
-    this.cargo = rollCargo(first);
+    this.dest = others[Math.floor(this.rand() * others.length)];
+    this.cargo = rollCargo(first, this.rand);
     this.broken = false;
-    this.par = ((this.from.c.angleTo(this.dest.c) * (R + 2)) / SPEED * 1.25 + 6) * this.cargo.par; // beat this for a combo
+    const here = this.player?.up ?? this.from.c; // after a steal the player isn't at `from`
+    this.par = ((here.angleTo(this.dest.c) * (R + 2)) / SPEED * 1.25 + 6) * this.cargo.par; // beat this for a combo
     this.elapsed = 0;
     this.player?.setCargo(this.cargo);
+    this.rival?.newLeg(this.from);
     if (this.beacon) this.placeBeacon();
     if (!first) this.app.hud.toast(`${this.cargo.icon} New ${this.cargo.name.toLowerCase()} for ${this.dest.name}: ${this.cargo.tip}`);
   }
@@ -222,7 +256,9 @@ export class CourierGame {
       app.sfx.pop(ring.position.clone(), `+${RING_BONUS}s!`, '#3fa7ff', 'ring');
       this.placeRing(ring);
     }
-    if (pl.up.angleTo(this.dest.c) < 0.07 && pl.alt < this.planet.surfR(this.dest.c) + 3.2) this.deliver();
+    const arrived = pl.up.angleTo(this.dest.c) < 0.07 && pl.alt < this.planet.surfR(this.dest.c) + 3.2;
+    if (arrived) this.deliver();
+    if (this.rival?.update(dt, this.dest, this.cargo) && !arrived) this.steal();
 
     const pulse = 1 + Math.sin(this.anim * 4) * 0.08;
     this.beaconRing.scale.set(pulse, 1, pulse);
@@ -248,6 +284,35 @@ export class CourierGame {
       app.achievements.unlock('courier');
       if (this.combo >= 4) app.achievements.unlock('combo');
     }
+    if (this.rival && ++this.rivalStreak >= RIVAL.streak) app.achievements.unlock('outrun');
+    this.from = this.dest;
+    this.pickDest();
+    if (!this.rival) this.spawnRival();
+    this.rival.setLevel(this.deliveries);
+  }
+
+  /** Rex takes off right after your first delivery, from the same city, and races you from then on. */
+  spawnRival() {
+    const pl = this.player, side = _s.crossVectors(pl.up, pl.fwd).normalize();
+    const start = _v.copy(this.from.c).addScaledVector(side, 0.05).normalize();
+    const heading = _t.copy(this.dest.c).addScaledVector(start, -this.dest.c.dot(start));
+    if (heading.lengthSq() < 1e-6) heading.copy(pl.fwd);
+    this.rival = new Rival(this.planet, {
+      from: this.from, start, heading, tag: this.dom.rival, toScreen: (p) => this.app.sfx.toScreen(p),
+    });
+    this.app.renderer.compileAsync?.(this.rival.plane.group, this.app.camera, this.app.scene)?.catch(() => {});
+    this.app.hud.toast(`😈 ${RIVAL.name} is racing you for every parcel! Get there first or he steals the delivery.`);
+  }
+
+  /** Rex got to the city first: the parcel is gone, and so is the combo. */
+  steal() {
+    const app = this.app;
+    this.stolen++;
+    this.rivalStreak = 0;
+    this.combo = 1;
+    app.sfx.pop(this.rival.pos.clone(), 'STOLEN!', '#8f5cff', 'crash');
+    app.hud.toast(`😈 ${RIVAL.name} delivered to ${this.dest.name} first. Grab the next one!`);
+    this.rival.gloat(this.dest);
     this.from = this.dest;
     this.pickDest();
   }
@@ -285,17 +350,41 @@ export class CourierGame {
     this.progress.addCoins(n);
   }
 
+  /** Daily runs keep their own best (they're flown in the stock plane); free flights update the hangar best. */
   gameOver() {
+    const p = this.progress, ach = this.app.achievements;
     this.over = true;
     this.time = 0;
-    const prevBest = this.progress.best, record = this.progress.recordScore(this.score);
-    if (this.score >= 1500) this.app.achievements.unlock('ace');
+    let best;
+    if (this.daily) {
+      const prev = p.dailyBest(this.dailyDate);
+      best = p.recordDaily(this.dailyDate, this.score) ? "🎉 New best today!" : `Today's best: ${prev}`;
+      ach.unlock('daily');
+    } else {
+      const prev = p.best;
+      best = p.recordScore(this.score) ? '🎉 New best!' : `Best: ${prev}`;
+    }
+    if (this.score >= 1500) ach.unlock('ace');
     for (const k in this.player.input) this.player.input[k] = false;
-    this.dom.result.innerHTML = `Score <b>${this.score}</b> · ${this.deliveries} deliveries<br>
-      🪙 +${this.runCoins} coins (you have ${this.progress.coins})<br>${record ? '🎉 New best!' : `Best: ${prevBest}`}`;
+    const stolen = this.stolen ? ` · 😈 ${this.stolen} stolen` : '';
+    this.dom.result.innerHTML = `${this.daily ? `📅 Daily ${this.dailyDate}<br>` : ''}Score <b>${this.score}</b> · ${this.deliveries} deliveries${stolen}<br>
+      🪙 +${this.runCoins} coins (you have ${p.coins})<br>${best}`;
+    this.dom.share.classList.toggle('hidden', !this.daily);
     this.dom.over.classList.remove('hidden');
     this.app.sfx.play('gameover');
     this.updateHud();
+  }
+
+  /** Copy a short brag plus a link that opens today's challenge. */
+  async shareDaily() {
+    const url = `${location.origin}${location.pathname}?daily`;
+    const text = `📅 Planet Pop daily ${this.dailyDate}: ⭐ ${this.score} with ${this.deliveries} deliveries. Can you beat it? ${url}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      this.app.hud.toast('🔗 Result copied! Paste it to challenge a friend.');
+    } catch {
+      prompt('Copy your result:', text);
+    }
   }
 
   updateHud() {
@@ -312,8 +401,9 @@ export class CourierGame {
     const km = Math.round(pl.up.angleTo(c) * R * 100);
     const comboLeft = Math.max(0, Math.ceil(this.par - this.elapsed));
     const what = `${this.cargo.icon} ${this.cargo.name}${this.broken ? ' (broken!)' : ''}`;
+    const rex = this.rival ? ` · 😈 ${this.rival.kmTo(c)} km` : '';
     d.goal.textContent = km < 90
-      ? `${what}: swoop down over ${this.dest.name}!`
-      : `${what} → ${this.dest.name} · ${km} km · combo ${comboLeft}s`;
+      ? `${what}: swoop down over ${this.dest.name}!${rex}`
+      : `${what} → ${this.dest.name} · ${km} km · combo ${comboLeft}s${rex}`;
   }
 }

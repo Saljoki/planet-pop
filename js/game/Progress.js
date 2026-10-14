@@ -19,7 +19,22 @@ export const SKINS = [
   { id: 'gold', name: 'Golden Ace', body: '#ffcf33', trim: '#1b1530', trophy: 'ace', trophyName: 'Sky Ace' },
 ];
 
-/** Coins, upgrade levels, paint jobs and best score, saved in this browser. */
+/** Plane stats for the given upgrade levels. */
+function statsFor(L) {
+  return {
+    speed: 1 + 0.08 * L('engine'),
+    turn: 1 + 0.12 * L('wings'),
+    drain: 0.35 * (1 - 0.15 * L('tank')),
+    regen: 0.08 * (1 + 0.4 * L('tank')),
+    magnet: 0.55 + 0.3 * L('magnet'),
+    startTime: 90 + 10 * L('clock'),
+  };
+}
+
+/** The stock plane, used for the daily challenge so everyone flies the same machine. */
+export const BASE_STATS = statsFor(() => 0);
+
+/** Coins, upgrade levels, paint jobs and best scores, saved in this browser. */
 export class Progress {
   constructor() {
     let s = {};
@@ -31,10 +46,11 @@ export class Progress {
     this.levels = { ...(s.levels || {}) };
     this.owned = new Set(s.owned || ['classic']);
     this.skin = this.owned.has(s.skin) ? s.skin : 'classic';
+    this.daily = s.daily || null; // { date, best } for the most recent daily challenge played
   }
 
   save() {
-    const data = { coins: this.coins, best: this.best, levels: this.levels, owned: [...this.owned], skin: this.skin };
+    const data = { coins: this.coins, best: this.best, levels: this.levels, owned: [...this.owned], skin: this.skin, daily: this.daily };
     try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* storage unavailable */ }
   }
 
@@ -85,18 +101,20 @@ export class Progress {
     return record;
   }
 
+  /** Today's best daily score, or null if today's challenge hasn't been flown. */
+  dailyBest(date) { return this.daily?.date === date ? this.daily.best : null; }
+
+  /** Returns true when this beats today's best daily score. */
+  recordDaily(date, score) {
+    const prev = this.dailyBest(date);
+    const record = prev === null || score > prev;
+    if (record) this.daily = { date, best: score };
+    this.save();
+    return record;
+  }
+
   get skinDef() { return SKINS.find((s) => s.id === this.skin) || SKINS[0]; }
 
   /** Multipliers and values the player plane and the game use. */
-  get stats() {
-    const L = (id) => this.level(id);
-    return {
-      speed: 1 + 0.08 * L('engine'),
-      turn: 1 + 0.12 * L('wings'),
-      drain: 0.35 * (1 - 0.15 * L('tank')),
-      regen: 0.08 * (1 + 0.4 * L('tank')),
-      magnet: 0.55 + 0.3 * L('magnet'),
-      startTime: 90 + 10 * L('clock'),
-    };
-  }
+  get stats() { return statsFor((id) => this.level(id)); }
 }
