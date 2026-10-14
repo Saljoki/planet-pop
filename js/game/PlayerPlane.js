@@ -8,11 +8,14 @@ import { Trails } from '../life/Trails.js';
 export const SPEED = 1.7;
 const BOOST = 3.0, TURN = 1.6, CLIMB = 1.4, MIN_ALT = R + 0.4, MAX_ALT = R + 5.5;
 const _a = new THREE.Vector3(), _f = new THREE.Vector3(), _u = new THREE.Vector3(), _m = new THREE.Matrix4();
+const BASE_STATS = { speed: 1, turn: 1, drain: 0.35, regen: 0.08 };
+const BASE_SKIN = { body: '#ffd23f', trim: '#ff4d4d' };
 
 /** The player's courier plane: flies great circles around the globe at a chosen altitude. */
 export class PlayerPlane {
-  constructor(planet, startDir, heading) {
+  constructor(planet, startDir, heading, stats = BASE_STATS, skin = BASE_SKIN) {
     this.planet = planet;
+    this.stats = stats;
     this.up = startDir.clone().normalize();
     this.fwd = heading.clone().addScaledVector(this.up, -heading.dot(this.up)).normalize();
     this.alt = planet.groundR(this.up) + 1.6;
@@ -28,12 +31,12 @@ export class PlayerPlane {
     this.input = { left: false, right: false, up: false, down: false, boost: false };
 
     const g = (this.group = new THREE.Group());
-    addMesh(g, new THREE.CapsuleGeometry(0.08, 0.4, 4, 12).rotateX(Math.PI / 2), toon('#ffd23f'), 0.012);
+    addMesh(g, new THREE.CapsuleGeometry(0.08, 0.4, 4, 12).rotateX(Math.PI / 2), toon(skin.body), 0.012);
     addMesh(g, mergeGeometries([
       new THREE.BoxGeometry(0.9, 0.03, 0.17).translate(0, -0.02, 0.04),
       new THREE.BoxGeometry(0.03, 0.17, 0.12).translate(0, 0.11, -0.25),
       new THREE.BoxGeometry(0.32, 0.025, 0.09).translate(0, 0.03, -0.26),
-    ]), toon('#ff4d4d'), 0.01);
+    ]), toon(skin.trim), 0.01);
     addMesh(g, new THREE.SphereGeometry(0.06, 12, 8).scale(1, 0.8, 1.4).translate(0, 0.065, 0.06), toon('#2d2a5a'), 0.006);
     this.crateMat = toon('#c98a4b');
     addMesh(g, new THREE.BoxGeometry(0.09, 0.07, 0.09).translate(0, 0.11, -0.08), this.crateMat, 0.006); // the parcel
@@ -56,12 +59,13 @@ export class PlayerPlane {
     const inp = this.input;
     const turn = (inp.left ? 1 : 0) - (inp.right ? 1 : 0);
     const climb = (inp.up ? 1 : 0) - (inp.down ? 1 : 0);
+    const st = this.stats;
     const boosting = inp.boost && this.boost > 0.02;
-    this.boost = clamp(this.boost + (boosting ? -0.35 : 0.08) * dt, 0, 1);
+    this.boost = clamp(this.boost + (boosting ? -st.drain : st.regen) * dt, 0, 1);
 
-    this.fwd.applyAxisAngle(this.up, turn * TURN * dt);                       // steer
+    this.fwd.applyAxisAngle(this.up, turn * TURN * st.turn * dt);             // steer
     const axis = _a.crossVectors(this.up, this.fwd).normalize();
-    const ang = ((boosting ? BOOST : SPEED) * this.cargoSpeed * dt) / this.alt; // fly along a great circle
+    const ang = ((boosting ? BOOST : SPEED) * st.speed * this.cargoSpeed * dt) / this.alt; // fly along a great circle
     this.up.applyAxisAngle(axis, ang).normalize();
     this.fwd.applyAxisAngle(axis, ang);
     this.fwd.addScaledVector(this.up, -this.fwd.dot(this.up)).normalize();

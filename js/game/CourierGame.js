@@ -4,8 +4,10 @@ import { toon } from '../render/Toon.js';
 import { addMesh } from '../render/Outline.js';
 import { PlayerPlane, SPEED } from './PlayerPlane.js';
 import { rollCargo } from './Cargo.js';
+import { Progress } from './Progress.js';
+import { Hangar } from './Hangar.js';
 
-const START_TIME = 90, DELIVERY_BONUS = 20, RING_BONUS = 5, CRASH_PENALTY = 8, RINGS = 7;
+const DELIVERY_BONUS = 20, RING_BONUS = 5, RING_COINS = 5, CRASH_PENALTY = 8, RINGS = 7;
 const KEYMAP = {
   ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up',
   ArrowDown: 'down', KeyS: 'down', Space: 'boost', ShiftLeft: 'boost', ShiftRight: 'boost',
@@ -27,7 +29,14 @@ export class CourierGame {
     this.player = null;
     this.onKeyDown = (e) => this.key(e, true);
     this.onKeyUp = (e) => this.key(e, false);
+    this.progress = new Progress();
     this.buildDom();
+    this.hangar = new Hangar(app, this.progress, () => this.start());
+  }
+
+  openHangar() {
+    if (this.active) return;
+    this.hangar.show();
   }
 
   buildDom() {
@@ -35,7 +44,7 @@ export class CourierGame {
     el.id = 'game';
     el.className = 'hidden';
     el.innerHTML = `
-      <div id="gStats"><div class="badge" id="gScore"></div><div class="badge" id="gTime"></div><div class="badge" id="gCombo"></div></div>
+      <div id="gStats"><div class="badge" id="gScore"></div><div class="badge" id="gTime"></div><div class="badge" id="gCombo"></div><div class="badge" id="gCoins"></div></div>
       <svg id="gArrow" viewBox="0 0 70 70"><polygon points="35,5 61,58 35,45 9,58" fill="#ff5fa2" stroke="#1b1530" stroke-width="5" stroke-linejoin="round"/></svg>
       <div id="gGoal" class="badge"></div>
       <div id="gBoost" class="badge"><div></div></div>
@@ -47,13 +56,13 @@ export class CourierGame {
       <div id="gOver" class="overlay hidden"><div class="panel">
         <h2>⏰ Time's up!</h2><p id="gResult"></p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button id="gAgain" class="big">✈️ Fly again</button><button id="gExit">🌍 Back to planet</button>
+          <button id="gAgain" class="big">✈️ Fly again</button><button id="gHangar">🛠️ Hangar</button><button id="gExit">🌍 Back to planet</button>
         </div>
       </div></div>`;
     document.getElementById('ui').append(el);
     const $ = (id) => el.querySelector('#' + id);
     this.dom = {
-      score: $('gScore'), time: $('gTime'), combo: $('gCombo'), arrow: $('gArrow'), goal: $('gGoal'),
+      score: $('gScore'), time: $('gTime'), combo: $('gCombo'), coins: $('gCoins'), arrow: $('gArrow'), goal: $('gGoal'),
       boost: $('gBoost').firstElementChild, over: $('gOver'), result: $('gResult'), pad: $('gPad'), help: $('gHelp'),
     };
     const touch = matchMedia('(pointer: coarse)').matches;
@@ -65,23 +74,29 @@ export class CourierGame {
       for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, set(false));
     });
     $('gAgain').addEventListener('click', () => { this.stop(); this.start(); });
+    $('gHangar').addEventListener('click', () => { this.stop(); this.openHangar(); });
     $('gExit').addEventListener('click', () => this.stop());
   }
 
   start() {
     const app = this.app, p = app.planet;
-    if (this.active || !p || app.building) return;
+    if (this.active) return;
+    if (!p || app.building) { app.hud.toast('🌍 The planet is still being built. Try again in a moment.'); return; }
     const sites = p.cities.sites;
     if (sites.length < 2) { app.hud.toast('📦 Sky Courier needs at least 2 cities. Try a new planet!'); return; }
     if (app.paused) app.togglePause();
-    Object.assign(this, { active: true, over: false, planet: p, score: 0, combo: 1, time: START_TIME, deliveries: 0, anim: 0 });
+    this.stats = this.progress.stats;
+    Object.assign(this, {
+      active: true, over: false, planet: p, score: 0, combo: 1, time: this.stats.startTime, deliveries: 0, anim: 0, runCoins: 0,
+    });
     this.from = sites[Math.floor(Math.random() * sites.length)];
     this.pickDest(true);
     const heading = _t.copy(this.dest.c).addScaledVector(this.from.c, -this.dest.c.dot(this.from.c));
     if (heading.lengthSq() < 1e-6) heading.copy(this.from.u);
-    this.player = new PlayerPlane(p, this.from.c, heading);
+    this.player = new PlayerPlane(p, this.from.c, heading, this.stats, this.progress.skinDef);
     this.player.setCargo(this.cargo);
     this.buildProps();
+    app.renderer.compileAsync?.(this.props, app.camera, app.scene)?.catch(() => {}); // new props: compile now, not mid-flight
     app.rig.setGame(this.player);
     app.hud.setGameMode(true);
     this.el.classList.remove('hidden');
@@ -197,9 +212,10 @@ export class CourierGame {
       }
     }
     for (const ring of this.rings) {
-      if (ring.position.distanceTo(pl.pos) > 0.55) continue;
+      if (ring.position.distanceTo(pl.pos) > this.stats.magnet) continue;
       this.time += RING_BONUS;
       this.score += 50;
+      this.earn(RING_COINS);
       pl.boost = 1;
       app.sfx.pop(ring.position.clone(), `+${RING_BONUS}s!`, '#3fa7ff', 'ring');
       this.placeRing(ring);
@@ -225,6 +241,7 @@ export class CourierGame {
       const pts = Math.round((100 * this.combo + Math.max(0, (this.par - this.elapsed) * 10)) * cargo.pay);
       this.score += pts;
       this.deliveries++;
+      this.earn(Math.round(pts / 10));
       app.sfx.pop(this.player.pos.clone(), fast && this.combo > 1 ? `+${pts}! x${this.combo}` : `+${pts}!`, '#2ee59d', 'deliver');
       app.achievements.unlock('courier');
       if (this.combo >= 4) app.achievements.unlock('combo');
@@ -233,16 +250,20 @@ export class CourierGame {
     this.pickDest();
   }
 
+  /** Coins are banked as they're earned, so quitting mid-run keeps them. */
+  earn(n) {
+    this.runCoins += n;
+    this.progress.addCoins(n);
+  }
+
   gameOver() {
     this.over = true;
     this.time = 0;
-    let best = 0;
-    try { best = +localStorage.getItem('planetpop.best') || 0; } catch { /* storage unavailable */ }
-    const record = this.score > best;
-    if (record) try { localStorage.setItem('planetpop.best', String(this.score)); } catch { /* storage unavailable */ }
+    const prevBest = this.progress.best, record = this.progress.recordScore(this.score);
     if (this.score >= 1500) this.app.achievements.unlock('ace');
     for (const k in this.player.input) this.player.input[k] = false;
-    this.dom.result.innerHTML = `Score <b>${this.score}</b> · ${this.deliveries} deliveries<br>${record ? '🎉 New best!' : `Best: ${best}`}`;
+    this.dom.result.innerHTML = `Score <b>${this.score}</b> · ${this.deliveries} deliveries<br>
+      🪙 +${this.runCoins} coins (you have ${this.progress.coins})<br>${record ? '🎉 New best!' : `Best: ${prevBest}`}`;
     this.dom.over.classList.remove('hidden');
     this.app.sfx.play('gameover');
     this.updateHud();
@@ -254,6 +275,7 @@ export class CourierGame {
     d.time.textContent = `⏱ ${Math.max(0, Math.ceil(this.time))}`;
     d.time.classList.toggle('low', this.time <= 10);
     d.combo.textContent = `🔥 x${this.combo}`;
+    d.coins.textContent = `🪙 ${this.runCoins}`;
     d.boost.style.width = `${Math.round(pl.boost * 100)}%`;
     _t.copy(c).addScaledVector(pl.up, -c.dot(pl.up));          // direction to target along the ground
     _s.crossVectors(pl.up, pl.fwd);                             // plane's left

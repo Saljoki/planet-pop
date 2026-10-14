@@ -48,7 +48,7 @@ export class Hud {
     $('ink').onchange = (e) => app.setInk(e.target.checked);
     $('shadows').onchange = (e) => app.setShadows(e.target.checked);
     $('sound').onchange = (e) => (app.sfx.enabled = e.target.checked);
-    $('playBtn').onclick = () => app.game.start();
+    $('playBtn').onclick = () => app.game.openHangar();
     $('trophies').onclick = () => this.showTrophies(app.achievements.list());
     $('trophyClose').onclick = () => $('trophyBox').classList.add('hidden');
     $('releaseBtn').onclick = () => app.rig.release();
