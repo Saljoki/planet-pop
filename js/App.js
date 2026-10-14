@@ -1,0 +1,132 @@
+import * as THREE from 'three';
+import { LAYER_FX } from './core/Geo.js';
+import { shared } from './render/Toon.js';
+import { PostFX } from './render/PostFX.js';
+import { Quality } from './render/Quality.js';
+import { Sky } from './sky/Sky.js';
+import { Planet } from './world/Planet.js';
+import { Hud } from './ui/Hud.js';
+import { Sfx } from './ui/Sfx.js';
+import { Achievements } from './ui/Achievements.js';
+import { CameraRig } from './camera/CameraRig.js';
+import { CourierGame } from './game/CourierGame.js';
+
+/** Owns the renderer, the frame loop, and swaps planets in and out. */
+export class App {
+  constructor() {
+    this.params = { seed: 20261014, land: 0.45, cities: 5, traffic: 5 };
+    this.timeScale = 1;
+    this.paused = false;
+    this.simTime = 0;
+    this.planet = null;
+    this.building = false;
+    this.pendingSeed = null;
+
+    const r = (this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }));
+    r.setClearColor(0x000000, 0);
+    r.shadowMap.enabled = true;
+    r.shadowMap.type = THREE.BasicShadowMap; // crisp comic shadows
+    r.shadowMap.autoUpdate = false;          // updated once per frame, not once per render pass
+    document.body.prepend(r.domElement);
+
+    this.scene = new THREE.Scene();
+    this.camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.05, 2000);
+    this.camera.layers.enable(LAYER_FX);
+    const start = Math.max(36, 14 / (Math.tan(THREE.MathUtils.degToRad(22.5)) * this.camera.aspect));
+    this.camera.position.set(0, 0.3, 1).normalize().multiplyScalar(start);
+    this.scene.add(this.camera);
+
+    this.hud = new Hud(this);
+    this.postfx = new PostFX(r);
+    this.sky = new Sky(this.scene);
+    this.sfx = new Sfx(this);
+    this.achievements = new Achievements(this.hud);
+    this.rig = new CameraRig(this);
+    this.game = new CourierGame(this);
+    this.quality = new Quality(this);
+
+    addEventListener('resize', () => this.resize());
+    this.clock = new THREE.Clock();
+    this.newPlanet(this.params.seed, true);
+    r.setAnimationLoop(() => this.frame());
+  }
+
+  resize() {
+    const r = this.renderer, w = innerWidth, h = innerHeight, pr = r.getPixelRatio();
+    r.setSize(w, h);
+    this.camera.aspect = w / h;
+    this.camera.updateProjectionMatrix();
+    this.postfx.setSize(Math.floor(w * pr), Math.floor(h * pr));
+  }
+
+  async newPlanet(seed = Math.floor(Math.random() * 1e9), initial = false) {
+    if (this.building) { this.pendingSeed = seed; return; }
+    this.building = true;
+    this.params.seed = seed;
+    this.hud.setLoading(true);
+    await new Promise((res) => setTimeout(res, 30)); // let the overlay paint first
+    try {
+      const planet = new Planet(this, this.params);
+      await planet.build();
+      if (this.game.active) this.game.stop();
+      this.rig.release(true);
+      this.planet?.dispose();
+      this.planet = planet;
+      if (!initial) this.achievements.unlock('newworld');
+    } catch (err) {
+      console.error(err);
+      this.hud.toast('💥 Planet build failed (see console)');
+    }
+    this.hud.setLoading(false);
+    this.quality.pauseFor(3);
+    this.building = false;
+    if (this.pendingSeed !== null) {
+      const s = this.pendingSeed;
+      this.pendingSeed = null;
+      this.newPlanet(s);
+    }
+  }
+
+  frame() {
+    const real = Math.min(this.clock.getDelta(), 0.1);
+    const scale = this.paused ? 0 : this.game.active ? 1 : this.timeScale;
+    const dt = Math.min(real, 0.05) * scale;
+    const steps = Math.max(1, Math.ceil(dt / 0.05)), h = dt / steps; // sub-steps keep fast-forward stable
+    for (let i = 0; i < steps; i++) {
+      this.simTime += h;
+      shared.uTime.value = this.simTime;
+      this.sky.update(h);
+      this.planet?.update(h, this.simTime);
+    }
+    if (this.planet) this.checkFollow();
+    if (this.game.active) this.game.update(dt, real);
+    this.rig.update(real);
+    this.sfx.update(real);
+    this.quality.tick(real);
+    this.renderer.shadowMap.needsUpdate = true;
+    this.postfx.render(this.scene, this.camera);
+  }
+
+  togglePause() { this.paused = !this.paused; this.hud.setPaused(this.paused); }
+  setTimeScale(x) { this.timeScale = x; }
+  setInk(on) { this.postfx.enabled = on; this.hud.setInk(on); }
+  setShadows(on) { this.sky.light.castShadow = on; }
+  setTraffic(n) { this.params.traffic = n; this.planet?.traffic.rebuild(n); }
+  setWorldParam(key, value) { this.params[key] = value; this.newPlanet(this.params.seed); }
+
+  onFocus(e) {
+    const a = this.achievements;
+    if (e.kind === 'bird') a.unlock('birdwatcher');
+    if (e.kind === 'station') a.unlock('astronaut');
+    if (e.kind === 'city') a.visitCity(e.name);
+  }
+
+  checkFollow() {
+    const { rig, planet: p, achievements: a } = this, e = rig.entity;
+    if (rig.mode !== 'local' || !e) return;
+    if (e.kind === 'plane' && rig.followTime > 10) a.unlock('copilot');
+    if (e.kind === 'train' && p.railway.justExited) a.unlock('tunnel');
+    if (e.kind === 'car' && e.mesh === p.traffic.body && p.traffic.isWaiting(e.id)) a.unlock('redlight');
+    if (e.kind === 'city' && p.nightAt(e.pos) > 0.6) a.unlock('nightowl');
+  }
+}
