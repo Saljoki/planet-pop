@@ -3,6 +3,7 @@ import { R, TAU, LAYER_FX, frame, tangentBasis } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addMesh } from '../render/Outline.js';
 import { PlayerPlane, SPEED } from './PlayerPlane.js';
+import { rollCargo } from './Cargo.js';
 
 const START_TIME = 90, DELIVERY_BONUS = 20, RING_BONUS = 5, CRASH_PENALTY = 8, RINGS = 7;
 const KEYMAP = {
@@ -75,10 +76,11 @@ export class CourierGame {
     if (app.paused) app.togglePause();
     Object.assign(this, { active: true, over: false, planet: p, score: 0, combo: 1, time: START_TIME, deliveries: 0, anim: 0 });
     this.from = sites[Math.floor(Math.random() * sites.length)];
-    this.pickDest();
+    this.pickDest(true);
     const heading = _t.copy(this.dest.c).addScaledVector(this.from.c, -this.dest.c.dot(this.from.c));
     if (heading.lengthSq() < 1e-6) heading.copy(this.from.u);
     this.player = new PlayerPlane(p, this.from.c, heading);
+    this.player.setCargo(this.cargo);
     this.buildProps();
     app.rig.setGame(this.player);
     app.hud.setGameMode(true);
@@ -115,12 +117,17 @@ export class CourierGame {
     this.player.input[k] = down;
   }
 
-  pickDest() {
+  /** Next destination and a fresh parcel for it. */
+  pickDest(first = false) {
     const others = this.planet.cities.sites.filter((s) => s !== this.from);
     this.dest = others[Math.floor(Math.random() * others.length)];
-    this.par = (this.from.c.angleTo(this.dest.c) * (R + 2)) / SPEED * 1.25 + 6; // beat this for a combo
+    this.cargo = rollCargo(first);
+    this.broken = false;
+    this.par = ((this.from.c.angleTo(this.dest.c) * (R + 2)) / SPEED * 1.25 + 6) * this.cargo.par; // beat this for a combo
     this.elapsed = 0;
+    this.player?.setCargo(this.cargo);
     if (this.beacon) this.placeBeacon();
+    if (!first) this.app.hud.toast(`${this.cargo.icon} New ${this.cargo.name.toLowerCase()} for ${this.dest.name}: ${this.cargo.tip}`);
   }
 
   buildProps() {
@@ -182,7 +189,12 @@ export class CourierGame {
     if (pl.crashed) {
       this.time -= CRASH_PENALTY;
       this.combo = 1;
-      app.sfx.pop(pl.pos.clone(), 'BONK!', '#ff4d4d');
+      if (this.cargo.fragile && !this.broken) {
+        this.broken = true;
+        app.sfx.pop(pl.pos.clone(), 'SMASH!', '#9fd8ff', 'crash');
+      } else {
+        app.sfx.pop(pl.pos.clone(), 'BONK!', '#ff4d4d');
+      }
     }
     for (const ring of this.rings) {
       if (ring.position.distanceTo(pl.pos) > 0.55) continue;
@@ -201,16 +213,22 @@ export class CourierGame {
   }
 
   deliver() {
-    const app = this.app, fast = this.elapsed <= this.par;
-    this.combo = fast ? Math.min(5, this.combo + 1) : 1;
-    const pts = 100 * this.combo + Math.max(0, Math.round((this.par - this.elapsed) * 10));
-    this.score += pts;
-    this.deliveries++;
+    const app = this.app, cargo = this.cargo;
     this.time += DELIVERY_BONUS;
-    app.sfx.pop(this.player.pos.clone(), `+${pts}!`, '#2ee59d', 'deliver');
-    app.hud.toast(`📦 Delivered to ${this.dest.name}! ${fast ? `Combo x${this.combo} 🔥` : 'Too slow for a combo'}`);
-    app.achievements.unlock('courier');
-    if (this.combo >= 4) app.achievements.unlock('combo');
+    if (this.broken) { // the fragile parcel arrived in pieces: no pay, no combo
+      this.combo = 1;
+      app.sfx.pop(this.player.pos.clone(), 'OOPS!', '#9fd8ff', 'crash');
+      app.hud.toast(`🥚 The fragile parcel arrived broken. No pay this time.`);
+    } else {
+      const fast = this.elapsed <= this.par;
+      this.combo = fast ? Math.min(5, this.combo + 1) : 1;
+      const pts = Math.round((100 * this.combo + Math.max(0, (this.par - this.elapsed) * 10)) * cargo.pay);
+      this.score += pts;
+      this.deliveries++;
+      app.sfx.pop(this.player.pos.clone(), fast && this.combo > 1 ? `+${pts}! x${this.combo}` : `+${pts}!`, '#2ee59d', 'deliver');
+      app.achievements.unlock('courier');
+      if (this.combo >= 4) app.achievements.unlock('combo');
+    }
     this.from = this.dest;
     this.pickDest();
   }
@@ -242,8 +260,9 @@ export class CourierGame {
     d.arrow.style.transform = `rotate(${-Math.atan2(_t.dot(_s), _t.dot(pl.fwd))}rad)`;
     const km = Math.round(pl.up.angleTo(c) * R * 100);
     const comboLeft = Math.max(0, Math.ceil(this.par - this.elapsed));
+    const what = `${this.cargo.icon} ${this.cargo.name}${this.broken ? ' (broken!)' : ''}`;
     d.goal.textContent = km < 90
-      ? `📦 Swoop down over ${this.dest.name}!`
-      : `📦 Deliver to ${this.dest.name} · ${km} km · combo ${comboLeft}s`;
+      ? `${what}: swoop down over ${this.dest.name}!`
+      : `${what} → ${this.dest.name} · ${km} km · combo ${comboLeft}s`;
   }
 }

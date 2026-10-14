@@ -23,6 +23,8 @@ export class PlayerPlane {
     this.shake = 0;
     this.invuln = 0;
     this.crashed = false;
+    this.cargoSpeed = 1;
+    this.cargoClimb = 1;
     this.input = { left: false, right: false, up: false, down: false, boost: false };
 
     const g = (this.group = new THREE.Group());
@@ -33,13 +35,21 @@ export class PlayerPlane {
       new THREE.BoxGeometry(0.32, 0.025, 0.09).translate(0, 0.03, -0.26),
     ]), toon('#ff4d4d'), 0.01);
     addMesh(g, new THREE.SphereGeometry(0.06, 12, 8).scale(1, 0.8, 1.4).translate(0, 0.065, 0.06), toon('#2d2a5a'), 0.006);
-    addMesh(g, new THREE.BoxGeometry(0.09, 0.07, 0.09).translate(0, 0.11, -0.08), toon('#c98a4b'), 0.006); // the parcel
+    this.crateMat = toon('#c98a4b');
+    addMesh(g, new THREE.BoxGeometry(0.09, 0.07, 0.09).translate(0, 0.11, -0.08), this.crateMat, 0.006); // the parcel
     this.prop = addMesh(g, new THREE.BoxGeometry(0.34, 0.03, 0.012), toon('#2a2540'), 0.004);
     this.prop.position.z = 0.29;
     planet.root.add(g);
     this.trail = new Trails(planet.root, { max: 200, color: '#fff4c2', life: 1.6, grow: 2, drag: 0.4 });
     this.trailT = 0;
     this.sync();
+  }
+
+  /** Heavy cargo slows the plane down; the crate on top takes the cargo's colour. */
+  setCargo(cargo) {
+    this.cargoSpeed = cargo.speed ?? 1;
+    this.cargoClimb = cargo.climb ?? 1;
+    this.crateMat.color.set(cargo.color);
   }
 
   update(dt) {
@@ -51,11 +61,11 @@ export class PlayerPlane {
 
     this.fwd.applyAxisAngle(this.up, turn * TURN * dt);                       // steer
     const axis = _a.crossVectors(this.up, this.fwd).normalize();
-    const ang = ((boosting ? BOOST : SPEED) * dt) / this.alt;                  // fly along a great circle
+    const ang = ((boosting ? BOOST : SPEED) * this.cargoSpeed * dt) / this.alt; // fly along a great circle
     this.up.applyAxisAngle(axis, ang).normalize();
     this.fwd.applyAxisAngle(axis, ang);
     this.fwd.addScaledVector(this.up, -this.fwd.dot(this.up)).normalize();
-    this.alt = clamp(this.alt + climb * CLIMB * dt, MIN_ALT, MAX_ALT);
+    this.alt = clamp(this.alt + climb * CLIMB * this.cargoClimb * dt, MIN_ALT, MAX_ALT);
 
     this.roll += (turn * 0.6 - this.roll) * Math.min(1, dt * 5);
     this.pitchV += (climb * 0.35 - this.pitchV) * Math.min(1, dt * 5);
