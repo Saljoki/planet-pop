@@ -21,6 +21,8 @@ export class App {
     this.planet = null;
     this.building = false;
     this.pendingSeed = null;
+    this.userInk = true;     // panel checkboxes; the quality level can still turn the ink pass off
+    this.userShadows = true;
 
     const r = (this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }));
     r.setClearColor(0x000000, 0);
@@ -103,14 +105,15 @@ export class App {
     this.rig.update(real);
     this.sfx.update(real);
     this.quality.tick(real);
-    this.renderer.shadowMap.needsUpdate = true;
+    if (this.quality.shadowFrame()) this.renderer.shadowMap.needsUpdate = true;
     this.postfx.render(this.scene, this.camera);
   }
 
   togglePause() { this.paused = !this.paused; this.hud.setPaused(this.paused); }
   setTimeScale(x) { this.timeScale = x; }
-  setInk(on) { this.postfx.enabled = on; this.hud.setInk(on); }
-  setShadows(on) { this.sky.light.castShadow = on; }
+  setInk(on) { this.userInk = on; this.quality.apply(); }
+  setShadows(on) { this.userShadows = on; this.quality.apply(); }
+  setQuality(mode) { this.quality.setMode(mode); }
   setTraffic(n) { this.params.traffic = n; this.planet?.traffic.rebuild(n); }
   setWorldParam(key, value) { this.params[key] = value; this.newPlanet(this.params.seed); }
 

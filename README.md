@@ -22,6 +22,9 @@ Bangers font load from CDNs, so an internet connection is needed.
 - **Click / tap** anything (cars, train, planes, boats, balloons, birds, storms, rocket, satellites,
   station, moon, or any spot on the ground) to fly there and follow it. **Esc** returns to orbit.
 - **P** pause · **N** new planet · **H** show/hide the control panel.
+- **Quality** (panel): *Auto* picks the best level your machine runs smoothly and remembers it;
+  *Crisp* forces full resolution; *Balanced* and *Fast* trade shadow detail and the edge-ink pass for speed.
+  Resolution never drops below one pixel per CSS pixel. Check it in DevTools with `app.quality.name` / `app.quality.pr`.
 
 ### Sky Courier
 

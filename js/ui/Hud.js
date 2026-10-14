@@ -15,6 +15,10 @@ export class Hud {
         <label>Land <b id="landVal"></b><input id="land" type="range" min="25" max="70" step="5" value="${Math.round(p.land * 100)}"></label>
         <label>Cities <b id="citiesVal"></b><input id="cities" type="range" min="2" max="8" step="1" value="${p.cities}"></label>
         <label>Traffic <b id="trafficVal"></b><input id="traffic" type="range" min="0" max="10" step="1" value="${p.traffic}"></label>
+        <label>Quality <b id="qualityVal"></b><select id="quality">
+          <option value="auto">Auto</option><option value="crisp">Crisp</option>
+          <option value="balanced">Balanced</option><option value="fast">Fast</option>
+        </select></label>
         <label class="check"><input id="ink" type="checkbox" checked> Ink edges</label>
         <label class="check"><input id="shadows" type="checkbox" checked> Shadows</label>
         <label class="check"><input id="sound" type="checkbox" checked> Sound</label>
@@ -38,6 +42,7 @@ export class Hud {
     this.slider('land', (v) => `${v}%`, (v) => app.setWorldParam('land', v / 100));
     this.slider('cities', (v) => `${v}`, (v) => app.setWorldParam('cities', v));
     this.slider('traffic', (v) => `${v} / lane`, (v) => app.setTraffic(v), true);
+    $('quality').onchange = (e) => app.setQuality(e.target.value);
     $('ink').onchange = (e) => app.setInk(e.target.checked);
     $('shadows').onchange = (e) => app.setShadows(e.target.checked);
     $('sound').onchange = (e) => (app.sfx.enabled = e.target.checked);
@@ -47,7 +52,7 @@ export class Hud {
     $('releaseBtn').onclick = () => app.rig.release();
 
     addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'INPUT') return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
       if (e.code === 'KeyP') app.togglePause();
       else if (e.code === 'KeyN' && !app.game.active) app.newPlanet();
       else if (e.code === 'KeyH' && !app.game.active) this.panel.classList.toggle('hidden');
@@ -66,6 +71,12 @@ export class Hud {
   setLoading(on) { this.$('loading').classList.toggle('hidden', !on); }
   setPaused(p) { this.$('pauseBtn').textContent = p ? '▶ Play' : '⏸ Pause'; }
   setInk(on) { this.$('ink').checked = on; }
+
+  /** Shows the chosen mode; in Auto it also names the level currently in use. */
+  setQuality(mode, levelName) {
+    this.$('quality').value = mode;
+    this.$('qualityVal').textContent = mode === 'auto' ? `(${levelName})` : '';
+  }
 
   setFollow(e) {
     this.$('follow').classList.toggle('hidden', !e);
