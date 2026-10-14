@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches-ignore: ['ci-shots/**']
+  pull_request:
+
+permissions:
+  contents: write # to publish screenshots to a ci-shots/<branch> branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Unit and simulation tests
+        run: npm test
+
+      - name: Browser screenshots (headless Chrome, software WebGL)
+        if: success() || failure()
+        run: npm run screenshots
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots/
+          if-no-files-found: ignore
+
+      - name: Publish screenshots to ci-shots/${{ github.ref_name }}
+        if: always() && github.event_name == 'push' && hashFiles('screenshots/report.json') != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd screenshots
+          git init -q
+          git checkout -q -b shots
+          git add -A
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Screenshots for ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "shots:refs/heads/ci-shots/${GITHUB_REF_NAME}"
+          echo "Screenshots: https://github.com/${GITHUB_REPOSITORY}/tree/ci-shots/${GITHUB_REF_NAME}" >> "$GITHUB_STEP_SUMMARY"
