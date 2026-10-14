@@ -90,6 +90,13 @@ export class PostFX {
     this.quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   }
 
+  /** Multisampling for the colour pass (0 = rely on FXAA alone, much lighter on weak GPUs). */
+  setSamples(n) {
+    if (this.colorRT.samples === n) return;
+    this.colorRT.samples = n;
+    this.colorRT.dispose(); // re-created with the new sample count on next use
+  }
+
   setSize(w, h) {
     for (const rt of [this.colorRT, this.inkRT, this.normalRT]) rt.setSize(w, h);
     this.inkMat.uniforms.uRes.value.set(w, h);

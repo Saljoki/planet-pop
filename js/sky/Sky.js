@@ -36,7 +36,39 @@ export class Sky {
     this.light.position.copy(this.sunDir).multiplyScalar(60);
     this.sun.position.copy(this.sunDir).multiplyScalar(450);
   }
+
+  /**
+   * Shadow box around what the camera sees: the whole planet from orbit, a few units across near the ground,
+   * so close-up shadows get far more texels and fewer objects are drawn into the shadow map.
+   * The box snaps to whole shadow texels so edges don't shimmer as the camera moves.
+   */
+  fitShadow(camera) {
+    const light = this.light, cam = camera.getWorldPosition(_c), alt = cam.length() - R;
+    let half = SHADOW_SIZES[SHADOW_SIZES.length - 1];
+    _focus.set(0, 0, 0);
+    if (alt < 9) {
+      half = SHADOW_SIZES.find((s) => s >= alt * 1.6 + 2.5) ?? half;
+      const up = _up.copy(cam).normalize();
+      camera.getWorldDirection(_d).addScaledVector(up, -_d.dot(up)); // view direction along the ground
+      _focus.copy(up).multiplyScalar(R);
+      if (_d.lengthSq() > 1e-6) _focus.addScaledVector(_d.normalize(), half * 0.5); // reach ahead of the camera
+      const [x, y] = tangentBasis(this.sunDir), texel = (2 * half) / light.shadow.mapSize.x;
+      const fx = Math.round(_focus.dot(x) / texel) * texel, fy = Math.round(_focus.dot(y) / texel) * texel;
+      const fz = _focus.dot(this.sunDir);
+      _focus.set(0, 0, 0).addScaledVector(x, fx).addScaledVector(y, fy).addScaledVector(this.sunDir, fz);
+    }
+    light.target.position.copy(_focus);
+    light.position.copy(_focus).addScaledVector(this.sunDir, 60);
+    const sc = light.shadow.camera;
+    if (sc.right !== half) {
+      Object.assign(sc, { left: -half, right: half, top: half, bottom: -half });
+      sc.updateProjectionMatrix();
+    }
+  }
 }
+
+const SHADOW_SIZES = [3, 4.5, 6.5, 9, 12, 16];
+const _c = new THREE.Vector3(), _d = new THREE.Vector3(), _up = new THREE.Vector3(), _focus = new THREE.Vector3();
 
 function sunTexture() {
   return canvasTexture(256, 256, (g) => {

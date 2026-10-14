@@ -16,7 +16,7 @@ function simulate(frameMs, seconds = 600, { keepStore = false } = {}) {
   const app = {
     userInk: true, userShadows: true,
     renderer: { getPixelRatio: () => pr, setPixelRatio: (v) => { pr = v; } },
-    postfx: { enabled: true },
+    postfx: { enabled: true, samples: 4, setSamples(n) { this.samples = n; } },
     sky: { light: { castShadow: true, shadow: { mapSize: { x: 2048, set(a) { this.x = a; } }, map: null } } },
     resize() {}, hud: { setQuality() {} },
   };
@@ -32,9 +32,10 @@ function simulate(frameMs, seconds = 600, { keepStore = false } = {}) {
 }
 
 test('a weak GPU settles on Balanced at full CSS resolution, never below 1.0', () => {
-  const { q } = simulate((l) => [42, 30, 21, 15][l]);
+  const { q, app } = simulate((l) => [42, 30, 21, 15][l]);
   assert.equal(q.name, 'Balanced');
   assert.equal(q.pr, 1);
+  assert.equal(app.postfx.samples, 0, 'Balanced relies on FXAA instead of multisampling');
 });
 
 test('a CPU-bound machine keeps Crisp (lower settings would not help)', () => {

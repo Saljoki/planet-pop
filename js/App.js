@@ -10,6 +10,7 @@ import { Sfx } from './ui/Sfx.js';
 import { Achievements } from './ui/Achievements.js';
 import { CameraRig } from './camera/CameraRig.js';
 import { CourierGame } from './game/CourierGame.js';
+import { DebugStats } from './ui/DebugStats.js';
 
 /** Planet settings from the address bar (?seed=…&land=…&cities=…), with defaults for anything missing. */
 function paramsFromUrl() {
@@ -60,6 +61,7 @@ export class App {
     this.rig = new CameraRig(this);
     this.game = new CourierGame(this);
     this.quality = new Quality(this);
+    this.debug = new DebugStats(this);
 
     addEventListener('resize', () => this.resize());
     this.clock = new THREE.Clock();
@@ -149,8 +151,11 @@ export class App {
     this.rig.update(real);
     this.sfx.update(real);
     this.quality.tick(real);
+    this.sky.fitShadow(this.camera);
     if (this.quality.shadowFrame()) this.renderer.shadowMap.needsUpdate = true;
+    this.debug.begin();
     this.postfx.render(this.scene, this.camera);
+    this.debug.end(real);
   }
 
   togglePause() { this.paused = !this.paused; this.hud.setPaused(this.paused); }

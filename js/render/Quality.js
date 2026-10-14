@@ -1,10 +1,10 @@
 import { shared } from './Toon.js';
 
 const LEVELS = [
-  { name: 'Crisp', full: true, shadow: 2048, every: 1, ink: true },    // full device resolution
-  { name: 'Sharp', full: false, shadow: 2048, every: 1, ink: true },   // 1 pixel per CSS pixel
-  { name: 'Balanced', full: false, shadow: 1024, every: 2, ink: true }, // lighter shadows, updated every 2nd frame
-  { name: 'Fast', full: false, shadow: 1024, every: 3, ink: false },   // no edge-ink pass (outlines stay)
+  { name: 'Crisp', full: true, shadow: 2048, every: 1, ink: true, msaa: 4 },     // full device resolution
+  { name: 'Sharp', full: false, shadow: 2048, every: 1, ink: true, msaa: 4 },    // 1 pixel per CSS pixel
+  { name: 'Balanced', full: false, shadow: 1024, every: 2, ink: true, msaa: 0 }, // FXAA only, lighter shadows every 2nd frame
+  { name: 'Fast', full: false, shadow: 1024, every: 3, ink: false, msaa: 0 },    // no edge-ink pass (outlines stay)
 ];
 const FIXED = { crisp: 0, balanced: 2, fast: 3 };
 const SLOW_MS = 25;   // slower than ~40 fps → step down
@@ -42,6 +42,7 @@ export class Quality {
     if (app.renderer.getPixelRatio() !== pr) app.renderer.setPixelRatio(pr);
     shared.uHalftone.value = Math.max(4, 5 * pr);
     app.postfx.enabled = app.userInk && L.ink;
+    app.postfx.setSamples?.(L.msaa);
     const light = app.sky.light;
     light.castShadow = app.userShadows;
     if (light.shadow.mapSize.x !== L.shadow) {
