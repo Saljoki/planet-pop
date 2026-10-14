@@ -5,9 +5,12 @@ export class Hud {
   constructor(app) {
     this.app = app;
     const p = app.params;
+    const hint = matchMedia('(pointer: coarse)').matches
+      ? 'Drag to orbit · Pinch to zoom · Tap anything to fly there'
+      : 'Drag to orbit · Scroll to zoom · Click anything to fly there';
     document.getElementById('ui').innerHTML = `
       <div id="title" class="badge">Planet Pop!</div>
-      <div id="hint" class="badge">Drag to orbit · Scroll / pinch to zoom · Click anything to fly there</div>
+      <div id="hint" class="badge">${hint}</div>
       <button id="panelToggle">☰ Controls</button>
       <div id="panel" class="panel">
         <div class="row"><button id="pauseBtn">⏸ Pause</button><button id="newBtn">🌍 New planet</button></div>

@@ -1,8 +1,18 @@
 import * as THREE from 'three';
+import { LAYER_FX } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addInstanced } from '../render/Outline.js';
 
 const _m = new THREE.Matrix4();
+const NEAR = 0.9; // puffs closer than this to the camera vanish instead of filling the screen
+
+/** Toon puffs that disappear when the camera is right next to them (following a smoking train, chasing your own contrail). */
+function puffMaterial(color) {
+  return toon(color, { flatShading: true }, (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <clipping_planes_fragment>',
+      `#include <clipping_planes_fragment>\n  if (vViewPosition.z < ${NEAR.toFixed(2)}) discard;`);
+  }, 'puff');
+}
 
 /** Pooled comic puffs: train smoke, contrails, boat wakes, rocket exhaust. */
 export class Trails {
@@ -13,7 +23,10 @@ export class Trails {
     this.age = new Float32Array(max).fill(Infinity);
     this.size = new Float32Array(max);
     this.next = 0;
-    this.mesh = addInstanced(parent, new THREE.IcosahedronGeometry(1, 1), toon(color, { flatShading: true }), max, 0, { cast: false });
+    // Puffs carry their own ink outline and stay out of the edge-detection pass, so a puff that vanishes
+    // next to the camera doesn't leave its silhouette behind.
+    this.mesh = addInstanced(parent, new THREE.IcosahedronGeometry(1, 1), puffMaterial(color), max, 0.008, { cast: false, near: NEAR });
+    this.mesh.layers.set(LAYER_FX);
     this.mesh.count = 0;
   }
 
@@ -44,8 +57,13 @@ export class Trails {
       this.mesh.setMatrixAt(n++, _m);
     }
     this.mesh.count = n;
+    if (this.mesh.userData.outline) this.mesh.userData.outline.count = n;
     this.mesh.instanceMatrix.needsUpdate = true;
   }
 
-  clear() { this.age.fill(Infinity); this.mesh.count = 0; }
+  clear() {
+    this.age.fill(Infinity);
+    this.mesh.count = 0;
+    if (this.mesh.userData.outline) this.mesh.userData.outline.count = 0;
+  }
 }

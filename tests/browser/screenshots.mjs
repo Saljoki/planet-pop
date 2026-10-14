@@ -146,26 +146,33 @@ await scene('07-courier', 'Sky Courier in flight', async () => {
   await frames(4);
 });
 await scene('08-lightning', 'Lightning striking the plane inside a thundercloud', async () => {
-  await page.evaluate(() => {
+  await page.evaluate(() => { // pause the world, park the plane in a storm, let the chase camera catch up
+    app.togglePause();
     const { planet, game } = app, storm = planet.weather.storms[0], pl = game.player;
     const c = planet.weather.stormCenter(storm, pl.pos.clone());
     pl.up.copy(c).normalize();
     pl.alt = c.length() - 0.3;
     pl.fwd.copy(storm.u).addScaledVector(pl.up, -storm.u.dot(pl.up)).normalize();
     pl.sync();
-    planet.weather.strike(storm, pl.pos.clone());
+  });
+  await frames(12);
+  await page.evaluate(() => {
+    const { planet, game } = app;
+    planet.weather.strike(planet.weather.storms[0], game.player.pos.clone());
+    planet.weather.boltT = 0.33; // a visible moment of the flicker; paused, so it stays
+    planet.weather.bolt.visible = true;
   });
   await frames(2);
 });
 await scene('09-game-over', 'End-of-run summary', async () => {
-  await page.evaluate(() => { app.game.time = 0.01; });
+  await page.evaluate(() => { app.togglePause(); app.game.time = 0.01; });
   await until(() => app.game.over);
   await frames(2);
 });
-await scene('10-mobile', 'Phone-sized screen (390 × 844)', async () => {
+await scene('10-mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
   await page.evaluate(() => app.game.stop());
   await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
-  await page.goto(`${base}index.html?${PLANET}`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${base}index.html?${PLANET}&debug`, { waitUntil: 'domcontentloaded' });
   await until(() => window.app?.planet && !window.app.building, 240000);
   await frames(4);
 });
