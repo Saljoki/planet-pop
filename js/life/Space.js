@@ -3,7 +3,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, TAU, LAYER_FX, frame, frameFwd, tangentBasis } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addMesh, addInstanced, shareMatrices } from '../render/Outline.js';
-import { InstanceEntity, ObjectEntity } from '../core/Entity.js';
+import { InstanceEntity } from '../core/InstanceEntity.js';
+import { ObjectEntity } from '../core/ObjectEntity.js';
 import { Trails } from './Trails.js';
 
 const NO_SHADOW = { cast: false, receive: false };

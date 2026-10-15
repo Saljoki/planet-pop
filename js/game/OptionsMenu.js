@@ -1,17 +1,14 @@
+import { Overlay } from '../ui/Overlay.js';
+
 /**
  * ⚙️ Options, from the briefing, the hangar or the pause menu: Invert Y and steering sensitivity, tilt steering and
  * vibration on phones, sound and ambience volume, whether to show the briefing, and resetting Sky Courier progress.
  * Every change applies straight away and is remembered.
  */
-export class OptionsMenu {
+export class OptionsMenu extends Overlay {
   constructor(app, game) {
-    this.app = app;
-    this.game = game;
     const s = app.settings, tilt = game.tilt, haptics = app.haptics, phone = game.touch;
-    const el = (this.el = document.createElement('div'));
-    el.id = 'options';
-    el.className = 'overlay hidden';
-    el.innerHTML = `<div class="panel">
+    super({ id: 'options', html: `
       <button class="close" id="oClose" title="Close">✕</button>
       <h2>⚙️ Options</h2>
       <h3>Controls</h3>
@@ -27,11 +24,10 @@ export class OptionsMenu {
       <label class="opt"><input id="oBrief" type="checkbox"><span>Show the briefing before each run</span></label>
       <button id="oReset" class="danger">🗑️ Reset Sky Courier progress</button>
       <small class="note" id="oResetNote">Coins, upgrades, paint jobs, missions and best scores. Trophies stay.</small>
-      <button id="oDone" class="big">✔ Done</button>
-    </div>`;
-    document.getElementById('ui').append(el);
-    const $ = (this.$ = (id) => el.querySelector('#' + id));
-    const pct = (v) => `${Math.round(v)}%`;
+      <button id="oDone" class="big">✔ Done</button>` });
+    this.app = app;
+    this.game = game;
+    const $ = (id) => this.$(id), pct = (v) => `${Math.round(v)}%`;
     this.bind('oInvert', 'change', (e) => s.set('invertY', e.target.checked));
     this.bind('oSens', 'input', (e) => { s.set('sensitivity', +e.target.value / 100); $('oSensVal').textContent = pct(+e.target.value); });
     this.bind('oSfx', 'input', (e) => { s.set('sfxVolume', +e.target.value / 100); $('oSfxVal').textContent = pct(+e.target.value); });
@@ -49,31 +45,28 @@ export class OptionsMenu {
     this.bind('oDone', 'click', () => this.hide());
     this.bind('oClose', 'click', () => this.hide());
     s.onChange(() => this.renderInvert());
-    addEventListener('keydown', (e) => { if (e.code === 'Escape' && this.open) { e.stopImmediatePropagation(); this.hide(); } }, true);
   }
 
-  bind(id, ev, fn) { this.$(id)?.addEventListener(ev, fn); }
-
-  get open() { return !this.el.classList.contains('hidden'); }
+  bind(id, ev, fn) { this.on(id, ev, fn); }
 
   /** `onClose` runs when the menu is closed (e.g. back to the briefing). */
   show(onClose = null) {
     this.onClose = onClose;
     this.armed = false;
     this.render();
-    this.el.classList.remove('hidden');
+    super.show();
   }
 
   hide() {
     if (!this.open) return;
-    this.el.classList.add('hidden');
+    super.hide();
     const done = this.onClose;
     this.onClose = null;
     done?.();
   }
 
   render() {
-    const s = this.app.settings, $ = this.$, app = this.app;
+    const s = this.app.settings, $ = (id) => this.$(id), app = this.app;
     $('oInvert').checked = s.get('invertY');
     $('oSens').value = Math.round(s.get('sensitivity') * 100);
     $('oSensVal').textContent = `${$('oSens').value}%`;

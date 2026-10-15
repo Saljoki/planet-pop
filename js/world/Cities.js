@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { R, TAU, LAYER_FX, frame, tangentBasis, canvasTexture } from '../core/Geo.js';
 import { toon, WPOS_DECL, WPOS_VERT } from '../render/Toon.js';
 import { addInstanced } from '../render/Outline.js';
-import { PointEntity } from '../core/Entity.js';
+import { PointEntity } from '../core/PointEntity.js';
 import { ROAD_W, ROAD_N } from './Roads.js';
 
 export const CITY_A = 0.14; // angular radius of a city

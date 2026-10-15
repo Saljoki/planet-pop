@@ -1,4 +1,5 @@
 import { shared } from './Toon.js';
+import { loadJson, saveJson } from '../core/Store.js';
 
 const LEVELS = [
   { name: 'Crisp', full: true, shadow: 2048, every: 1, ink: true, msaa: 4 },     // full device resolution
@@ -21,8 +22,7 @@ export class Quality {
   constructor(app) {
     this.app = app;
     this.max = Math.min(devicePixelRatio || 1, 2);
-    let saved = {};
-    try { saved = JSON.parse(localStorage.getItem(KEY)) || {}; } catch { /* storage unavailable */ }
+    const saved = loadJson(KEY, {});
     this.mode = saved.mode in FIXED ? saved.mode : 'auto';
     this.level = this.mode === 'auto' ? clampLevel(saved.level ?? 0) : FIXED[this.mode];
     this.frame = 0;
@@ -52,7 +52,7 @@ export class Quality {
     }
     app.resize();
     app.hud.setQuality(this.mode, L.name);
-    try { localStorage.setItem(KEY, JSON.stringify({ mode: this.mode, level: this.level })); } catch { /* storage unavailable */ }
+    saveJson(KEY, { mode: this.mode, level: this.level });
   }
 
   setMode(mode) {

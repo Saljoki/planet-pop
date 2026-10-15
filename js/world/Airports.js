@@ -3,7 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, TAU, frame, smoothstep, canvasTexture } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addInstanced, shareMatrices } from '../render/Outline.js';
-import { PointEntity } from '../core/Entity.js';
+import { PointEntity } from '../core/PointEntity.js';
 import { nightGlowMaterial } from './Glow.js';
 import { CITY_A } from './Cities.js';
 import { ROAD_W } from './Roads.js';

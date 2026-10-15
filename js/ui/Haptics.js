@@ -1,3 +1,5 @@
+import { loadFlag, saveFlag } from '../core/Store.js';
+
 const KEY = 'planetpop.vibrate';
 const PATTERNS = { tap: 12, ring: 15, deliver: [30, 50, 40], crash: 140, zap: [60, 40, 60, 40, 90], trophy: [20, 40, 20, 40, 60] };
 
@@ -6,14 +8,12 @@ export class Haptics {
   constructor() {
     // desktop Chrome has navigator.vibrate too, but nothing to buzz: only offer it on touch screens
     this.supported = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function' && matchMedia('(pointer: coarse)').matches;
-    let saved = null;
-    try { saved = localStorage.getItem(KEY); } catch { /* storage unavailable */ }
-    this.enabled = saved !== '0';
+    this.enabled = loadFlag(KEY, true);
   }
 
   setEnabled(on) {
     this.enabled = on;
-    try { localStorage.setItem(KEY, on ? '1' : '0'); } catch { /* storage unavailable */ }
+    saveFlag(KEY, on);
     if (on) this.buzz('tap');
   }
 

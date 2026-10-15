@@ -1,3 +1,5 @@
+import { Widget } from './Widget.js';
+
 /** Icon and plain name for each kind of thing on the planet. */
 export const KINDS = {
   city: ['🏙️', 'Town'], car: ['🚗', 'Car'], person: ['🚶', 'Townsperson'], tram: ['🚋', 'Tram'], train: ['🚂', 'Steam train'],
@@ -47,20 +49,15 @@ export function describe(e, p) {
 }
 
 /** A card about one thing (press and hold on phones): what it is, what it's up to, and a Follow button. */
-export class InfoCard {
+export class InfoCard extends Widget {
   constructor(app) {
+    super({ id: 'info', className: 'panel', html: `<div class="iHead"><span id="iIcon"></span><div><b id="iName"></b><small id="iKind"></small></div></div>
+      <p id="iStatus"></p><div class="row"><button id="iFollow" class="big">👀 Follow</button><button id="iClose">✕</button></div>` });
     this.app = app;
     this.entity = null;
-    const el = (this.el = document.createElement('div'));
-    el.id = 'info';
-    el.className = 'panel hidden';
-    el.innerHTML = `<div class="iHead"><span id="iIcon"></span><div><b id="iName"></b><small id="iKind"></small></div></div>
-      <p id="iStatus"></p><div class="row"><button id="iFollow" class="big">👀 Follow</button><button id="iClose">✕</button></div>`;
-    document.getElementById('ui').append(el);
-    const $ = (id) => el.querySelector('#' + id);
-    this.dom = { icon: $('iIcon'), name: $('iName'), kind: $('iKind'), status: $('iStatus') };
-    $('iFollow').addEventListener('click', () => { const e = this.entity; this.hide(); if (e) app.rig.focus(e); });
-    $('iClose').addEventListener('click', () => this.hide());
+    this.dom = { icon: this.$('iIcon'), name: this.$('iName'), kind: this.$('iKind'), status: this.$('iStatus') };
+    this.on('iFollow', 'click', () => { const e = this.entity; this.hide(); if (e) app.rig.focus(e); });
+    this.on('iClose', 'click', () => this.hide());
   }
 
   get open() { return !!this.entity; }
@@ -72,13 +69,13 @@ export class InfoCard {
     this.dom.name.textContent = e.name;
     this.dom.kind.textContent = kind;
     this.refresh();
-    this.el.classList.remove('hidden');
+    super.show();
     this.app.haptics?.buzz('tap');
   }
 
   hide() {
     this.entity = null;
-    this.el.classList.add('hidden');
+    super.hide();
   }
 
   /** Keep the status line current while the card is up. */

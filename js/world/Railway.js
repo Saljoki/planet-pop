@@ -3,7 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, TAU, mod, clamp, frame, frameFwd, tangentBasis, smallCircle, canvasTexture, ribbonGeometry } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addMesh, addInstanced, shareMatrices } from '../render/Outline.js';
-import { InstanceEntity } from '../core/Entity.js';
+import { InstanceEntity } from '../core/InstanceEntity.js';
 import { Trails } from '../life/Trails.js';
 import { CITY_A } from './Cities.js';
 

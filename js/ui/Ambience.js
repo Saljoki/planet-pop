@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { R, smoothstep, tangentBasis } from '../core/Geo.js';
+import { loadNumber, saveNumber } from '../core/Store.js';
 
 const KEY = 'planetpop.ambience';
 const LEVEL = { wind: 0.09, waves: 0.16, city: 0.12, drone: 0.05 }; // full-volume gain of each layer
@@ -29,16 +30,14 @@ export function ambientMix({ alt, sea, city, night }) {
 export class Ambience {
   constructor(app) {
     this.app = app;
-    let v = 0.5;
-    try { const s = localStorage.getItem(KEY); if (s !== null) v = Math.min(1, Math.max(0, +s)); } catch { /* storage unavailable */ }
-    this.volume = v;
+    this.volume = Math.min(1, Math.max(0, loadNumber(KEY, 0.5)));
     this.layers = null;
     this.chirpT = 1;
   }
 
   setVolume(v) {
     this.volume = v;
-    try { localStorage.setItem(KEY, String(v)); } catch { /* storage unavailable */ }
+    saveNumber(KEY, v);
   }
 
   /** Where the camera is, in the terms ambientMix understands. */

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { R, TAU, clamp, frameFwd, tangentBasis } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addInstanced } from '../render/Outline.js';
-import { InstanceEntity } from '../core/Entity.js';
+import { InstanceEntity } from '../core/InstanceEntity.js';
 
 const FLOCKS = 3, PER = 14;
 const NAMES = ['Seagull Squad', 'The Honkers', 'Feather Gang'];

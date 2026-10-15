@@ -66,7 +66,8 @@ input[type=checkbox] { accent-color: var(--pink); width: 18px; height: 18px; }
 #debug { position: fixed; left: 16px; top: 104px; z-index: 7; pointer-events: none; white-space: pre; padding: 6px 8px;
   font: 12px/1.4 ui-monospace, Consolas, monospace; letter-spacing: 0; color: #fff; background: rgba(12, 8, 36, 0.75); border-radius: 6px; }
 #flash { position: fixed; inset: 0; z-index: 2; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
-.overlay { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgba(12, 8, 36, 0.5); }
+.overlay { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgba(12, 8, 36, 0.5);
+  pointer-events: auto; } /* menus take clicks even inside the click-through game layer */
 .overlay .panel { padding: 18px 26px; text-align: center; max-width: 92vw; max-height: 86vh; overflow: auto; }
 .overlay h2 { margin: 0 0 10px; font-size: 34px; font-weight: normal; }
 .trophy { display: flex; gap: 10px; align-items: center; text-align: left; font-size: 18px; padding: 4px 0; }
@@ -96,7 +97,6 @@ input[type=checkbox] { accent-color: var(--pink); width: 18px; height: 18px; }
   background: #3fa7ff; color: #fff; font-size: 19px; text-shadow: 2px 2px 0 var(--ink); pointer-events: auto; touch-action: none; padding: 0; }
 #gPause .col { display: flex; flex-direction: column; gap: 10px; min-width: 240px; }
 #gFree { background: var(--blue); }
-#gOver, #gPause { pointer-events: auto; } /* the game layer lets clicks through to the stick; its menus take them */
 #gDaily { background: var(--blue); }
 #gStats .badge { white-space: nowrap; }
 .tag { position: fixed; z-index: 3; pointer-events: none; background: #8f5cff; color: #fff; font-size: 15px; white-space: nowrap;

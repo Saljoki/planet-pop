@@ -3,7 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, TAU, frame, canvasTexture } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addInstanced, shareMatrices } from '../render/Outline.js';
-import { InstanceEntity } from '../core/Entity.js';
+import { InstanceEntity } from '../core/InstanceEntity.js';
 import { nightGlowMaterial } from '../world/Glow.js';
 
 const COLS = ['#ff4d6d', '#ffd23f', '#3fa7ff', '#8f5cff', '#2ee59d', '#ff8c42'];

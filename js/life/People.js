@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { R, frame } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addInstanced, shareMatrices } from '../render/Outline.js';
-import { InstanceEntity } from '../core/Entity.js';
+import { InstanceEntity } from '../core/InstanceEntity.js';
 import { ROAD_W } from '../world/Roads.js';
 import { CITY_A, GRID } from '../world/Cities.js';
 

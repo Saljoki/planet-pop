@@ -533,8 +533,10 @@ await scene('mobile-pause', 'Pause menu on a phone', async () => {
   await page.evaluate(() => app.togglePause());
   await frames(2);
 });
-await page.tap('#pResume');
-if (await page.evaluate(() => app.paused)) problems.push('mobile-pause: tapping Resume did not resume');
+if (await page.evaluate(() => app.game.pauseMenu.open)) { // (only if that scene ran)
+  await page.tap('#pResume');
+  if (await page.evaluate(() => app.paused)) problems.push('mobile-pause: tapping Resume did not resume');
+}
 await page.evaluate(() => { if (app.paused) app.togglePause(); });
 await scene('landscape-courier', 'Phone on its side, flying', async () => {
   await page.setViewport({ width: 844, height: 390, deviceScaleFactor: 2, isMobile: true, hasTouch: true, isLandscape: true });

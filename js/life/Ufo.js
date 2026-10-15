@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { R, TAU, LAYER_FX, ease, frame, tangentBasis } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addMesh, addInstanced } from '../render/Outline.js';
-import { ObjectEntity } from '../core/Entity.js';
+import { ObjectEntity } from '../core/ObjectEntity.js';
 
 const ARRIVE = 3, HOVER = 8, LEAVE = 2.5, HOVER_ALT = 1.5;
 const LIGHTS = ['#ff4d4d', '#ffd23f', '#3bff7a', '#3fa7ff', '#ff5fa2', '#ff8c42', '#8f5cff', '#ffffff'];

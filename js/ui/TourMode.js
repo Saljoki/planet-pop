@@ -1,5 +1,7 @@
 import { happenings } from '../world/Happenings.js';
 import { KINDS, describe } from './InfoCard.js';
+import { Widget } from './Widget.js';
+import { loadFlag, saveFlag } from '../core/Store.js';
 
 const STAY = 12, EVENT_STAY = 16, IDLE_START = 60, RECENT = 6, POTATO = 180;
 const FILLERS = ['train', 'whale', 'helicopter', 'tram', 'plane', 'balloon', 'boat', 'city', 'station', 'bird', 'moon'];
@@ -17,22 +19,16 @@ export class TourMode {
     this.idle = 0;
     this.recent = [];
     this.watched = 0;
-    let saved = null;
-    try { saved = localStorage.getItem(KEY); } catch { /* storage unavailable */ }
-    this.auto = saved !== '0';
-    const el = (this.el = document.createElement('div'));
-    el.id = 'tourBar';
-    el.className = 'badge hidden';
-    el.innerHTML = '<span id="tourText"></span><button id="tourStop">✕ Stop tour</button>';
-    document.getElementById('ui').append(el);
-    this.text = el.querySelector('#tourText');
-    el.querySelector('#tourStop').addEventListener('click', () => this.stop());
+    this.auto = loadFlag(KEY, true);
+    this.bar = new Widget({ id: 'tourBar', className: 'badge', html: '<span id="tourText"></span><button id="tourStop">✕ Stop tour</button>' });
+    this.text = this.bar.$('tourText');
+    this.bar.on('tourStop', 'click', () => this.stop());
     for (const ev of ['pointerdown', 'keydown', 'wheel']) addEventListener(ev, (e) => this.input(e), { capture: true, passive: true });
   }
 
   setAuto(on) {
     this.auto = on;
-    try { localStorage.setItem(KEY, on ? '1' : '0'); } catch { /* storage unavailable */ }
+    saveFlag(KEY, on);
   }
 
   /** Any input: the user is back. (The tour bar's own button stops it through its click.) */
@@ -55,7 +51,7 @@ export class TourMode {
     if (auto) this.app.hud.toast('📺 Taking you on a tour. Touch anything to take over.');
     this.app.hud.setTourMode(true);
     this.app.wakeLock?.want('tour', true);
-    this.el.classList.remove('hidden');
+    this.bar.show();
     this.next();
   }
 
@@ -63,7 +59,7 @@ export class TourMode {
     if (!this.on) return;
     this.on = false;
     this.item = null;
-    this.el.classList.add('hidden');
+    this.bar.hide();
     this.app.hud.setTourMode(false);
     this.app.wakeLock?.want('tour', false);
   }

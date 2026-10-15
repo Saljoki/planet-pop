@@ -1,5 +1,6 @@
 import { happenings, findable } from '../world/Happenings.js';
 import { KINDS } from './InfoCard.js';
+import { Widget } from './Widget.js';
 
 const PLURAL = { city: 'Towns', moon: 'Moon', station: 'Space station', rocket: 'Rocket', train: 'Train', volcano: 'Volcanoes' };
 
@@ -7,24 +8,19 @@ const PLURAL = { city: 'Towns', moon: 'Moon', station: 'Space station', rocket: 
  * 📍 Find: everything worth seeing in one list, so nobody has to hunt for a tiny whale on a phone screen.
  * "Happening now" lists live events; below, a button per kind of thing (each tap visits the next one) and the towns.
  */
-export class FindMenu {
+export class FindMenu extends Widget {
   constructor(app) {
-    this.app = app;
-    this.cursor = {}; // per kind: which one to visit next
-    const el = (this.el = document.createElement('div'));
-    el.id = 'find';
-    el.className = 'panel sheet hidden';
-    el.innerHTML = `<div class="grab"></div><div class="fHead"><h3>📍 Find</h3><button id="fClose" title="Close">✕</button></div>
+    super({ id: 'find', className: 'panel sheet', html: `<div class="grab"></div><div class="fHead"><h3>📍 Find</h3><button id="fClose" title="Close">✕</button></div>
       <button id="fTour" class="big">📺 Take the tour</button>
       <h4>Happening now</h4><div id="fNow"></div>
       <h4>Take me to…</h4><div id="fKinds" class="chips"></div>
-      <h4>Towns</h4><div id="fTowns" class="chips"></div>`;
-    document.getElementById('ui').append(el);
-    const $ = (id) => el.querySelector('#' + id);
-    this.dom = { now: $('fNow'), kinds: $('fKinds'), towns: $('fTowns') };
-    $('fClose').addEventListener('click', () => this.hide());
-    $('fTour').addEventListener('click', () => { this.hide(); app.tour.start(); });
-    el.addEventListener('click', (e) => {
+      <h4>Towns</h4><div id="fTowns" class="chips"></div>` });
+    this.app = app;
+    this.cursor = {}; // per kind: which one to visit next
+    this.dom = { now: this.$('fNow'), kinds: this.$('fKinds'), towns: this.$('fTowns') };
+    this.on('fClose', 'click', () => this.hide());
+    this.on('fTour', 'click', () => { this.hide(); app.tour.start(); });
+    this.el.addEventListener('click', (e) => {
       const b = e.target.closest?.('button[data-go]');
       if (b) this.go(b.dataset.go);
     });
@@ -35,21 +31,20 @@ export class FindMenu {
     });
   }
 
-  get open() { return !this.el.classList.contains('hidden'); }
-
   toggle() { if (this.open) this.hide(); else this.show(); }
 
   show() {
     if (!this.app.planet || this.app.game.active) return;
     this.app.hud.closePanel?.();
     this.render();
-    this.el.classList.remove('hidden');
+    super.show();
+    clearInterval(this.timer);
     this.timer = setInterval(() => this.renderNow(), 2000);
   }
 
   hide() {
     clearInterval(this.timer);
-    this.el.classList.add('hidden');
+    super.hide();
   }
 
   render() {

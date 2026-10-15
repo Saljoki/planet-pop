@@ -1,4 +1,5 @@
 import { themeOf } from '../world/Themes.js';
+import { Overlay } from '../ui/Overlay.js';
 
 const COURIER = [
   'Follow the pink arrow to the town, then swoop down low through the pink beacon to deliver.',
@@ -45,48 +46,38 @@ export function controlsFor({ touch = false, pad = false, invertY = false } = {}
  * The start screen before a Sky Courier run: the goal, a few tips, the controls for this device, and Start / Options /
  * Back. "Don't show this again" turns it off (it can be turned back on in Options). Enter starts, Esc goes back.
  */
-export class Briefing {
+export class Briefing extends Overlay {
   constructor(app, game) {
-    this.app = app;
-    this.game = game;
-    this.pending = null;
-    const el = (this.el = document.createElement('div'));
-    el.id = 'briefing';
-    el.className = 'overlay hidden';
-    el.innerHTML = `<div class="panel">
+    super({ id: 'briefing', html: `
       <h2><span id="bIcon"></span> <span id="bTitle"></span></h2>
       <p id="bGoal" class="goal"></p>
       <ul id="bTips" class="tips"></ul>
       <h3>Controls</h3>
       <ul id="bControls" class="tips controls"></ul>
       <label class="skip"><input id="bSkip" type="checkbox"> Don’t show this before every run</label>
-      <div class="hrow"><button id="bStart" class="big">▶ Start</button><button id="bOptions">⚙️ Options</button><button id="bBack">✕ Back</button></div>
-    </div>`;
-    document.getElementById('ui').append(el);
-    const $ = (this.$ = (id) => el.querySelector('#' + id));
-    $('bStart').addEventListener('click', () => this.start());
-    $('bOptions').addEventListener('click', () => this.options());
-    $('bBack').addEventListener('click', () => this.back());
-    $('bSkip').addEventListener('change', (e) => app.settings.set('briefing', !e.target.checked));
+      <div class="hrow"><button id="bStart" class="big">▶ Start</button><button id="bOptions">⚙️ Options</button><button id="bBack">✕ Back</button></div>` });
+    this.app = app;
+    this.game = game;
+    this.pending = null;
+    this.on('bStart', 'click', () => this.start());
+    this.on('bOptions', 'click', () => this.options());
+    this.on('bBack', 'click', () => this.back());
+    this.on('bSkip', 'change', (e) => app.settings.set('briefing', !e.target.checked));
     addEventListener('keydown', (e) => {
-      if (!this.open || this.game.options.open) return;
-      if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); this.start(); }
-      else if (e.code === 'Escape') this.back();
+      if (this.open && !this.game.options.open && (e.code === 'Enter' || e.code === 'Space')) { e.preventDefault(); this.start(); }
     });
     app.settings.onChange((k) => { if (k === 'invertY' && this.open) this.render(); });
   }
-
-  get open() { return !this.el.classList.contains('hidden'); }
 
   /** Show the briefing for a run with these options; Start begins it. */
   show(opts) {
     this.pending = opts;
     this.render();
-    this.el.classList.remove('hidden');
+    super.show();
   }
 
   render() {
-    const b = briefingFor(this.pending || {}), $ = this.$, app = this.app;
+    const b = briefingFor(this.pending || {}), $ = (id) => this.$(id), app = this.app;
     $('bIcon').textContent = b.icon;
     $('bTitle').textContent = b.title;
     $('bGoal').textContent = b.goal;
@@ -96,7 +87,7 @@ export class Briefing {
     $('bSkip').checked = !app.settings.get('briefing');
   }
 
-  hide() { this.el.classList.add('hidden'); }
+  escape() { this.back(); }
 
   start() {
     if (!this.open) return;

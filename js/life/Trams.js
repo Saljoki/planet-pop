@@ -3,7 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, frameFwd, ribbonGeometry } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addMesh, addInstanced, shareMatrices } from '../render/Outline.js';
-import { InstanceEntity } from '../core/Entity.js';
+import { InstanceEntity } from '../core/InstanceEntity.js';
 import { nightGlowMaterial } from '../world/Glow.js';
 import { ROAD_W } from '../world/Roads.js';
 import { CITY_A, GRID } from '../world/Cities.js';

@@ -1,6 +1,7 @@
 import { MISSIONS } from './Missions.js';
+import { loadJson, saveJson, loadNumber, forget } from '../core/Store.js';
 
-const KEY = 'planetpop.courier';
+const KEY = 'planetpop.courier', OLD_BEST_KEY = 'planetpop.best';
 
 /** Hangar upgrades. Each entry in `costs` is one level. */
 export const UPGRADES = [
@@ -39,10 +40,7 @@ export const BASE_STATS = statsFor(() => 0);
 /** Coins, upgrade levels, paint jobs and best scores, saved in this browser. */
 export class Progress {
   constructor() {
-    let s = {};
-    try { s = JSON.parse(localStorage.getItem(KEY)) || {}; } catch { /* storage unavailable */ }
-    let oldBest = 0;
-    try { oldBest = +localStorage.getItem('planetpop.best') || 0; } catch { /* storage unavailable */ }
+    const s = loadJson(KEY, {}), oldBest = loadNumber(OLD_BEST_KEY, 0);
     this.coins = s.coins | 0;
     this.best = Math.max(s.best | 0, oldBest); // carries over the best score from before the hangar existed
     this.levels = { ...(s.levels || {}) };
@@ -55,7 +53,7 @@ export class Progress {
   save() {
     const data = { coins: this.coins, best: this.best, levels: this.levels, owned: [...this.owned], skin: this.skin, daily: this.daily,
       missions: [...this.missions] };
-    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* storage unavailable */ }
+    saveJson(KEY, data);
   }
 
   level(id) { return this.levels[id] | 0; }
@@ -99,7 +97,8 @@ export class Progress {
 
   /** Back to a brand-new pilot: no coins, upgrades, paint jobs, missions or best scores. */
   reset() {
-    try { localStorage.removeItem(KEY); localStorage.removeItem('planetpop.best'); } catch { /* storage unavailable */ }
+    forget(KEY);
+    forget(OLD_BEST_KEY);
     Object.assign(this, { coins: 0, best: 0, levels: {}, owned: new Set(['classic']), skin: 'classic', daily: null, missions: new Set() });
     this.save();
   }

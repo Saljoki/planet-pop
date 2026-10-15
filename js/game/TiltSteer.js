@@ -1,3 +1,5 @@
+import { loadFlag, saveFlag } from '../core/Store.js';
+
 const KEY = 'planetpop.tilt', DEG = Math.PI / 180;
 const STEER_RANGE = 25 * DEG, CLIMB_RANGE = 20 * DEG, DEAD = 3 * DEG;
 
@@ -35,9 +37,7 @@ export class TiltSteer {
     this.steer = 0;
     this.climb = 0;
     this.neutral = null;
-    let saved = null;
-    try { saved = localStorage.getItem(KEY); } catch { /* storage unavailable */ }
-    this.wanted = saved === '1';
+    this.wanted = loadFlag(KEY, false);
     this.onOrient = (e) => this.read(e);
   }
 
@@ -80,7 +80,7 @@ export class TiltSteer {
 
   save(on) {
     this.wanted = on;
-    try { localStorage.setItem(KEY, on ? '1' : '0'); } catch { /* storage unavailable */ }
+    saveFlag(KEY, on);
   }
 
   read(e) {

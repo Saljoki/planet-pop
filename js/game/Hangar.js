@@ -1,15 +1,11 @@
 import { UPGRADES, SKINS } from './Progress.js';
 import { todayKey } from './Daily.js';
+import { Overlay } from '../ui/Overlay.js';
 
 /** Between-run screen: spend coins on upgrades and paint jobs, then take off: a courier run, a mission, the daily or free flight. */
-export class Hangar {
+export class Hangar extends Overlay {
   constructor(app, progress, { onFly, onFree, onDaily, onMissions, onOptions }) {
-    this.app = app;
-    this.progress = progress;
-    const el = (this.el = document.createElement('div'));
-    el.id = 'hangar';
-    el.className = 'overlay hidden';
-    el.innerHTML = `<div class="panel">
+    super({ id: 'hangar', html: `
       <button id="hClose" class="close" title="Close">✕</button>
       <button id="hOptions" class="opts" title="Options">⚙️</button>
       <h2>🛠️ Hangar</h2>
@@ -21,29 +17,27 @@ export class Hangar {
         <div class="hrow"><button id="hGo" class="big">📦 Courier run</button><button id="hMissions" class="big missions">🎯 Missions</button>
           <button id="hDaily" class="big daily">📅 Daily</button><button id="hFree" class="big free">🕊️ Free flight</button></div>
         <p class="note" id="hDailyNote"></p>
-      </div>
-    </div>`;
-    document.getElementById('ui').append(el);
-    const $ = (id) => el.querySelector('#' + id);
+      </div>` });
+    this.app = app;
+    this.progress = progress;
+    const $ = (id) => this.$(id);
     this.dom = { coins: $('hCoins'), ups: $('hUpgrades'), skins: $('hSkins'), dailyNote: $('hDailyNote') };
-    $('hGo').addEventListener('click', () => { this.hide(); onFly(); });
-    $('hDaily').addEventListener('click', () => { this.hide(); onDaily(); });
-    $('hFree').addEventListener('click', () => { this.hide(); onFree(); });
-    $('hMissions').addEventListener('click', () => { this.hide(); onMissions(); });
-    $('hClose').addEventListener('click', () => this.hide());
-    $('hOptions').addEventListener('click', () => { this.hide(); onOptions?.(); });
-    el.addEventListener('click', (e) => {
+    const go = (fn) => () => { this.hide(); fn?.(); };
+    this.on('hGo', 'click', go(onFly));
+    this.on('hDaily', 'click', go(onDaily));
+    this.on('hFree', 'click', go(onFree));
+    this.on('hMissions', 'click', go(onMissions));
+    this.on('hOptions', 'click', go(onOptions));
+    this.on('hClose', 'click', () => this.hide());
+    this.el.addEventListener('click', (e) => {
       const b = e.target.closest?.('button[data-buy], button[data-skin]');
       if (!b || b.disabled) return;
       if (b.dataset.buy) this.buy(b.dataset.buy);
       else this.pickSkin(b.dataset.skin);
     });
-    addEventListener('keydown', (e) => { if (e.code === 'Escape' && this.open) this.hide(); });
   }
 
-  get open() { return !this.el.classList.contains('hidden'); }
-  show() { this.render(); this.el.classList.remove('hidden'); }
-  hide() { this.el.classList.add('hidden'); }
+  show() { this.render(); super.show(); }
 
   buy(id) {
     const ok = this.progress.buy(id);

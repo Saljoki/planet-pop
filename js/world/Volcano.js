@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { R, TAU, LAYER_FX, frame, tangentBasis, canvasTexture } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addMesh, addInstanced } from '../render/Outline.js';
-import { PointEntity } from '../core/Entity.js';
+import { PointEntity } from '../core/PointEntity.js';
 import { Trails } from '../life/Trails.js';
 import { CITY_A } from './Cities.js';
 

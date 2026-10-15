@@ -3,7 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, TAU, ease, frameFwd, tangentBasis, smallCircle } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addInstanced, shareMatrices } from '../render/Outline.js';
-import { InstanceEntity } from '../core/Entity.js';
+import { InstanceEntity } from '../core/InstanceEntity.js';
 import { Trails } from './Trails.js';
 
 const NAMES = ['Humphrey', 'Big Blue', 'Barnacle Bill', 'Splashy', 'Moby'];

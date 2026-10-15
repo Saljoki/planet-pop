@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { R, TAU, clamp, mod, smoothstep, ease, raySphere, tangentBasis } from '../core/Geo.js';
-import { PointEntity } from '../core/Entity.js';
+import { PointEntity } from '../core/PointEntity.js';
 import { Gestures } from './Gestures.js';
 
 const FRAME = { car: 1.0, train: 1.3, boat: 1.2, plane: 1.7, balloon: 1.6, bird: 0.9, rocket: 2.2, satellite: 1.4, station: 3.2, moon: 6.5, storm: 5, city: 4.2, spot: 3,
@@ -181,7 +181,11 @@ export class CameraRig {
         if (_w.length() < p.surfR(_e.copy(_w).normalize()) + 0.05) { t = s; break; }
       }
     }
-    if (t < 0) return null;
+    if (t < 0) { // skimming just over the horizon: take the spot where the ray passes closest to the planet
+      const closest = -cam.dot(_v);
+      if (closest <= 0 || cam.clone().addScaledVector(_v, closest).length() > R + 3) return null;
+      t = closest;
+    }
     const d = _w.copy(cam).addScaledVector(_v, t).normalize();
     return new PointEntity(d.clone().multiplyScalar(this.app.planet.surfR(d) + 0.1), 'spot', 'Somewhere nice', tangentBasis(d)[0]);
   }

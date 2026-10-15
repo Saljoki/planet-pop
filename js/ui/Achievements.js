@@ -1,3 +1,5 @@
+import { loadJson, saveJson } from '../core/Store.js';
+
 const DEFS = [
   ['newworld', '🌍', 'World Builder', 'Generate a new planet'],
   ['tourist', '🏙️', 'Tourist', 'Visit 3 different cities'],
@@ -42,9 +44,7 @@ export class Achievements {
   constructor(hud) {
     this.hud = hud;
     this.cities = new Set();
-    let saved = [];
-    try { saved = JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { /* storage unavailable */ }
-    this.done = new Set(saved);
+    this.done = new Set(loadJson(KEY, []));
     hud.updateTrophies(this.done.size, DEFS.length);
   }
 
@@ -52,7 +52,7 @@ export class Achievements {
     const def = DEFS.find((d) => d[0] === id);
     if (!def || this.done.has(id)) return;
     this.done.add(id);
-    try { localStorage.setItem(KEY, JSON.stringify([...this.done])); } catch { /* storage unavailable */ }
+    saveJson(KEY, [...this.done]);
     this.hud.toast(`🏆 ${def[1]} ${def[2]} — ${def[3]}`);
     this.hud.app.sfx?.play('trophy');
     this.hud.updateTrophies(this.done.size, DEFS.length);
@@ -61,10 +61,9 @@ export class Achievements {
 
   /** Remembers which kinds of world (themes) have been seen, across visits. */
   visitTheme(id) {
-    let seen = [];
-    try { seen = JSON.parse(localStorage.getItem(WORLDS_KEY) || '[]'); } catch { /* storage unavailable */ }
+    const seen = loadJson(WORLDS_KEY, []);
     if (!seen.includes(id)) seen.push(id);
-    try { localStorage.setItem(WORLDS_KEY, JSON.stringify(seen)); } catch { /* storage unavailable */ }
+    saveJson(WORLDS_KEY, seen);
     if (seen.length >= WORLD_KINDS) this.unlock('globetrotter');
   }
 

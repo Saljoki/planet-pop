@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { R, TAU, frameFwd, tangentBasis, smallCircle } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addInstanced, shareMatrices } from '../render/Outline.js';
-import { InstanceEntity } from '../core/Entity.js';
+import { InstanceEntity } from '../core/InstanceEntity.js';
 import { Trails } from './Trails.js';
 
 const HULLS = ['#ff4d4d', '#3fa7ff', '#ffd23f', '#2ee59d'];
