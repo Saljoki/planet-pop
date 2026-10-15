@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { makeWorld } from './helpers/world.mjs';
 import { MISSIONS } from '../js/game/Missions.js';
 import { Progress } from '../js/game/Progress.js';
-import { readPad } from '../js/game/Gamepad.js';
+import { readPad } from '../js/game/input/Gamepad.js';
 
 const def = (id) => MISSIONS.find((m) => m.id === id);
 
@@ -50,29 +50,29 @@ describe('mission runs', () => {
   it('First Flight: three deliveries complete it, pay the reward and unlock the next', () => {
     const game = app.game, coins = game.progress.coins;
     game.start({ mission: def('first') });
-    assert.ok(game.mission && !game.dom.mission.classList.contains('hidden'));
-    for (let i = 0; i < 3; i++) game.deliver();
+    assert.ok(game.run.def && !game.hud.dom.mission.classList.contains('hidden'));
+    for (let i = 0; i < 3; i++) game.run.deliver();
     game.update(1 / 60);
     assert.ok(game.over);
-    assert.match(game.dom.title.textContent, /complete/);
+    assert.match(game.results.dom.title.textContent, /complete/);
     assert.ok(game.progress.missionDone('first'));
     assert.ok(game.progress.coins >= coins + def('first').reward);
-    assert.ok(!game.dom.next.classList.contains('hidden'), 'no Next mission button');
+    assert.ok(!game.results.dom.next.classList.contains('hidden'), 'no Next mission button');
     game.again();
-    assert.equal(game.mission.def.id, 'first', 'again should replay the same mission');
+    assert.equal(game.run.def.id, 'first', 'again should replay the same mission');
     game.stop();
   });
 
   it('Handle With Care fails when the fragile parcel breaks', () => {
     const game = app.game, pl = (game.start({ mission: def('care') }), game.player);
-    game.cargo = { ...game.cargo, fragile: true };
-    pl.up.copy(game.from.c);
+    game.run.cargo = { ...game.run.cargo, fragile: true };
+    pl.up.copy(game.run.from.c);
     pl.alt = planet.groundR(pl.up) - 0.05;
     pl.invuln = 0;
     game.update(1 / 60);
     assert.ok(game.over);
-    assert.match(game.dom.title.textContent, /failed/);
-    assert.match(game.dom.result.innerHTML, /broke/);
+    assert.match(game.results.dom.title.textContent, /failed/);
+    assert.match(game.results.dom.result.innerHTML, /broke/);
     assert.ok(!game.progress.missionDone('care'));
     game.stop();
   });
@@ -80,20 +80,20 @@ describe('mission runs', () => {
   it('running out of time fails a mission', () => {
     const game = app.game;
     game.start({ mission: def('rings') });
-    game.time = 0.001;
+    game.run.time = 0.001;
     game.update(1 / 60);
     assert.ok(game.over);
-    assert.match(game.dom.result.innerHTML, /Out of time/);
+    assert.match(game.results.dom.result.innerHTML, /Out of time/);
     game.stop();
   });
 
   it('Night Shift starts in the dark, Outrun Rex starts with Rex, Close Encounter calls the UFO', () => {
     const game = app.game;
     game.start({ mission: def('night') });
-    assert.ok(planet.nightAt(game.from.c) > 0.5, 'the start city is in daylight');
+    assert.ok(planet.nightAt(game.run.from.c) > 0.5, 'the start city is in daylight');
     game.stop();
     game.start({ mission: def('rex') });
-    assert.ok(game.rival, 'no Rex at the start');
+    assert.ok(game.run.rival, 'no Rex at the start');
     game.stop();
     game.start({ mission: def('ufo') });
     assert.equal(planet.ufo.state, 'away');
@@ -104,8 +104,8 @@ describe('mission runs', () => {
   it('the same mission always gets the same route', () => {
     const game = app.game, route = () => {
       game.start({ mission: def('rush') });
-      const legs = [game.from.name, game.dest.name];
-      for (let i = 0; i < 5; i++) { game.deliver(); legs.push(`${game.dest.name}:${game.cargo.id}`); }
+      const legs = [game.run.from.name, game.run.dest.name];
+      for (let i = 0; i < 5; i++) { game.run.deliver(); legs.push(`${game.run.dest.name}:${game.run.cargo.id}`); }
       game.stop();
       return legs;
     };
@@ -132,9 +132,9 @@ describe('controller', () => {
     const game = a.game;
     game.start();
     game.player.input.left = true;                 // held on the keyboard
-    game.padInput(readPad(pad([0, 0])), readPad(pad([0, 0])));
+    game.controls.pad(readPad(pad([0, 0])), readPad(pad([0, 0])));
     assert.ok(game.player.input.left, 'an idle controller cancelled a key');
-    game.padInput(readPad(pad([0.9, 0])), readPad(pad([0, 0])));
+    game.controls.pad(readPad(pad([0.9, 0])), readPad(pad([0, 0])));
     assert.ok(game.player.input.right);
     game.stop();
     p.dispose();

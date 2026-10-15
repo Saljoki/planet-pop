@@ -1,5 +1,5 @@
-import { themeOf } from '../world/Themes.js';
-import { Overlay } from '../ui/Overlay.js';
+import { themeOf } from '../../world/Themes.js';
+import { Overlay } from '../../ui/Overlay.js';
 
 const COURIER = [
   'Follow the pink arrow to the town, then swoop down low through the pink beacon to deliver.',

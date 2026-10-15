@@ -14,11 +14,12 @@ import { CourierGame } from './game/CourierGame.js';
 import { DebugStats } from './ui/DebugStats.js';
 import { Ambience } from './ui/Ambience.js';
 import { PhotoMode } from './ui/PhotoMode.js';
-import { Gamepad } from './game/Gamepad.js';
+import { Gamepad } from './game/input/Gamepad.js';
 import { Haptics } from './ui/Haptics.js';
 import { WakeLock } from './ui/WakeLock.js';
 import { TourMode } from './ui/TourMode.js';
 import { FindMenu } from './ui/FindMenu.js';
+import { TrophyWatch } from './ui/TrophyWatch.js';
 import { Settings } from './game/Settings.js';
 import { dailyParams } from './game/Daily.js';
 import { THEME_IDS, pickTheme } from './world/Themes.js';
@@ -77,6 +78,7 @@ export class App {
     this.sky = new Sky(this.scene);
     this.sfx = new Sfx(this);
     this.achievements = new Achievements(this.hud);
+    this.trophies = new TrophyWatch(this);
     this.rig = new CameraRig(this);
     this.game = new CourierGame(this);
     this.quality = new Quality(this);
@@ -182,7 +184,7 @@ export class App {
       this.sky.update(h);
       this.planet?.update(h, this.simTime);
     }
-    if (this.planet) this.checkFollow();
+    this.trophies.update();
     this.gamepad.update();
     if (this.game.active) this.game.update(dt, real);
     this.tour.update(real);
@@ -202,7 +204,7 @@ export class App {
 
   togglePause() {
     this.paused = !this.paused;
-    this.hud.setPaused(this.paused);
+    this.hud.panel.setPaused(this.paused);
     this.game.pauseMenu?.sync();
   }
 
@@ -222,25 +224,9 @@ export class App {
     else if (mode !== this.params.theme) this.newPlanet(this.params.seed, false, mode);
   }
 
+  /** The camera has arrived at something to follow it. */
   onFocus(e) {
-    const a = this.achievements;
-    if (e.kind === 'bird') a.unlock('birdwatcher');
-    if (e.kind === 'station') a.unlock('astronaut');
-    if (e.kind === 'city') a.visitCity(e.name);
-    if (e.kind === 'person') a.unlock('peoplewatcher');
-    if (e.kind === 'ufo') a.unlock('ufo');
+    this.trophies.arrived(e);
     this.hud.info.hide();
-  }
-
-  checkFollow() {
-    const { rig, planet: p, achievements: a } = this, e = rig.entity;
-    if (rig.mode !== 'local' || !e) return;
-    if (e.kind === 'plane' && rig.followTime > 10) a.unlock('copilot');
-    if (e.kind === 'helicopter' && rig.followTime > 10) a.unlock('chopper');
-    if (e.kind === 'tram' && rig.followTime > 3 && p.trams.atEnd(p.trams.entities.indexOf(e))) a.unlock('tramride');
-    if (e.kind === 'train' && p.railway.justExited) a.unlock('tunnel');
-    if (e.kind === 'car' && e.mesh === p.traffic.body && p.traffic.isWaiting(e.id)) a.unlock('redlight');
-    if (e.kind === 'city' && p.nightAt(e.pos) > 0.6) a.unlock('nightowl');
-    if (e.kind === 'city' && p.seasons.snowAt(e.pos.clone().normalize()) > 0.5) a.unlock('snowday');
   }
 }

@@ -31,11 +31,10 @@ export class FindMenu extends Widget {
     });
   }
 
-  toggle() { if (this.open) this.hide(); else this.show(); }
 
   show() {
     if (!this.app.planet || this.app.game.active) return;
-    this.app.hud.closePanel?.();
+    this.app.hud.panel.makeRoom();
     this.render();
     super.show();
     clearInterval(this.timer);

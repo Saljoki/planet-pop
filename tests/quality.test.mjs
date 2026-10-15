@@ -18,7 +18,7 @@ function simulate(frameMs, seconds = 600, { keepStore = false } = {}) {
     renderer: { getPixelRatio: () => pr, setPixelRatio: (v) => { pr = v; } },
     postfx: { enabled: true, samples: 4, setSamples(n) { this.samples = n; } },
     sky: { light: { castShadow: true, shadow: { mapSize: { x: 2048, set(a) { this.x = a; } }, map: null } } },
-    resize() {}, hud: { setQuality() {} },
+    resize() {}, hud: { panel: { setQuality() {} } },
   };
   const q = new Quality(app);
   let changes = 0, last = q.name;

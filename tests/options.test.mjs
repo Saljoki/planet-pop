@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { makeWorld, run } from './helpers/world.mjs';
 import { Settings, DEFAULTS } from '../js/game/Settings.js';
-import { briefingFor, controlsFor } from '../js/game/Briefing.js';
+import { briefingFor, controlsFor } from '../js/game/screens/Briefing.js';
 import { MISSIONS } from '../js/game/Missions.js';
 
 describe('settings', () => {
@@ -69,12 +69,12 @@ describe('briefing, options and invert Y in Sky Courier', () => {
     game.board.hide();
     game.launch({ free: true });
     game.briefing.start();
-    assert.ok(game.active && game.free, 'Start did not begin the run it was briefing');
+    assert.ok(game.active && game.run.opts.free, 'Start did not begin the run it was briefing');
     game.stop();
   });
 
   it('controller: A in the hangar opens the briefing, A again takes off, B goes back', async () => {
-    const { Gamepad } = await import('../js/game/Gamepad.js');
+    const { Gamepad } = await import('../js/game/input/Gamepad.js');
     const buttons = Array.from({ length: 16 }, () => ({ pressed: false, value: 0 }));
     const pad = { connected: true, id: 'Test pad', axes: [0, 0, 0, 0], buttons }, router = new Gamepad(app);
     Object.defineProperty(navigator, 'getGamepads', { value: () => [pad], configurable: true });
@@ -115,13 +115,13 @@ describe('briefing, options and invert Y in Sky Courier', () => {
     assert.ok(climbFor({ up: true }) > 0.2, 'up should climb');
     app.settings.set('invertY', true); // mid-run
     assert.ok(climbFor({ up: true }) < -0.2, 'inverted: up should dive');
-    game.stick = { steer: 0, climb: 1, reset() {} };
+    game.controls.stick = { steer: 0, climb: 1, reset() {} };
     assert.ok(climbFor({}) < -0.2, 'inverted: thumbstick up should dive');
-    game.stick = null;
+    game.controls.stick = null;
     app.settings.set('invertY', false);
     assert.ok(climbFor({ down: true }) < -0.2);
-    game.deliver(); // Rex turns up after the first delivery
-    assert.equal(game.rival.plane.controls.invertY, false, 'Rex should not follow the player’s options');
+    game.run.deliver(); // Rex turns up after the first delivery
+    assert.equal(game.run.rival.plane.controls.invertY, false, 'Rex should not follow the player’s options');
     game.stop();
   });
 

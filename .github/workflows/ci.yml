@@ -22,7 +22,11 @@ jobs:
 
       - run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
       - name: Unit and simulation tests
+        if: success() || failure()
         run: npm test
 
       - name: Browser screenshots (headless Chrome, software WebGL)

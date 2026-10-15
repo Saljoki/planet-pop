@@ -1,4 +1,4 @@
-import { loadFlag, saveFlag } from '../core/Store.js';
+import { loadFlag, saveFlag } from '../../core/Store.js';
 
 const KEY = 'planetpop.tilt', DEG = Math.PI / 180;
 const STEER_RANGE = 25 * DEG, CLIMB_RANGE = 20 * DEG, DEAD = 3 * DEG;

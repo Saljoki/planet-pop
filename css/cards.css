@@ -1,0 +1,27 @@
+/* The info card, the Find menu and the tour bar. */
+#info { position: fixed; left: 50%; bottom: calc(64px + var(--sb)); transform: translateX(-50%); z-index: 9; width: min(340px, calc(100vw - 32px));
+  padding: 12px 14px; }
+#info .iHead { display: flex; gap: 12px; align-items: center; }
+#iIcon { font-size: 36px; }
+#iName { display: block; font-weight: normal; font-size: 24px; }
+#info small, #find small { font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.7; }
+#iStatus { margin: 8px 0 10px; font-family: system-ui, sans-serif; letter-spacing: 0; font-size: 15px; }
+#info .row { display: flex; gap: 8px; }
+#info .row .big { flex: 1; font-size: 19px; }
+#find { position: fixed; top: calc(104px + var(--st)); left: calc(16px + var(--sl)); width: 330px; max-height: calc(100vh - 130px); overflow-y: auto;
+  z-index: 7; padding: 12px 14px; }
+#find .fHead { display: flex; justify-content: space-between; align-items: center; }
+#find h3 { margin: 0; font-weight: normal; font-size: 26px; }
+#find h4 { margin: 12px 0 6px; font-weight: normal; font-size: 18px; }
+#find #fTour { width: 100%; margin-top: 8px; font-size: 19px; }
+#fClose { background: #fff; font-size: 15px; padding: 3px 8px 0; }
+#fNow { display: flex; flex-direction: column; gap: 6px; }
+#fNow .event { text-align: left; background: #fff; font-size: 16px; }
+#find .quiet { margin: 0; font-family: system-ui, sans-serif; font-size: 13px; letter-spacing: 0; opacity: 0.7; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { font-size: 15px; padding: 4px 9px 1px; background: #fff; }
+.chips small { color: var(--pink); font-family: inherit !important; font-size: 14px !important; opacity: 1 !important; letter-spacing: 1px !important; }
+#tourBar { bottom: calc(14px + var(--sb)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; font-size: 18px;
+  width: max-content; max-width: calc(100vw - 24px); background: var(--yellow); z-index: 7; }
+#tourBar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#tourBar button { font-size: 15px; padding: 2px 8px 0; background: #fff; flex: none; }

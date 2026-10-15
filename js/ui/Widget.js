@@ -25,4 +25,11 @@ export class Widget {
   get open() { return !this.el.classList.contains('hidden'); }
   show() { this.el.classList.remove('hidden'); }
   hide() { this.el.classList.add('hidden'); }
+
+  /** Show or hide (flip it, if `on` is left out); returns whether it's now showing. */
+  toggle(on = !this.open) {
+    if (on) this.show();
+    else this.hide();
+    return on;
+  }
 }

@@ -1,6 +1,6 @@
-import { UPGRADES, SKINS } from './Progress.js';
-import { todayKey } from './Daily.js';
-import { Overlay } from '../ui/Overlay.js';
+import { UPGRADES, SKINS } from '../Progress.js';
+import { todayKey } from '../Daily.js';
+import { Overlay } from '../../ui/Overlay.js';
 
 /** Between-run screen: spend coins on upgrades and paint jobs, then take off: a courier run, a mission, the daily or free flight. */
 export class Hangar extends Overlay {

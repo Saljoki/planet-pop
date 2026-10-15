@@ -45,7 +45,7 @@ export class Achievements {
     this.hud = hud;
     this.cities = new Set();
     this.done = new Set(loadJson(KEY, []));
-    hud.updateTrophies(this.done.size, DEFS.length);
+    hud.panel.updateTrophies(this.done.size, DEFS.length);
   }
 
   unlock(id) {
@@ -55,7 +55,7 @@ export class Achievements {
     saveJson(KEY, [...this.done]);
     this.hud.toast(`🏆 ${def[1]} ${def[2]} — ${def[3]}`);
     this.hud.app.sfx?.play('trophy');
-    this.hud.updateTrophies(this.done.size, DEFS.length);
+    this.hud.panel.updateTrophies(this.done.size, DEFS.length);
     if (this.done.size === DEFS.length - 1) this.unlock('completionist');
   }
 

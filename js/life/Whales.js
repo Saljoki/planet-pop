@@ -58,9 +58,6 @@ export class Whales {
     this.update(0);
   }
 
-  /** True while whale `i` is in the air. */
-  breaching(i) { return this.list[i]?.state === 'breach'; }
-
   /** For the tour: come up now, blow briefly, then leap. */
   showOff(i) {
     const w = this.list[i];

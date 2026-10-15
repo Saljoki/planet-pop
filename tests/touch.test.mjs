@@ -2,8 +2,8 @@ import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { makeWorld, run } from './helpers/world.mjs';
-import { stickAxes } from '../js/game/TouchStick.js';
-import { tiltAngles, tiltAxes } from '../js/game/TiltSteer.js';
+import { stickAxes } from '../js/game/input/TouchStick.js';
+import { tiltAngles, tiltAxes } from '../js/game/input/TiltSteer.js';
 import { Gestures } from '../js/camera/Gestures.js';
 import { happenings } from '../js/world/Happenings.js';
 import { TourMode } from '../js/ui/TourMode.js';
@@ -199,7 +199,7 @@ describe('phone modes on a planet', () => {
     assert.ok(tour.on, 'tour did not start after a minute idle');
     assert.ok(app.wakeLock.reasons.has('tour'), 'screen allowed to sleep during the tour');
     const first = tour.item;
-    assert.ok(first && (rig.entity || rig.queued || rig.tween), 'tour went nowhere');
+    assert.ok(first && (rig.entity || rig.queued || rig.orbit.tween), 'tour went nowhere');
     for (let i = 0; i < 4; i++) { tour.t = 99; tour.update(0.1); }
     assert.notEqual(tour.item.id, first.id, 'tour stuck on one thing');
     assert.ok(new Set(tour.recent).size === tour.recent.length);
@@ -214,33 +214,33 @@ describe('phone modes on a planet', () => {
   it('free flight: no clock, no parcels, no coins; rings refill boost; quitting works', () => {
     const g = app.game, coins = g.progress.coins;
     g.start({ free: true });
-    assert.ok(g.active && g.free && !g.dest && !g.beacon.visible);
+    assert.ok(g.active && g.run.opts.free && !g.run.dest && !g.props.beacon.visible);
     assert.ok(app.wakeLock.reasons.has('game'));
-    const time = g.time;
     run(app, 5, { game: true });
-    assert.equal(g.time, time, 'the clock ran in free flight');
+    assert.ok(!g.over && g.run.time > 4.9, 'free flight should count up, with no time limit');
+    assert.ok(g.hud.dom.time.classList.contains('hidden'), 'free flight shows the countdown');
     g.player.boost = 0;
-    g.rings[0].position.copy(g.player.pos);
+    g.props.rings[0].position.copy(g.player.pos);
     run(app, 0.05, { game: true });
     assert.ok(g.player.boost > 0.9, 'ring did not refill the boost');
     assert.equal(g.progress.coins, coins, 'free flight paid coins');
-    assert.ok(!g.rival, 'Rex turned up in free flight');
-    g.free.time = 119.99;
+    assert.ok(!g.run.rival, 'Rex turned up in free flight');
+    g.run.time = 119.99;
     run(app, 0.05, { game: true });
     assert.ok(app.unlocked.includes('sightseer'));
     // the thumbstick steers: full right turns the plane right
     const right = new THREE.Vector3().crossVectors(g.player.fwd, g.player.up), before = g.player.fwd.clone();
-    g.stick = { steer: 1, climb: 0, reset() {} };
+    g.controls.stick = { steer: 1, climb: 0, reset() {} };
     run(app, 0.3, { game: true });
     assert.ok(g.player.fwd.clone().sub(before).dot(right) > 0, 'stick right did not turn right');
     // …and banks into the turn: the plane's own up leans to the right, right wing down
     const tilted = new THREE.Vector3(0, 1, 0).applyQuaternion(g.player.group.quaternion);
     assert.ok(tilted.dot(new THREE.Vector3().crossVectors(g.player.fwd, g.player.up)) > 0.2, 'plane banks the wrong way turning right');
-    g.stick = { steer: -1, climb: 0, reset() {} };
+    g.controls.stick = { steer: -1, climb: 0, reset() {} };
     run(app, 0.6, { game: true });
     const tiltedL = new THREE.Vector3(0, 1, 0).applyQuaternion(g.player.group.quaternion);
     assert.ok(tiltedL.dot(new THREE.Vector3().crossVectors(g.player.up, g.player.fwd)) > 0.2, 'plane banks the wrong way turning left');
-    g.stick = null;
+    g.controls.stick = null;
     g.stop();
     assert.ok(!g.active && !app.wakeLock.reasons.has('game'));
   });

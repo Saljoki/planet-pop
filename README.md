@@ -117,37 +117,44 @@ planet-pop/
 ├─ index.html                 page + import map (three.js from vendor/)
 ├─ manifest.webmanifest       app name, colours and icons for installing
 ├─ sw.js, precache.js         service worker and the generated list of files it caches
-├─ css/style.css              comic UI styles
+├─ css/                       comic UI styles by area: base, hud, game, cards, menus, photo, phone (loaded in that order)
 ├─ js/
 │  ├─ main.js                 entry point, registers the service worker
 │  ├─ App.js                  renderer, frame loop, planet swapping
-│  ├─ core/                   Noise, Random, Geo (math helpers), Entity (focus targets)
+│  ├─ core/                   Noise, Random, Geo (math helpers), Store (saved state), Entity + ObjectEntity,
+│  │                          InstanceEntity, PointEntity (things you can click and follow)
 │  ├─ render/                 Toon (halftone shading), Outline (ink hulls), PostFX (edge ink), Quality (adaptive
 │  │                          resolution), Detail (skips sub-pixel things from high up)
 │  ├─ sky/                    Sky (sun, shadows, atmosphere, stars), Weather (clouds, rain, lightning, snow), Aurora,
 │  │                          Sparks (pooled glowing particles), Fireworks, Meteors, Rainbows
-│  ├─ world/                  Planet, Themes, Terrain + TerrainCompute + terrain.worker, SurfaceIndex (exact ground
-│  │                          height), Roads, Cities, Nature, TreeShapes, Railway, Airports, Harbours, Volcano, Glow,
-│  │                          Seasons, Happenings (what's going on, for Find and the tour)
+│  ├─ world/                  Planet (the module list), Themes, Terrain + TerrainCompute + terrain.worker,
+│  │                          SurfaceIndex (exact ground height), Roads, Cities, Nature, TreeShapes, Railway, Airports,
+│  │                          Harbours, Volcano, Glow, Seasons, Happenings (what's going on, for Find and the tour)
 │  ├─ life/                   Trails, Traffic, People, Trams, Boats, Whales, Balloons, Planes, Helicopters, Birds,
 │  │                          Ufo, Space
-│  ├─ camera/                 CameraRig (orbit, fly-to, follow, chase, terrain collision), Gestures (touch and mouse)
-│  ├─ ui/                     Hud, Sfx (bubbles + synthesized sound), Ambience (soundscape), PhotoMode,
-│  │                          Achievements, InfoCard, FindMenu, TourMode, Haptics, WakeLock, DebugStats (?debug)
-│  └─ game/                   CourierGame, PlayerPlane, Rival, Cargo, Progress (coins/upgrades), Hangar, Daily,
-│                             Missions + MissionRun + MissionBoard, FreeFlight, PauseMenu, Gamepad, TouchStick,
-│                             TiltSteer, Settings, Briefing, OptionsMenu
+│  ├─ camera/                 CameraRig (modes and swoops), OrbitView, FollowView, ChaseView, Picker (what's under a
+│  │                          tap), Gestures (touch and mouse)
+│  ├─ ui/                     Widget + Overlay (UI building blocks), Hud, ControlPanel (☰), InfoCard, FindMenu,
+│  │                          TourMode, PhotoMode, Sfx (bubbles + synthesized sound), Ambience (soundscape),
+│  │                          Achievements + TrophyWatch, Haptics, WakeLock, DebugStats (?debug)
+│  └─ game/                   CourierGame (runs the show), PlayerPlane, Rival, Cargo, CourierProps (beacon, rings),
+│     │                       FlightHazards (storms, runways, ash), Progress, Settings, Daily, Missions
+│     ├─ runs/                Run (the hooks), DeliveryRun (courier run), DailyRun, MissionRun, FreeFlight
+│     ├─ screens/             CourierHud, ResultsScreen, Briefing, OptionsMenu, PauseMenu, Hangar, MissionBoard
+│     └─ input/               FlightControls (keys, stick, tilt, boost), TouchStick, TiltSteer, Gamepad
 ├─ vendor/three/, fonts/      three.js and the Bangers font (with their licences)
 ├─ icons/                     app icons (drawn by scripts/icons.mjs)
 ├─ scripts/                   vendor.mjs (copy three.js + font), icons.mjs, precache.mjs
+├─ docs/EXTENDING.md          where new things go: world modules, game modes, missions, options, trophies…
 ├─ tests/
-│  ├─ *.test.mjs              node:test suites: quality, progress, daily, ambience, themes, missions + controller,
-│  │                          touch (gestures, stick, tilt, Find, tour, free flight), options (briefing, Invert Y,
-│  │                          sensitivity, reset), offline files, and 3 full
-│  │                          planets simulated
+│  ├─ *.test.mjs              node:test suites: world (3 full planets simulated, camera, trophies), courier (Sky
+│  │                          Courier and the daily on the same planets), quality, progress, daily, ambience, themes,
+│  │                          missions + controller, touch (gestures, stick, tilt, Find, tour, free flight), options
+│  │                          (briefing, Invert Y, sensitivity, reset), offline files
 │  ├─ helpers/                a fake DOM and a headless App so the game runs under Node
-│  └─ browser/screenshots.mjs headless Chrome (software WebGL) plays key scenes on a laptop-sized screen and a
-│                             phone (upright and on its side), including an offline reload
+│  └─ browser/                screenshots.mjs + harness.mjs: headless Chrome (software WebGL) plays the scenes in
+│                             scenes/ (one file per area) on a laptop-sized screen and a phone, upright and on its
+│                             side, including an offline reload
 └─ .github/workflows/ci.yml   tests + screenshots on every push and pull request
 ```
 
@@ -155,7 +162,8 @@ planet-pop/
 
 ```bash
 npm install
-npm test                  # unit + simulation tests, no browser needed (~40 s)
+npm test                  # unit + simulation tests, no browser needed (~80 s)
+npm run lint              # ESLint
 npm run screenshots       # renders scenes into ./screenshots and fails on page or shader errors
                           # (SCENES=photo,theme renders only the scenes whose names contain those words)
 ```

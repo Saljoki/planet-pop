@@ -51,7 +51,7 @@ export class Quality {
       light.shadow.map = null;
     }
     app.resize();
-    app.hud.setQuality(this.mode, L.name);
+    app.hud.panel.setQuality(this.mode, L.name);
     saveJson(KEY, { mode: this.mode, level: this.level });
   }
 

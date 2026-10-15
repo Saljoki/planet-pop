@@ -1,0 +1,34 @@
+/* Shared look: the font, colours, buttons, inputs, badges and panels, full-screen overlays. */
+/* Bangers (SIL Open Font License, see fonts/LICENSE), served from this folder so the game works offline */
+@font-face { font-family: 'Bangers'; font-style: normal; font-weight: 400; font-display: swap;
+  src: url('../fonts/bangers-latin-400-normal.woff2') format('woff2'); }
+:root { --ink: #1b1530; --yellow: #ffd93d; --pink: #ff5fa2; --blue: #9fd8ff;
+  /* notches and home bars on phones (viewport-fit=cover) */
+  --st: env(safe-area-inset-top, 0px); --sb: env(safe-area-inset-bottom, 0px); --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px); }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
+body {
+  background:
+    radial-gradient(circle, rgba(255,255,255,0.08) 1.2px, transparent 1.7px) 0 0 / 8px 8px,
+    radial-gradient(ellipse at 30% 25%, #5a35a8 0%, #261659 45%, #0c0824 100%);
+  font-family: 'Bangers', Impact, sans-serif; color: var(--ink); letter-spacing: 1px;
+  -webkit-user-select: none; user-select: none;
+}
+canvas { display: block; touch-action: none; }
+.hidden { display: none !important; }
+
+.badge, .panel { background: #fff; border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+.badge { position: fixed; z-index: 5; padding: 6px 14px 3px; }
+
+button { font: inherit; font-size: 17px; letter-spacing: 1px; color: var(--ink); background: var(--yellow);
+  border: 3px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); padding: 5px 12px 2px; cursor: pointer; }
+button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+button.big { background: var(--pink); color: #fff; font-size: 22px; text-shadow: 2px 2px 0 var(--ink); }
+button:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: 3px 3px 0 var(--ink); }
+input[type=range] { width: 100%; accent-color: var(--pink); }
+input[type=checkbox] { accent-color: var(--pink); width: 18px; height: 18px; }
+
+.overlay { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgba(12, 8, 36, 0.5);
+  pointer-events: auto; } /* menus take clicks even inside the click-through game layer */
+.overlay .panel { padding: 18px 26px; text-align: center; max-width: 92vw; max-height: 86vh; overflow: auto; }
+.overlay h2 { margin: 0 0 10px; font-size: 34px; font-weight: normal; }

@@ -1,0 +1,29 @@
+/* Sky Courier: the game layer, its HUD, and the touch flight controls. */
+#game { position: fixed; inset: 0; z-index: 8; pointer-events: none; }
+#gStats { position: fixed; top: calc(14px + var(--st)); left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+#gStats .badge { position: static; font-size: 22px; }
+#gTime.low { background: #ff5f5f; color: #fff; }
+#gArrow { position: fixed; top: calc(74px + var(--st)); left: 50%; width: 70px; height: 70px; margin-left: -35px; }
+#gGoal { position: fixed; top: calc(152px + var(--st)); left: 50%; transform: translateX(-50%); font-size: 20px; white-space: nowrap; }
+#gBoost { position: fixed; left: calc(16px + var(--sl)); bottom: calc(16px + var(--sb)); width: 170px; height: 20px; padding: 0; }
+#gBoost div { height: 100%; width: 100%; background: #3fa7ff; }
+#gHelp { position: fixed; left: calc(16px + var(--sl)); bottom: calc(50px + var(--sb)); font-size: 15px; }
+#gPauseBtn { position: fixed; top: calc(14px + var(--st)); right: calc(16px + var(--sr)); pointer-events: auto; font-size: 20px; padding: 4px 10px 1px; background: #fff; }
+/* touch flight controls: a floating stick anywhere on the left, a big boost button on the right */
+#gStick { position: fixed; left: 0; bottom: 0; width: 55vw; height: 70vh; pointer-events: auto; touch-action: none; }
+#gStick .base { position: fixed; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.85); background: rgba(27, 21, 48, 0.25); box-shadow: 3px 3px 0 var(--ink); }
+#gStick .knob { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%;
+  background: var(--yellow); border: 3px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+#gStick .ghost { position: fixed; left: calc(24px + var(--sl)); bottom: calc(56px + var(--sb)); font-size: 18px; color: #fff;
+  text-shadow: 2px 2px 0 var(--ink); opacity: 0.85; pointer-events: none; }
+#gBoostBtn { position: fixed; right: calc(20px + var(--sr)); bottom: calc(28px + var(--sb)); width: 96px; height: 96px; border-radius: 50%;
+  background: #3fa7ff; color: #fff; font-size: 19px; text-shadow: 2px 2px 0 var(--ink); pointer-events: auto; touch-action: none; padding: 0; }
+#gPause .col { display: flex; flex-direction: column; gap: 10px; min-width: 240px; }
+#gFree { background: var(--blue); }
+#gDaily { background: var(--blue); }
+#gMission { background: #2ee59d; }
+#gStats .badge { white-space: nowrap; }
+.tag { position: fixed; z-index: 3; pointer-events: none; background: #8f5cff; color: #fff; font-size: 15px; white-space: nowrap;
+  border: 3px solid var(--ink); border-radius: 10px; box-shadow: 2px 2px 0 var(--ink); padding: 2px 8px 0; text-shadow: 1px 1px 0 var(--ink);
+  transform: translate(-50%, calc(-100% - 10px)); }

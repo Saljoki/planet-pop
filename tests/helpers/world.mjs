@@ -8,6 +8,7 @@ import { Achievements } from '../../js/ui/Achievements.js';
 import { CameraRig } from '../../js/camera/CameraRig.js';
 import { CourierGame } from '../../js/game/CourierGame.js';
 import { Settings } from '../../js/game/Settings.js';
+import { TrophyWatch } from '../../js/ui/TrophyWatch.js';
 
 /** An App-shaped object with everything except the WebGL renderer, post-processing and quality control. */
 export function makeApp(params) {
@@ -17,7 +18,7 @@ export function makeApp(params) {
     scene: new THREE.Scene(),
     camera: new THREE.PerspectiveCamera(45, 1.6, 0.05, 2000),
     togglePause() {},
-    onFocus(e) { this.focused = e.kind; },
+    onFocus(e) { this.focused = e.kind; this.trophies.arrived(e); },
   };
   app.camera.position.set(0, 0.3, 1).normalize().multiplyScalar(36);
   app.settings = new Settings();
@@ -27,6 +28,7 @@ export function makeApp(params) {
   app.achievements = new Achievements(app.hud);
   const unlock = app.achievements.unlock.bind(app.achievements);
   app.achievements.unlock = (id) => { app.unlocked.push(id); unlock(id); };
+  app.trophies = new TrophyWatch(app);
   app.rig = new CameraRig(app);
   app.game = new CourierGame(app);
   return app;

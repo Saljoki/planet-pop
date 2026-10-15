@@ -36,7 +36,7 @@ export class Gamepad {
       if (game.over) {
         if (edge('a')) game.again();
         else if (edge('b')) game.stop();
-      } else if (pad) game.padInput(s, this.prev);
+      } else if (pad) game.controls.pad(s, this.prev);
     } else if (hangar.open) {
       if (edge('a')) { hangar.hide(); game.launch(); }
       else if (edge('b')) hangar.hide();

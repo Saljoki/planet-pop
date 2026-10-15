@@ -1,0 +1,55 @@
+/* Small screens and touch: loaded last, so these win. (Area files keep their own small tweaks.) */
+@media (max-width: 640px) {
+  #title { font-size: 22px; } #hint { font-size: 13px; }
+  #gStats { gap: 6px; } #gStats .badge { font-size: 16px; padding: 4px 8px 2px; } #gStats .wide { display: none; }
+  .in-game #title { display: none; }
+  #gGoal { font-size: 16px; white-space: normal; width: max-content; max-width: calc(100vw - 32px); text-align: center; }
+  .skins { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---------- Phones ---------- */
+/* bigger targets for fingers */
+@media (pointer: coarse) {
+  button { min-height: 42px; }
+  #topBtns button { min-width: 46px; }
+  input[type=range] { height: 30px; }
+  input[type=checkbox] { width: 24px; height: 24px; }
+  #panel label.check { min-height: 32px; }
+  .chips button { min-height: 40px; }
+}
+/* portrait phones: the controls and Find become sheets that slide up from the bottom (drag the bar down to close) */
+@media (max-width: 700px) {
+  #topBtns .wide { display: none; }
+  #panel.sheet, #find.sheet { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 72vh; z-index: 11;
+    border-width: 3px 0 0; border-radius: 18px 18px 0 0; box-shadow: 0 -4px 0 var(--ink); padding: 6px 16px calc(14px + var(--sb));
+    overflow-y: auto; animation: sheetup 0.22s ease-out; }
+  .sheet .grab { display: block; flex: none; position: relative; height: 24px; margin: -4px -16px 2px; touch-action: none; cursor: grab; }
+  .sheet .grab::before { content: ''; position: absolute; left: 50%; top: 9px; width: 56px; height: 6px; margin-left: -28px; border-radius: 3px;
+    background: rgba(27, 21, 48, 0.3); }
+  #panel.sheet .checks { grid-template-columns: 1fr 1fr; }
+  #follow { top: calc(112px + var(--st)); font-size: 17px; max-width: calc(100vw - 24px); }
+  #followName { overflow: hidden; text-overflow: ellipsis; }
+  #tourBar { font-size: 16px; }
+  #tourBar span { white-space: normal; }
+  #info { bottom: calc(16px + var(--sb)); }
+  #hint { bottom: calc(10px + var(--sb)); }
+  #gPauseBtn { top: calc(66px + var(--st)); }
+}
+/* phones on their side: little vertical room, so slimmer badges and the sheets come in from the right */
+@media (max-height: 500px) and (orientation: landscape) {
+  #title { font-size: 20px; } #worldTag { top: calc(50px + var(--st)); font-size: 13px; }
+  .in-game #title { display: none; }
+  #hint { display: none; }
+  #panel.sheet, #find.sheet { position: fixed; top: calc(60px + var(--st)); right: 0; bottom: 0; left: auto; width: min(320px, 46vw); max-height: none; z-index: 11;
+    border-width: 3px 0 0 3px; border-radius: 14px 0 0 0; box-shadow: -4px 0 0 var(--ink); padding: 10px calc(14px + var(--sr)) 14px 14px;
+    overflow-y: auto; animation: sheetin 0.22s ease-out; }
+  .sheet .grab { display: none; }
+  #gStats .badge { font-size: 15px; padding: 3px 7px 1px; }
+  #gArrow { top: calc(50px + var(--st)); width: 50px; height: 50px; margin-left: -25px; }
+  #gGoal { top: calc(104px + var(--st)); font-size: 15px; }
+  #gStick { width: 50vw; height: 80vh; }
+  #gBoostBtn { width: 84px; height: 84px; }
+  #info { bottom: calc(10px + var(--sb)); }
+}
+@keyframes sheetup { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sheetin { from { transform: translateX(40%); opacity: 0; } to { transform: none; opacity: 1; } }

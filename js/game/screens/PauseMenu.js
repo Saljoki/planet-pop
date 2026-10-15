@@ -1,4 +1,4 @@
-import { Overlay } from '../ui/Overlay.js';
+import { Overlay } from '../../ui/Overlay.js';
 
 /**
  * Sky Courier's pause screen (the ⏸ button, P, or Start on a controller): resume, options, or leave the run.
@@ -21,8 +21,7 @@ export class PauseMenu extends Overlay {
 
   /** Shown whenever a run is paused (and Options isn't open on top). */
   sync() {
-    const show = this.game.active && this.game.app.paused && !this.game.over && !this.game.options?.open;
-    if (show) this.show();
-    else this.hide();
+    const g = this.game;
+    this.toggle(g.active && g.app.paused && !g.over && !g.options?.open);
   }
 }

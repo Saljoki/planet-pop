@@ -1,4 +1,4 @@
-import { Overlay } from '../ui/Overlay.js';
+import { Overlay } from '../../ui/Overlay.js';
 
 /**
  * ⚙️ Options, from the briefing, the hangar or the pause menu: Invert Y and steering sensitivity, tilt steering and
@@ -7,7 +7,7 @@ import { Overlay } from '../ui/Overlay.js';
  */
 export class OptionsMenu extends Overlay {
   constructor(app, game) {
-    const s = app.settings, tilt = game.tilt, haptics = app.haptics, phone = game.touch;
+    const s = app.settings, tilt = game.controls.tilt, haptics = app.haptics, phone = game.touch;
     super({ id: 'options', html: `
       <button class="close" id="oClose" title="Close">✕</button>
       <h2>⚙️ Options</h2>
@@ -32,8 +32,8 @@ export class OptionsMenu extends Overlay {
     this.bind('oSens', 'input', (e) => { s.set('sensitivity', +e.target.value / 100); $('oSensVal').textContent = pct(+e.target.value); });
     this.bind('oSfx', 'input', (e) => { s.set('sfxVolume', +e.target.value / 100); $('oSfxVal').textContent = pct(+e.target.value); });
     this.bind('oSfx', 'change', () => app.sfx.play('ring')); // a sample at the new volume
-    this.bind('oAmb', 'input', (e) => { app.ambience?.setVolume(+e.target.value / 100); $('oAmbVal').textContent = pct(+e.target.value); app.hud.syncAmbience?.(); });
-    this.bind('oSound', 'change', (e) => { s.set('sound', e.target.checked); app.hud.syncSound?.(); });
+    this.bind('oAmb', 'input', (e) => { app.ambience?.setVolume(+e.target.value / 100); $('oAmbVal').textContent = pct(+e.target.value); app.hud.panel.syncAmbience(); });
+    this.bind('oSound', 'change', (e) => { s.set('sound', e.target.checked); app.hud.panel.syncSound(); });
     this.bind('oBrief', 'change', (e) => s.set('briefing', e.target.checked));
     this.bind('oBuzz', 'change', (e) => haptics?.setEnabled(e.target.checked));
     this.bind('oTilt', 'change', async (e) => {
@@ -76,7 +76,7 @@ export class OptionsMenu extends Overlay {
     $('oAmbVal').textContent = `${$('oAmb').value}%`;
     $('oSound').checked = app.sfx.enabled;
     $('oBrief').checked = s.get('briefing');
-    $('oTilt').checked = this.game.tilt.wanted;
+    $('oTilt').checked = this.game.controls.tilt.wanted;
     $('oBuzz').checked = !!app.haptics?.enabled;
     $('oReset').textContent = '🗑️ Reset Sky Courier progress';
     this.renderInvert();

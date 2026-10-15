@@ -1,6 +1,6 @@
-import { MISSIONS } from './Missions.js';
-import { themeOf } from '../world/Themes.js';
-import { Overlay } from '../ui/Overlay.js';
+import { MISSIONS } from '../Missions.js';
+import { themeOf } from '../../world/Themes.js';
+import { Overlay } from '../../ui/Overlay.js';
 
 /** The list of missions: done, next up, or locked until the one before it is done. */
 export class MissionBoard extends Overlay {

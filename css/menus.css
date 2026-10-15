@@ -1,0 +1,61 @@
+/* Sky Courier menus: the briefing and Options, the hangar, the mission board. */
+/* ---------- Briefing and Options ---------- */
+#briefing .panel, #options .panel { width: 520px; text-align: left; position: relative; }
+#briefing h2, #options h2 { text-align: center; }
+#briefing h3, #options h3 { margin: 14px 0 6px; font-weight: normal; font-size: 20px; }
+#briefing .goal { margin: 0 0 8px; font-size: 21px; text-align: center; }
+.tips { margin: 0; padding-left: 20px; font-family: system-ui, sans-serif; letter-spacing: 0; font-size: 14px; line-height: 1.45; }
+.tips li { margin: 3px 0; }
+.tips.controls { list-style: none; padding-left: 0; }
+#briefing .skip { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-family: system-ui, sans-serif; letter-spacing: 0; font-size: 13px; }
+#briefing .hrow .big { font-size: 22px; min-width: 150px; }
+#options { z-index: 30; }
+#options .opt { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 2px dashed rgba(27, 21, 48, 0.15); font-size: 17px; }
+#options .opt small { display: block; font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.7; }
+#options .opt.slider { flex-direction: column; align-items: stretch; gap: 2px; }
+#options .opt.slider b { font-weight: normal; color: var(--pink); }
+#options .danger { background: #fff; margin-top: 8px; width: 100%; }
+#options .note { display: block; text-align: center; font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.7; margin-top: 4px; }
+#options #oDone { width: 100%; margin-top: 14px; }
+#options .close, #briefing .close { position: absolute; top: 12px; right: 12px; background: #fff; font-size: 15px; padding: 3px 8px 0; }
+#hangar .opts { position: absolute; top: 12px; left: 12px; background: #fff; font-size: 16px; padding: 3px 8px 0; }
+@media (max-width: 640px) {
+  #briefing .panel, #options .panel { padding: 14px 16px; }
+  #briefing .goal { font-size: 18px; }
+  #briefing .hrow .big { min-width: 0; flex: 1 1 100%; }
+}
+
+/* ---------- Hangar ---------- */
+#hangar .panel { width: 480px; text-align: left; position: relative; padding-bottom: 0; }
+#hangar h2, #hangar .coins { text-align: center; }
+#hangar h3 { margin: 14px 0 6px; font-weight: normal; font-size: 22px; }
+.coins { font-size: 20px; margin-bottom: 6px; }
+.upg { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 2px dashed rgba(27, 21, 48, 0.2); font-size: 19px; }
+.upg .icon { font-size: 26px; width: 34px; text-align: center; }
+.upg .info { flex: 1; }
+.upg small, .skin small { display: block; font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.7; }
+.upg button { min-width: 86px; }
+.pips { color: var(--pink); letter-spacing: 2px; }
+.skins { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.skin { background: #fff; font-size: 15px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 4px 4px; }
+.skin.equipped { background: var(--blue); }
+.swatch { width: 36px; height: 20px; border: 4px solid; border-radius: 10px; box-shadow: 2px 2px 0 var(--ink); }
+.hrow { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+button.daily { background: #3fa7ff; }
+button.missions { background: #2ee59d; }
+#hangar .hrow .big { font-size: 18px; }
+button.free { background: var(--blue); }
+
+/* ---------- Mission board ---------- */
+#missions .panel { width: 520px; text-align: left; position: relative; }
+#missions h2, #missions .coins { text-align: center; }
+#missions .close, #hangar .close { position: absolute; top: 12px; right: 12px; background: #fff; font-size: 15px; padding: 3px 8px 0; }
+.mission { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 2px dashed rgba(27, 21, 48, 0.2); font-size: 19px; }
+.mission .icon { font-size: 26px; width: 34px; text-align: center; }
+.mission .info { flex: 1; }
+.mission small { display: block; font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.75; }
+.mission button { min-width: 84px; font-size: 16px; }
+.mission.locked { opacity: 0.5; }
+/* the take-off buttons stay in view while the upgrade list scrolls */
+.hfoot { position: sticky; bottom: 0; margin: 14px -26px 0; padding: 0 26px 14px; background: #fff; border-top: 3px solid var(--ink); }
+#hangar .note { margin: 8px 0 0; text-align: center; font-family: system-ui, sans-serif; font-size: 13px; letter-spacing: 0; opacity: 0.75; }

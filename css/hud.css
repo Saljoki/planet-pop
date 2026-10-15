@@ -1,0 +1,57 @@
+/* The planet view: title, hint, top buttons, the ☰ panel, follow badge, labels, toasts, bubbles, trophies. */
+#title { top: calc(14px + var(--st)); left: calc(16px + var(--sl)); background: var(--yellow); font-size: 30px; transform: rotate(-2deg); pointer-events: none; }
+#worldTag { top: calc(66px + var(--st)); left: calc(26px + var(--sl)); font-size: 16px; background: var(--blue); transform: rotate(-2deg); pointer-events: none; padding: 3px 10px 1px; }
+#hint { bottom: calc(14px + var(--sb)); left: 50%; transform: translateX(-50%); border-radius: 14px; font-size: 16px; pointer-events: none;
+  width: max-content; max-width: calc(100vw - 32px); text-align: center; }
+
+#topBtns { position: fixed; top: calc(14px + var(--st)); right: calc(16px + var(--sr)); z-index: 6; display: flex; gap: 8px; }
+#photoBtn, #installBtn, #findBtn, #compassBtn { padding: 4px 9px 1px; }
+#compassBtn { background: #fff; transition: transform 0.2s; }
+#panel { position: fixed; top: calc(64px + var(--st)); right: calc(16px + var(--sr)); width: 236px; padding: 12px; z-index: 6; display: flex; flex-direction: column; gap: 7px;
+  max-height: calc(100vh - 80px); overflow-y: auto; }
+#panel > * { flex-shrink: 0; } /* the panel scrolls rather than squashing its rows */
+#panel .row { display: flex; gap: 8px; }
+#panel .row button { flex: 1; }
+#panel .row #fullBtn { flex: none; padding: 5px 11px 2px; }
+#panel label { display: flex; flex-direction: column; font-size: 15px; }
+#panel label b { font-weight: normal; color: var(--pink); }
+#panel label.check { flex-direction: row; align-items: center; gap: 8px; }
+#panel .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#panel .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#panel .pair select { width: 100%; min-width: 0; }
+#panel select { font: inherit; font-size: 15px; letter-spacing: 1px; color: var(--ink); background: #fff;
+  border: 3px solid var(--ink); padding: 2px 6px 0; margin-top: 3px; cursor: pointer; }
+#trophies { text-align: center; font-size: 18px; cursor: pointer; }
+.grab { display: none; }
+
+#follow { top: calc(14px + var(--st)); left: 50%; transform: translateX(-50%); background: var(--blue); display: flex; align-items: center; gap: 10px; font-size: 20px; white-space: nowrap; }
+#follow button { font-size: 15px; padding: 2px 8px 0; }
+.touring #follow { display: none; }
+
+.label { position: fixed; z-index: 4; pointer-events: none; background: #fff; border: 3px solid var(--ink); border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--ink); padding: 4px 10px 2px; font-size: 18px; white-space: nowrap; transform: translate(-50%, calc(-100% - 16px)); }
+
+#toasts { position: fixed; left: calc(16px + var(--sl)); bottom: calc(64px + var(--sb)); z-index: 9; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { background: var(--yellow); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); padding: 6px 12px 3px; font-size: 19px;
+  animation: slidein 0.35s ease-out, fadeout 0.6s ease-in 3.4s forwards; }
+
+.bubble { position: fixed; z-index: 3; pointer-events: none; padding: 4px 12px 1px; color: #fff; font-size: 26px; white-space: nowrap;
+  border: 3px solid var(--ink); border-radius: 50% / 42%; box-shadow: 3px 3px 0 var(--ink); text-shadow: 2px 2px 0 var(--ink);
+  animation: pop 1.3s ease-out forwards; }
+
+#debug { position: fixed; left: 16px; top: 104px; z-index: 7; pointer-events: none; white-space: pre; padding: 6px 8px;
+  font: 12px/1.4 ui-monospace, Consolas, monospace; letter-spacing: 0; color: #fff; background: rgba(12, 8, 36, 0.75); border-radius: 6px; }
+#flash { position: fixed; inset: 0; z-index: 2; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
+.trophy { display: flex; gap: 10px; align-items: center; text-align: left; font-size: 18px; padding: 4px 0; }
+.trophy small { display: block; font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.7; }
+.trophy.locked { opacity: 0.45; }
+
+@keyframes pop {
+  0%   { transform: translate(-50%, -50%) scale(0.2) rotate(-12deg); opacity: 0; }
+  15%  { transform: translate(-50%, -50%) scale(1.15) rotate(4deg); opacity: 1; }
+  30%  { transform: translate(-50%, -50%) scale(1) rotate(-3deg); }
+  80%  { opacity: 1; }
+  100% { transform: translate(-50%, -90%) scale(0.9) rotate(-3deg); opacity: 0; }
+}
+@keyframes slidein { from { transform: translateX(-120%); } to { transform: none; } }
+@keyframes fadeout { to { opacity: 0; transform: translateY(10px); } }

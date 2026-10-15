@@ -108,7 +108,7 @@ export class Gestures {
 
   twoFinger() {
     const s = this.shape(), t = this.two;
-    const dDist = s.dist - t.dist, dAng = turnBetween(t.ang, s.ang), dMy = s.my - t.my;
+    const dAng = turnBetween(t.ang, s.ang), dMy = s.my - t.my;
     if (!t.lock) { // decide what this gesture is once the fingers have moved a little from where they started
       const s0 = t.start, pinchish = Math.abs(s.dist - s0.dist) + Math.abs(turnBetween(s0.ang, s.ang)) * s.dist * 0.5, tiltish = Math.abs(s.my - s0.my);
       if (pinchish + tiltish > LOCK) t.lock = tiltish > pinchish * 1.5 ? 'tilt' : 'pinch';
