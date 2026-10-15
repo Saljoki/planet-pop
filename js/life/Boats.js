@@ -33,8 +33,8 @@ export class Boats {
     }
     const n = this.boats.length;
     this.hull = addInstanced(root, new THREE.BoxGeometry(0.085, 0.045, 0.18), toon('#ffffff'), n, 0.006);
-    const cabin = addInstanced(root, new THREE.BoxGeometry(0.06, 0.045, 0.065).translate(0, 0.045, -0.02), toon('#ffffff'), n, 0.005);
-    const funnel = addInstanced(root, new THREE.CylinderGeometry(0.013, 0.013, 0.045, 8).translate(0, 0.09, -0.03), toon('#ff8c42'), n);
+    const cabin = addInstanced(root, new THREE.BoxGeometry(0.06, 0.045, 0.065).translate(0, 0.045, -0.02), toon('#ffffff'), n, 0.005, { detail: 8 });
+    const funnel = addInstanced(root, new THREE.CylinderGeometry(0.013, 0.013, 0.045, 8).translate(0, 0.09, -0.03), toon('#ff8c42'), n, 0, { detail: 8 });
     shareMatrices(this.hull, cabin, funnel);
     this.boats.forEach((_, i) => this.hull.setColorAt(i, _c.set(HULLS[i % HULLS.length])));
     this.wake = new Trails(root, { max: 220, color: '#ffffff', life: 1.6, grow: 2.4, drag: 2 });

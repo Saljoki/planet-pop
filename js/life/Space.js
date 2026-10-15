@@ -35,13 +35,11 @@ export class Space {
     this.moonOrbit = this.orbitGroup(0.4, 0.25);
     const moon = addMesh(this.moonOrbit, new THREE.SphereGeometry(1.6, 32, 24), toon('#efeaff'), 0.05, NO_SHADOW);
     moon.position.set(28, 0, 0);
-    const craterGeo = new THREE.SphereGeometry(1, 16, 8), craterMat = toon('#c6badf');
-    for (let i = 0; i < 8; i++) {
+    const craters = Array.from({ length: 8 }, () => { // merged: one draw call instead of eight
       const d = rng.dir(), cr = rng.range(0.18, 0.42);
-      const crater = new THREE.Mesh(craterGeo, craterMat);
-      crater.applyMatrix4(frame(_m, _p.copy(d).multiplyScalar(1.6 - cr * 0.15), d, rng.dir(), cr, cr * 0.22, cr));
-      moon.add(crater);
-    }
+      return new THREE.SphereGeometry(1, 16, 8).applyMatrix4(frame(_m, _p.copy(d).multiplyScalar(1.6 - cr * 0.15), d, rng.dir(), cr, cr * 0.22, cr));
+    });
+    moon.add(new THREE.Mesh(mergeGeometries(craters), toon('#c6badf')));
     this.entities.push(new ObjectEntity(moon, 'moon', 'The Moon'));
   }
 

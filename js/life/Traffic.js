@@ -21,11 +21,11 @@ export class Traffic {
     const root = planet.root, cap = planet.roads.list.length * 2 * MAX_PER_LANE;
     const lamps = (z) => mergeGeometries([-1, 1].map((sx) => new THREE.BoxGeometry(0.018, 0.012, 0.006).translate(sx * 0.026, 0.045, z)));
     this.body = addInstanced(root, new THREE.BoxGeometry(0.08, 0.036, 0.17).translate(0, 0.04, 0), toon('#ffffff'), cap, 0.006);
-    const cab = addInstanced(root, new THREE.BoxGeometry(0.066, 0.032, 0.085).translate(0, 0.074, -0.012), toon('#cfeaff'), cap, 0.005);
+    const cab = addInstanced(root, new THREE.BoxGeometry(0.066, 0.032, 0.085).translate(0, 0.074, -0.012), toon('#cfeaff'), cap, 0.005, { detail: 7 });
     const wheels = addInstanced(root, mergeGeometries([[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) =>
-      new THREE.CylinderGeometry(0.021, 0.021, 0.018, 10).rotateZ(Math.PI / 2).translate(sx * 0.038, 0.021, sz * 0.052))), toon('#2a2540'), cap);
-    const heads = addInstanced(root, lamps(0.086), nightGlowMaterial('#f2eefc', '#fff6b0'), cap, 0, { cast: false });
-    const tails = addInstanced(root, lamps(-0.086), nightGlowMaterial('#a83a4e', '#ff3b3b'), cap, 0, { cast: false });
+      new THREE.CylinderGeometry(0.021, 0.021, 0.018, 10).rotateZ(Math.PI / 2).translate(sx * 0.038, 0.021, sz * 0.052))), toon('#2a2540'), cap, 0, { detail: 7 });
+    const heads = addInstanced(root, lamps(0.086), nightGlowMaterial('#f2eefc', '#fff6b0'), cap, 0, { cast: false, detail: 7 });
+    const tails = addInstanced(root, lamps(-0.086), nightGlowMaterial('#a83a4e', '#ff3b3b'), cap, 0, { cast: false, detail: 7 });
     shareMatrices(this.body, cab, wheels, heads, tails);
     this.parts = [this.body, cab, wheels, heads, tails];
     this.body.setColorAt(0, _c.set(COLORS[0])); // creates the colour buffer up front

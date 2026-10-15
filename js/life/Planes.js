@@ -37,9 +37,9 @@ export class Planes {
       new THREE.BoxGeometry(0.024, 0.14, 0.1).translate(0, 0.09, -0.2),     // fin
       new THREE.BoxGeometry(0.25, 0.02, 0.07).translate(0, 0.02, -0.21),    // stabiliser
     ]), toon('#ffffff'), n, 0.01);
-    const windows = addInstanced(root, new THREE.BoxGeometry(0.075, 0.035, 0.07).translate(0, 0.045, 0.17), toon('#2d2a5a'), n);
-    const port = addInstanced(root, new THREE.SphereGeometry(0.018, 8, 6).translate(0.33, -0.01, 0.03), nightGlowMaterial('#9a4a5a', '#ff3b3b'), n, 0, { cast: false });
-    const starboard = addInstanced(root, new THREE.SphereGeometry(0.018, 8, 6).translate(-0.33, -0.01, 0.03), nightGlowMaterial('#3f7a5a', '#3bff7a'), n, 0, { cast: false });
+    const windows = addInstanced(root, new THREE.BoxGeometry(0.075, 0.035, 0.07).translate(0, 0.045, 0.17), toon('#2d2a5a'), n, 0, { detail: 9 });
+    const port = addInstanced(root, new THREE.SphereGeometry(0.018, 8, 6).translate(0.33, -0.01, 0.03), nightGlowMaterial('#9a4a5a', '#ff3b3b'), n, 0, { cast: false, detail: 9 });
+    const starboard = addInstanced(root, new THREE.SphereGeometry(0.018, 8, 6).translate(-0.33, -0.01, 0.03), nightGlowMaterial('#3f7a5a', '#3bff7a'), n, 0, { cast: false, detail: 9 });
     shareMatrices(this.body, accents, windows, port, starboard);
     COLS.forEach((c, i) => accents.setColorAt(i, _c.set(c)));
     this.trail = new Trails(root, { max: 420, color: '#ffffff', life: 2.6, grow: 2.2, drag: 0.3 });

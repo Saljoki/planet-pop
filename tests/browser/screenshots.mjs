@@ -1,18 +1,17 @@
 // Opens the game in headless Chrome (software WebGL via SwiftShader), plays through key scenes and saves
 // screenshots plus a report to ./screenshots. Exits non-zero on page errors or shader compile errors.
-//   npm run screenshots            (OFFLINE=1 skips Google Fonts when the network blocks them)
+//   npm run screenshots            (SCENES=airport,photo renders just the scenes whose names contain those words)
 import { createServer } from 'node:http';
 import { readFile, mkdir, writeFile, rm } from 'node:fs/promises';
-import { extname, join, normalize, sep } from 'node:path';
+import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import chromium from '@sparticuz/chromium';
 import puppeteer from 'puppeteer-core';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const OUT = join(ROOT, 'screenshots');
-const THREE_CDN = 'https://cdn.jsdelivr.net/npm/three@0.160.0/';
-const THREE_LOCAL = join(ROOT, 'node_modules', 'three') + sep;
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.md': 'text/plain' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png', '.md': 'text/plain',
+  '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
 const PLANET = 'seed=20261014&land=45&cities=5';
 
 // ---------- static server for the repo ----------
@@ -45,23 +44,10 @@ const page = await browser.newPage();
 page.on('console', (m) => {
   const text = m.text();
   log.push(`[${m.type()}] ${text}`);
-  const benign = /Failed to load resource|fonts\.g|Terrain worker unavailable/.test(text);
+  const benign = /Failed to load resource|Terrain worker unavailable/.test(text);
   if ((m.type() === 'error' || /Shader Error|WebGLProgram/.test(text)) && !benign) problems.push(text);
 });
 page.on('pageerror', (e) => problems.push(`Uncaught: ${e.message}`));
-await page.setRequestInterception(true);
-page.on('request', async (req) => {
-  const url = req.url();
-  if (url.startsWith(THREE_CDN)) { // serve three.js from node_modules: same version, no CDN dependency
-    try {
-      return await req.respond({ status: 200, contentType: 'text/javascript', body: await readFile(THREE_LOCAL + url.slice(THREE_CDN.length)) });
-    } catch {
-      return req.respond({ status: 404, body: '' });
-    }
-  }
-  if (process.env.OFFLINE && /fonts\.(googleapis|gstatic)\.com/.test(url)) return req.abort();
-  return req.continue();
-});
 // Screenshots should show the full-quality look, whatever the software renderer's speed.
 await page.evaluateOnNewDocument(() => localStorage.setItem('planetpop.quality', JSON.stringify({ mode: 'crisp', level: 0 })));
 
@@ -328,6 +314,17 @@ await scene('27-mobile-courier', 'Daily challenge HUD on a phone', async () => {
   await until(() => app.rig.mode === 'game');
   await frames(6);
 });
+
+await scene('28-offline', 'Reloaded with the network off: the service worker serves every file', async () => {
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
+  await page.setOfflineMode(true);
+  await page.goto(`${base}index.html?${PLANET}`, { waitUntil: 'domcontentloaded' });
+  await until(() => window.app?.planet && !window.app.building, 240000);
+  if (!(await page.evaluate(() => !!navigator.serviceWorker.controller))) throw new Error('the page was not served by the service worker');
+  await frames(3);
+});
+await page.setOfflineMode(false);
 
 const report = {
   commit: process.env.GITHUB_SHA || 'local',

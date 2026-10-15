@@ -144,7 +144,7 @@ export class Airports {
       new THREE.MeshBasicMaterial({ color: '#3bff7a' }), n, 0, { cast: false });
     shareMatrices(terminal, glass, tower, cab, this.beacon);
 
-    const LIGHTS = 9, lights = addInstanced(root, new THREE.SphereGeometry(0.014, 8, 6), nightGlowMaterial('#d8d2ea', '#7fd0ff'), n * LIGHTS * 2, 0, { cast: false });
+    const LIGHTS = 9, lights = addInstanced(root, new THREE.SphereGeometry(0.014, 8, 6), nightGlowMaterial('#d8d2ea', '#7fd0ff'), n * LIGHTS * 2, 0, { cast: false, detail: 8 });
     this.list.forEach((ap, i) => {
       slab.setMatrixAt(i, _m.copy(ap.matrix).multiply(_l.makeScale(1, ap.depth, 1)));
       terminal.setMatrixAt(i, ap.matrix);

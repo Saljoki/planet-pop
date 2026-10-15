@@ -63,7 +63,7 @@ export class Harbours {
     if (!n) return;
     const root = p.root;
     const deck = addInstanced(root, new THREE.BoxGeometry(0.1, 0.03, 1).translate(0, -0.015, 0.5), toon('#c98a4b'), n, 0.006);
-    const piles = addInstanced(root, new THREE.CylinderGeometry(0.012, 0.012, 1, 6).translate(0, -0.5, 0), toon('#8a5a3c'), n * PILES * 2, 0.004);
+    const piles = addInstanced(root, new THREE.CylinderGeometry(0.012, 0.012, 1, 6).translate(0, -0.5, 0), toon('#8a5a3c'), n * PILES * 2, 0.004, { detail: 7 });
     const tower = addInstanced(root, mergeGeometries([
       new THREE.CylinderGeometry(0.032, 0.048, 0.34, 12).translate(0, 0.17, 0),
       new THREE.CylinderGeometry(0.05, 0.05, 0.015, 12).translate(0, 0.34, 0),

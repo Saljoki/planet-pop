@@ -26,8 +26,8 @@ export class People {
       }
     }
     const n = this.people.length;
-    this.body = addInstanced(planet.root, new THREE.CapsuleGeometry(0.01, 0.016, 3, 8).translate(0, 0.018, 0), toon('#ffffff'), n, 0.003);
-    const head = addInstanced(planet.root, new THREE.SphereGeometry(0.0095, 10, 8).translate(0, 0.046, 0), toon('#ffffff'), n, 0.003);
+    this.body = addInstanced(planet.root, new THREE.CapsuleGeometry(0.01, 0.016, 3, 8).translate(0, 0.018, 0), toon('#ffffff'), n, 0.003, { detail: 5 });
+    const head = addInstanced(planet.root, new THREE.SphereGeometry(0.0095, 10, 8).translate(0, 0.046, 0), toon('#ffffff'), n, 0.003, { detail: 5 });
     shareMatrices(this.body, head);
     this.people.forEach((_, i) => {
       this.body.setColorAt(i, new THREE.Color(rng.pick(SHIRTS)));

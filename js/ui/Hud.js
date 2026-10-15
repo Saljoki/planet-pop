@@ -14,7 +14,7 @@ export class Hud {
       <div id="title" class="badge">Planet Pop!</div>
       <div id="hint" class="badge">${hint}</div>
       <div id="worldTag" class="badge"></div>
-      <div id="topBtns"><button id="photoBtn" title="Photo mode (C)">📷</button><button id="panelToggle">☰ Controls</button></div>
+      <div id="topBtns"><button id="installBtn" class="hidden" title="Install Planet Pop as an app">📲</button><button id="photoBtn" title="Photo mode (C)">📷</button><button id="panelToggle">☰ Controls</button></div>
       <div id="panel" class="panel">
         <div class="row"><button id="pauseBtn">⏸ Pause</button><button id="newBtn">🌍 New planet</button></div>
         <button id="shareBtn">🔗 Share this planet</button>
@@ -52,6 +52,16 @@ export class Hud {
     if (innerWidth < 700) this.panel.classList.add('hidden');
     $('panelToggle').onclick = () => this.panel.classList.toggle('hidden');
     $('photoBtn').onclick = () => app.photo?.enter();
+    addEventListener('beforeinstallprompt', (e) => { // browsers that can install web apps offer it here
+      e.preventDefault();
+      this.installPrompt = e;
+      $('installBtn').classList.remove('hidden');
+    });
+    $('installBtn').onclick = async () => {
+      this.installPrompt?.prompt();
+      const choice = await this.installPrompt?.userChoice;
+      if (choice?.outcome === 'accepted') $('installBtn').classList.add('hidden');
+    };
     $('pauseBtn').onclick = () => app.togglePause();
     $('newBtn').onclick = () => app.newPlanet();
     $('shareBtn').onclick = () => app.sharePlanet();

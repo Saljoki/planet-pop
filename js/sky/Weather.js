@@ -115,7 +115,7 @@ export class Weather {
           y: rng.range(top - m.hgt * 0.6, top + 0.5), speed: rng.range(0.12, 0.2), ph: rng.range(0, TAU) });
       }
     }
-    this.snow = addInstanced(p.root, new THREE.IcosahedronGeometry(0.02, 0), toon('#ffffff', { flatShading: true }), this.flakes.length, 0, { cast: false });
+    this.snow = addInstanced(p.root, new THREE.IcosahedronGeometry(0.02, 0), toon('#ffffff', { flatShading: true }), this.flakes.length, 0, { cast: false, detail: 10 });
   }
 
   /** Lightning from storm `s` down to the ground. With `aim`, the bolt passes exactly through that point. */

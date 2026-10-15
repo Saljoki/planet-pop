@@ -3,6 +3,8 @@ import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 import { LAYER_FX } from '../core/Geo.js';
 
 const INK = new THREE.Color('#1b1530');
+/** Outlines this thin (world units) are under a pixel wide from orbit, so they're skipped above this altitude. */
+const THIN = 0.012, THIN_ALT = 9;
 const geoCache = new WeakMap();
 
 /**
@@ -45,15 +47,17 @@ export function outlineGeometry(geo) {
   return geoCache.get(geo);
 }
 
-/** opts: { cast, receive, near, outlineGeometry } */
+/** opts: { cast, receive, near, outlineGeometry, detail (highest camera altitude it's drawn at, see Detail.js) } */
 export function addMesh(parent, geo, mat, maxW = 0, opts = {}) {
   const mesh = new THREE.Mesh(geo, mat);
   mesh.castShadow = opts.cast ?? true;
   mesh.receiveShadow = opts.receive ?? true;
+  if (opts.detail) mesh.userData.detail = opts.detail;
   parent.add(mesh);
   if (maxW) {
     const o = new THREE.Mesh(opts.outlineGeometry || outlineGeometry(geo), outlineMaterial(maxW, opts.near));
     o.layers.set(LAYER_FX);
+    if (maxW <= THIN) o.userData.detail = THIN_ALT;
     mesh.add(o);
   }
   return mesh;
@@ -66,6 +70,7 @@ export function addInstanced(parent, geo, mat, count, maxW = 0, opts = {}) {
   mesh.frustumCulled = false;
   mesh.castShadow = opts.cast ?? true;
   mesh.receiveShadow = opts.receive ?? true;
+  if (opts.detail) mesh.userData.detail = opts.detail;
   parent.add(mesh);
   if (maxW) {
     const o = new THREE.InstancedMesh(outlineGeometry(geo), outlineMaterial(maxW, opts.near), cap);
@@ -73,6 +78,8 @@ export function addInstanced(parent, geo, mat, count, maxW = 0, opts = {}) {
     o.count = count;
     o.frustumCulled = false;
     o.layers.set(LAYER_FX);
+    const d = Math.min(opts.detail || Infinity, maxW <= THIN ? THIN_ALT : Infinity);
+    if (d < Infinity) o.userData.detail = d;
     parent.add(o);
     mesh.userData.outline = o;
   }

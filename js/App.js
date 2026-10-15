@@ -3,6 +3,7 @@ import { LAYER_FX } from './core/Geo.js';
 import { shared } from './render/Toon.js';
 import { PostFX } from './render/PostFX.js';
 import { Quality } from './render/Quality.js';
+import { Detail } from './render/Detail.js';
 import { Sky } from './sky/Sky.js';
 import { Planet } from './world/Planet.js';
 import { Hud } from './ui/Hud.js';
@@ -74,6 +75,7 @@ export class App {
     this.debug = new DebugStats(this);
     this.photo = new PhotoMode(this);
     this.gamepad = new Gamepad(this);
+    this.detail = new Detail();
     this.onRendered = null; // one-shot callback with the canvas right after a frame is drawn (photo mode)
 
     addEventListener('resize', () => this.resize());
@@ -106,6 +108,7 @@ export class App {
       this.rig.release(true);
       this.planet?.dispose();
       this.planet = planet;
+      this.detail.collect(planet.root);
       this.sky.setTheme(planet.theme);
       this.hud.setTheme(planet.theme);
       if (!initial) this.achievements.unlock('newworld');
@@ -177,6 +180,7 @@ export class App {
     this.ambience.update(real);
     this.quality.tick(real);
     this.sky.fitShadow(this.camera);
+    this.detail.update(this.camera);
     if (this.quality.shadowFrame()) this.renderer.shadowMap.needsUpdate = true;
     this.debug.begin();
     this.postfx.render(this.scene, this.camera);

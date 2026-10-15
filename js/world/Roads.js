@@ -148,8 +148,8 @@ export class Roads {
       }
     }
     const root = this.planet.root;
-    const post = addInstanced(root, new THREE.CylinderGeometry(0.006, 0.009, 0.22, 5).translate(0, 0.11, 0), toon('#3a3555'), list.length, 0.004);
-    const head = addInstanced(root, new THREE.SphereGeometry(0.02, 8, 6).translate(0, 0.225, 0), nightGlowMaterial('#d8d2ea', '#ffd86b'), list.length, 0.004);
+    const post = addInstanced(root, new THREE.CylinderGeometry(0.006, 0.009, 0.22, 5).translate(0, 0.11, 0), toon('#3a3555'), list.length, 0.004, { detail: 8 });
+    const head = addInstanced(root, new THREE.SphereGeometry(0.02, 8, 6).translate(0, 0.225, 0), nightGlowMaterial('#d8d2ea', '#ffd86b'), list.length, 0.004, { detail: 8 });
     shareMatrices(post, head);
     list.forEach((l, k) => post.setMatrixAt(k, frame(_m, l.pos, _d.copy(l.pos).normalize(), l.fwd)));
   }
@@ -159,10 +159,10 @@ export class Roads {
     const pole = addInstanced(root, mergeGeometries([
       new THREE.CylinderGeometry(0.009, 0.009, 0.26, 6).translate(0, 0.13, 0),
       new THREE.BoxGeometry(0.04, 0.09, 0.034).translate(0, 0.29, 0),
-    ]), toon('#2a2540'), n, 0.005);
+    ]), toon('#2a2540'), n, 0.005, { detail: 7 });
     const lampMat = new THREE.MeshBasicMaterial({ color: '#ffffff' });
-    this.redLamps = addInstanced(root, new THREE.SphereGeometry(0.021, 10, 8).translate(0, 0.31, 0), lampMat, n, 0, { cast: false });
-    this.greenLamps = addInstanced(root, new THREE.SphereGeometry(0.021, 10, 8).translate(0, 0.268, 0), lampMat, n, 0, { cast: false });
+    this.redLamps = addInstanced(root, new THREE.SphereGeometry(0.021, 10, 8).translate(0, 0.31, 0), lampMat, n, 0, { cast: false, detail: 7 });
+    this.greenLamps = addInstanced(root, new THREE.SphereGeometry(0.021, 10, 8).translate(0, 0.268, 0), lampMat, n, 0, { cast: false, detail: 7 });
     shareMatrices(pole, this.redLamps, this.greenLamps);
     this.crossings.forEach((c, ci) => c.legs.forEach((leg, k) => {
       const a = leg.a - STOP * 1.4, id = ci * 2 + k;
