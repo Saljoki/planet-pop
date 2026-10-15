@@ -76,7 +76,9 @@ const shot = async (name, note) => {
   shots.push({ name, note });
   console.log(`  📸 ${name}: ${note}`);
 };
+const ONLY = process.env.SCENES?.split(','); // e.g. SCENES=airport,harbour renders just those (quick iteration)
 async function scene(name, note, steps) {
+  if (ONLY && !ONLY.some((k) => name.includes(k))) return;
   try {
     await steps();
     await shot(name, note);
@@ -136,16 +138,49 @@ await scene('05-train', 'Following the train', async () => {
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
-await scene('06-hangar', 'Sky Courier hangar', async () => {
+await page.evaluate(() => app.togglePause()); // world scenes below are staged, so freeze it
+await scene('06-airport', 'Airport: one plane waiting to take off, another on final approach', async () => {
+  const has = await page.evaluate(() => {
+    const { planet } = app, ap = planet.airports.list[0];
+    if (!ap) return false;
+    const mine = planet.planes.list.filter((p) => p.ap === ap);
+    Object.assign(mine[0], { a: 0, wait: 30 });
+    if (mine[1]) Object.assign(mine[1], { a: Math.PI * 2 - 0.3, wait: 0 });
+    planet.planes.update(0, app.simTime);
+    app.rig.focus(planet.airports.entities[0]);
+    return true;
+  });
+  if (!has) throw new Error('this planet has no airport');
+  await until(() => app.rig.mode === 'local');
+  await frames(3);
+});
+await scene('07-harbour', 'Harbour: ferry tied up at the pier, lighthouse on the shore', async () => {
+  await page.evaluate(() => {
+    const { planet } = app, boats = planet.boats;
+    const i = boats.boats.findIndex((b) => b.harbour === planet.harbours.list[0]);
+    Object.assign(boats.boats[i], { phi: Math.PI * 2, wait: 30 });
+    boats.update(0, app.simTime);
+    app.rig.focus(planet.harbours.entities[0]);
+  });
+  await until(() => app.rig.mode === 'local');
+  await frames(3);
+});
+await scene('08-people', 'Following a pedestrian through town', async () => {
+  await page.evaluate(() => app.rig.focus(app.planet.entities.find((e) => e.kind === 'person')));
+  await until(() => app.rig.mode === 'local');
+  await frames(3);
+});
+await page.evaluate(() => app.togglePause());
+await scene('09-hangar', 'Sky Courier hangar', async () => {
   await page.evaluate(() => { app.rig.release(true); app.game.progress.addCoins(400); app.game.openHangar(); });
   await frames(3);
 });
-await scene('07-courier', 'Sky Courier in flight', async () => {
+await scene('10-courier', 'Sky Courier in flight', async () => {
   await page.evaluate(() => { app.game.hangar.hide(); app.game.start(); });
   await until(() => app.rig.mode === 'game');
   await frames(4);
 });
-await scene('08-lightning', 'Lightning striking the plane inside a thundercloud', async () => {
+await scene('11-lightning', 'Lightning striking the plane inside a thundercloud', async () => {
   await page.evaluate(() => { // pause the world, park the plane in a storm, let the chase camera catch up
     app.togglePause();
     const { planet, game } = app, storm = planet.weather.storms[0], pl = game.player;
@@ -164,7 +199,7 @@ await scene('08-lightning', 'Lightning striking the plane inside a thundercloud'
   });
   await frames(2);
 });
-await scene('09-rival', 'Rival Rex racing just ahead, with his name tag', async () => {
+await scene('12-rival', 'Rival Rex racing just ahead, with his name tag', async () => {
   await page.evaluate(() => { // still paused: one delivery spawns Rex, then park him ahead and to the left
     const { game, planet } = app, pl = game.player;
     game.deliver();
@@ -183,7 +218,7 @@ await scene('09-rival', 'Rival Rex racing just ahead, with his name tag', async 
   await page.evaluate(() => app.game.rival.placeTag());
   await frames(2);
 });
-await scene('10-daily-over', 'End of a daily challenge run, with the share button', async () => {
+await scene('13-daily-over', 'End of a daily challenge run, with the share button', async () => {
   await page.evaluate(() => {
     const { game } = app;
     game.stop();
@@ -195,14 +230,14 @@ await scene('10-daily-over', 'End of a daily challenge run, with the share butto
   await until(() => app.game.over);
   await frames(2);
 });
-await scene('11-mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
+await scene('14-mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
   await page.evaluate(() => app.game.stop());
   await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await page.goto(`${base}index.html?${PLANET}&debug`, { waitUntil: 'domcontentloaded' });
   await until(() => window.app?.planet && !window.app.building, 240000);
   await frames(4);
 });
-await scene('12-mobile-courier', 'Daily challenge HUD on a phone', async () => {
+await scene('15-mobile-courier', 'Daily challenge HUD on a phone', async () => {
   await page.evaluate(() => { app.game.start({ daily: true }); app.game.deliver(); });
   await until(() => app.rig.mode === 'game');
   await frames(6);

@@ -57,6 +57,9 @@ export class Roads {
     return { n, u, v, rad, water, idx };
   }
 
+  /** Re-measure the road heights after the terrain changed (airports level the ground). */
+  retrace() { for (const road of this.list) Object.assign(road, this.trace(road.n, road.idx)); }
+
   angleOn(road, d) { return mod(Math.atan2(d.dot(road.v), d.dot(road.u)), TAU); }
   dir(road, a, out) { return out.copy(road.u).multiplyScalar(Math.cos(a)).addScaledVector(road.v, Math.sin(a)); }
   tangent(road, a, out) { return out.copy(road.v).multiplyScalar(Math.cos(a)).addScaledVector(road.u, -Math.sin(a)); }

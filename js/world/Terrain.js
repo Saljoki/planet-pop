@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { R } from '../core/Geo.js';
 import { toon, WPOS_DECL, WPOS_VERT } from '../render/Toon.js';
 import { addMesh } from '../render/Outline.js';
+import { SurfaceIndex } from './SurfaceIndex.js';
 
 const DETAIL = 56;
 
@@ -32,7 +33,7 @@ export class Terrain {
   async build() {
     const p = this.planet, ico = new THREE.IcosahedronGeometry(1, DETAIL);
     const out = await compute({
-      seed: p.params.seed, sea: p.sea, radius: R,
+      seed: p.params.seed, sea: p.sea, flats: p.hf.flats, radius: R,
       unit: ico.attributes.position.array,
       cities: p.cities.sites.map((s) => [s.c.x, s.c.y, s.c.z]),
       cityCos: p.cities.cosR,
@@ -47,6 +48,7 @@ export class Terrain {
     g.setAttribute('position', new THREE.BufferAttribute(o.pos, 3));
     g.setAttribute('color', new THREE.BufferAttribute(o.col, 3));
     g.computeVertexNormals();
+    this.surface = new SurfaceIndex(o.pos); // exact ground height for small things (people, piers, runways)
     const hull = new THREE.BufferGeometry();
     hull.setAttribute('position', new THREE.BufferAttribute(o.opos, 3));
     hull.setAttribute('normal', new THREE.BufferAttribute(o.onrm, 3));

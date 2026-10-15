@@ -16,6 +16,8 @@ const DEFS = [
   ['mechanic', '🔧', 'Mechanic', 'Buy your first upgrade in the hangar'],
   ['lightningrod', '🌩️', 'Lightning Rod', 'Get struck by lightning in Sky Courier'],
   ['outrun', '😈', 'Outrun', 'Beat Rival Rex to 5 cities in a row'],
+  ['touchdown', '🛬', 'Touchdown', 'Watch a plane land at an airport'],
+  ['peoplewatcher', '🚶', 'People Watcher', 'Follow someone on a stroll through town'],
   ['daily', '📅', 'Daily Flyer', 'Finish a daily challenge'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];

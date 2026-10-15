@@ -179,6 +179,7 @@ export class App {
     if (e.kind === 'bird') a.unlock('birdwatcher');
     if (e.kind === 'station') a.unlock('astronaut');
     if (e.kind === 'city') a.visitCity(e.name);
+    if (e.kind === 'person') a.unlock('peoplewatcher');
   }
 
   checkFollow() {

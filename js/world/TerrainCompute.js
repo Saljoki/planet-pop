@@ -18,8 +18,8 @@ const PAL = {
  * Returns the displaced flat-shaded mesh, a vertex-merged hull with smooth normals for the ink outline,
  * and an equirectangular height map the ocean shader uses for shallows and foam.
  */
-export function computeTerrain({ seed, sea, radius, unit, cities, cityCos, mapW = 512, mapH = 256 }) {
-  const hf = new Heightfield(seed, sea);
+export function computeTerrain({ seed, sea, flats = [], radius, unit, cities, cityCos, mapW = 512, mapH = 256 }) {
+  const hf = new Heightfield(seed, sea, flats);
   const n = unit.length / 3;
 
   // 1. merge duplicates (shared edges of the subdivided icosahedron)

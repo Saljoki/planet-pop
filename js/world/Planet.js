@@ -7,12 +7,15 @@ import { Roads } from './Roads.js';
 import { Cities, CITY_A } from './Cities.js';
 import { Railway } from './Railway.js';
 import { Nature } from './Nature.js';
+import { Airports } from './Airports.js';
+import { Harbours } from './Harbours.js';
 import { Traffic } from '../life/Traffic.js';
 import { Boats } from '../life/Boats.js';
 import { Balloons } from '../life/Balloons.js';
 import { Planes } from '../life/Planes.js';
 import { Birds } from '../life/Birds.js';
 import { Space } from '../life/Space.js';
+import { People } from '../life/People.js';
 import { Weather } from '../sky/Weather.js';
 
 const _v = new THREE.Vector3();
@@ -28,13 +31,18 @@ export class Planet {
     this.hf = new Heightfield(params.seed, this.sea);
     this.root = new THREE.Group();
     this.reserved = [];
+    this.keepClear = []; // spots mountains must avoid (airport approaches)
     this.modules = [];
     this.time = 0;
   }
 
   heightAt(d) { return this.hf.height(d.x, d.y, d.z); }
   surfR(d) { return R + Math.max(this.heightAt(d), -0.8); }
+  /** Radius of the rendered terrain mesh (exact for small objects); the heightfield until the terrain is built. */
+  meshR(d) { return this.terrain?.surface?.radiusAt(d) ?? this.surfR(d); }
   reserve(d, ang) { this.reserved.push({ d: d.clone(), ang }); }
+  /** Level the ground to `level` within `rIn` radians of d, blending back to natural terrain by `rOut`. */
+  flatten(d, rIn, rOut, level) { this.hf.flats.push({ x: d.x, y: d.y, z: d.z, cosIn: Math.cos(rIn), cosOut: Math.cos(rOut), level }); }
   isReserved(d, pad = 0) { return this.reserved.some((r) => r.d.angleTo(d) < r.ang + pad); }
   nightAt(pos) { return smoothstep(0.15, -0.25, _v.copy(pos).normalize().dot(this.app.sky.sunDir)); }
 
@@ -56,6 +64,9 @@ export class Planet {
     this.cities = new Cities(this);
     this.railway = new Railway(this);
     this.padSite = this.findPadSite();
+    this.airports = new Airports(this);  // sites are claimed now, so nothing else gets built on them
+    this.harbours = new Harbours(this);
+    if (this.hf.flats.length) this.roads.retrace(); // highways follow the levelled ground
     this.terrain = new Terrain(this);
     const terrainReady = this.terrain.build(); // worker runs while everything else is placed
     this.roads.build();
@@ -65,15 +76,19 @@ export class Planet {
     this.cities.build();
     await yieldFrame();
     this.traffic = new Traffic(this);
-    this.boats = new Boats(this);
     this.balloons = new Balloons(this);
-    this.planes = new Planes(this);
     this.birds = new Birds(this);
     this.space = new Space(this);
     this.weather = new Weather(this);
     await terrainReady;
-    this.modules = [this.roads, this.cities, this.nature, this.railway, this.traffic, this.boats,
-      this.balloons, this.planes, this.birds, this.space, this.weather];
+    // these sit on the exact rendered ground, so they wait for the terrain mesh
+    this.airports.build();
+    this.harbours.build();
+    this.boats = new Boats(this);
+    this.planes = new Planes(this);
+    this.people = new People(this);
+    this.modules = [this.roads, this.cities, this.nature, this.railway, this.airports, this.harbours, this.traffic, this.boats,
+      this.balloons, this.planes, this.birds, this.people, this.space, this.weather];
     this.update(0, this.app.simTime);
     this.app.scene.add(this.root);
   }

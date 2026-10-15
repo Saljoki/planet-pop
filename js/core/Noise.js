@@ -42,9 +42,11 @@ export function makePerlin(seed) {
 }
 
 export class Heightfield {
-  constructor(seed, sea = 0) {
+  /** flats: levelled zones [{ x, y, z, cosIn, cosOut, level }]: full level inside cosIn, blending out to cosOut. */
+  constructor(seed, sea = 0, flats = []) {
     this.perlin = makePerlin(seed);
     this.sea = sea;
+    this.flats = flats;
   }
 
   fbm(x, y, z) {
@@ -57,7 +59,16 @@ export class Heightfield {
   }
 
   /** Height above sea level for a unit direction (negative = underwater). */
-  height(x, y, z) { return Math.min((this.fbm(x, y, z) - this.sea) * 3.4, 1.5); }
+  height(x, y, z) {
+    let h = Math.min((this.fbm(x, y, z) - this.sea) * 3.4, 1.5);
+    for (const f of this.flats) {
+      const c = f.x * x + f.y * y + f.z * z;
+      if (c <= f.cosOut) continue;
+      const t = Math.min(1, (c - f.cosOut) / (f.cosIn - f.cosOut));
+      h += (f.level - h) * t * t * (3 - 2 * t);
+    }
+    return h;
+  }
 
   /** Sea level that leaves `land` (0..1) of the surface above water. */
   static seaLevelFor(seed, land) {

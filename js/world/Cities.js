@@ -6,7 +6,7 @@ import { PointEntity } from '../core/Entity.js';
 import { ROAD_W, ROAD_N } from './Roads.js';
 
 export const CITY_A = 0.14; // angular radius of a city
-const GRID = 0.3;
+export const GRID = 0.3; // building plot spacing
 const NAMES = ['Pop City', 'Zapville', 'Boomtown', 'Kablam Bay', 'Whamford', 'Bonkton', 'Fizzburg', 'Splatport',
   'Zing Harbor', 'Kapow Falls', 'Biffington', 'Swooshire', 'Blammo Springs', 'Crunchfield', 'Plinkton', 'Thwackmore'];
 const BUILD_COLS = ['#ff9fb1', '#ffd57a', '#9fd8ff', '#d4b8ff', '#ffbe8f', '#a8f0cf', '#f4f1ff', '#b8c8ff'];

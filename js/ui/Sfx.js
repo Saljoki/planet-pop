@@ -4,6 +4,7 @@ import { R, raySphere } from '../core/Geo.js';
 const SOUND_FOR = {
   'KRAKA-BOOM!': 'boom', 'WHOOOSH!': 'whoosh', 'FWOOSH!': 'whoosh', 'ZOOM!': 'zoom', 'VROOM!': 'vroom',
   'BEEP BEEP!': 'beep', 'CHOO CHOO!': 'choo', 'TOOT TOOT!': 'toot', 'SQUAWK!': 'squawk', 'BONK!': 'crash',
+  'SCREECH!': 'screech', 'HI!': 'chirp', 'NICE DAY!': 'chirp', 'OOH!': 'chirp',
 };
 const AMBIENT = {
   plane: [['ZOOM!', '#3fa7ff']],
@@ -12,6 +13,7 @@ const AMBIENT = {
   boat: [['TOOT TOOT!', '#2ee59d']],
   bird: [['SQUAWK!', '#8f5cff']],
   balloon: [['FWOOSH!', '#ff5fa2']],
+  person: [['HI!', '#ffd23f'], ['NICE DAY!', '#2ee59d'], ['OOH!', '#ff5fa2']],
 };
 const _v = new THREE.Vector3(), _d = new THREE.Vector3(), _p = new THREE.Vector3(), _q = new THREE.Vector3();
 
@@ -86,6 +88,8 @@ export class Sfx {
       case 'vroom': T(90, 170, 0.45, 'sawtooth', 0.05); break;
       case 'choo': N(0.16, 0.25, 3000, 900); N(0.16, 0.25, 3000, 900, 0.25); break;
       case 'toot': T(330, 0, 0.4, 'triangle', 0.09); break;
+      case 'screech': N(0.5, 0.12, 5000, 1400); T(1400, 900, 0.35, 'sawtooth', 0.02); break;
+      case 'chirp': T(700, 1100, 0.08, 'triangle', 0.05); T(900, 1300, 0.08, 'triangle', 0.05, 0.1); break;
       case 'squawk': T(1100, 600, 0.1, 'sawtooth', 0.035); T(1100, 600, 0.1, 'sawtooth', 0.035, 0.14); break;
       case 'ring': T(880, 0, 0.1, 'triangle', 0.07); T(1320, 0, 0.2, 'triangle', 0.07, 0.08); break;
       case 'crash': N(0.45, 0.45, 1600, 120); T(220, 60, 0.35, 'square', 0.07); break;
