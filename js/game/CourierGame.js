@@ -109,7 +109,7 @@ export class CourierGame {
     this.player = run.vehicle(at, heading);
     if (app.settings) this.player.controls = app.settings.values; // Invert Y and sensitivity, live
     this.player.setCargo(run.cargo);
-    this.props = new CourierProps(p);
+    this.props = new CourierProps(p, run.rings);
     this.hazards.reset();
     app.rig.setGame(this.player);
     app.hud.setGameMode(true);

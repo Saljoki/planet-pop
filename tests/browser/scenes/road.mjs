@@ -1,5 +1,5 @@
 // On the road and at sea: the road trips menu, driving a car (on the highway, off-road, one taken from the traffic),
-// sailing a boat, damage and wrecks.
+// sailing a boat, the taxi, the van courier, the race round the world, damage and wrecks.
 // One of the screenshot run's scene files (see ../screenshots.mjs); the helpers are described in ../harness.mjs.
 
 export default async function road({ page, frames, until, scene }) {
@@ -74,6 +74,56 @@ export default async function road({ page, frames, until, scene }) {
     if (!ok) throw new Error('no sea to sail on this world');
     await until(() => app.rig.mode === 'game');
     await frames(8);
+  });
+  await scene('road-taxi', 'Taxi: someone waving on the green pad at the edge of town', async () => {
+    await page.evaluate(() => { // drive up to the first fare and stop just short of it
+      const g = app.game;
+      g.stop();
+      g.start({ road: 'taxi' });
+      const pl = g.player, stop = g.run.fare.from;
+      pl.respawn(stop.at.clone().addScaledVector(stop.heading, -0.5 / 10).normalize(), stop.heading);
+      pl.input.up = true;
+      for (let i = 0; i < 12; i++) g.update(1 / 30);
+      pl.input.up = false;
+      for (let i = 0; i < 20; i++) g.update(1 / 30);
+    });
+    await until(() => app.rig.mode === 'game');
+    await frames(8);
+  });
+  await scene('road-van', 'Van courier: the parcel on the roof, the pink pad at the next town', async () => {
+    await page.evaluate(() => {
+      const g = app.game;
+      g.stop();
+      g.start({ road: 'van' });
+      const pl = g.player, stop = g.run.stop;
+      pl.respawn(stop.at.clone().addScaledVector(stop.heading, -0.6 / 10).normalize(), stop.heading);
+      pl.input.up = true;
+      for (let i = 0; i < 14; i++) g.update(1 / 30);
+      pl.input.up = false;
+    });
+    await until(() => app.rig.mode === 'game');
+    await frames(8);
+  });
+  await scene('road-race', 'Round the world: Rex alongside at the start, the first checkpoint arch ahead', async () => {
+    await page.evaluate(() => {
+      const g = app.game;
+      g.stop();
+      g.start({ road: 'race' });
+      g.player.input.up = true;
+      for (let i = 0; i < 4.2 * 30; i++) g.update(1 / 30);
+    });
+    await until(() => app.rig.mode === 'game');
+    await frames(10);
+    await page.evaluate(() => app.game.run.rex.placeTag());
+    await frames(1);
+  });
+  await scene('road-race-won', 'Through the finish ahead of Rex', async () => {
+    await page.evaluate(() => {
+      const g = app.game, run = g.run;
+      for (const gate of run.gates) { g.player.place(gate.at, g.player.fwd); g.player.v = 0; g.update(1 / 60); }
+    });
+    await until(() => app.game.over);
+    await frames(3);
   });
   await scene('road-wreck', 'Out of health in a courier run: KABOOM, and the run is over', async () => {
     await page.evaluate(() => {

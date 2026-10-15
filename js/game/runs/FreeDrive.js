@@ -34,6 +34,8 @@ export class FreeDrive extends Run {
 
   get layout() { return { badge: 'free', stats: false, arrow: false }; }
 
+  get rings() { return 0; }
+
   /** The traffic or the boats, whichever the vehicle came from. */
   get source() { return this.take && (this.take.kind === 'boat' ? this.planet.boats : this.planet.traffic); }
 

@@ -50,11 +50,12 @@ export class Progress {
     this.skin = this.owned.has(s.skin) ? s.skin : 'classic';
     this.daily = s.daily || null; // { date, best } for the most recent daily challenge played
     this.missions = new Set(s.missions || []); // ids of completed missions
+    this.bests = { ...(s.bests || {}) };       // the road trips' bests: taxi and van scores, the race's fastest time
   }
 
   save() {
     const data = { coins: this.coins, best: this.best, levels: this.levels, owned: [...this.owned], skin: this.skin, daily: this.daily,
-      missions: [...this.missions] };
+      missions: [...this.missions], bests: this.bests };
     saveJson(KEY, data);
   }
 
@@ -101,7 +102,7 @@ export class Progress {
   reset() {
     forget(KEY);
     forget(OLD_BEST_KEY);
-    Object.assign(this, { coins: 0, best: 0, levels: {}, owned: new Set(['classic']), skin: 'classic', daily: null, missions: new Set() });
+    Object.assign(this, { coins: 0, best: 0, levels: {}, owned: new Set(['classic']), skin: 'classic', daily: null, missions: new Set(), bests: {} });
     this.save();
   }
 
@@ -111,6 +112,17 @@ export class Progress {
     if (record) this.best = score;
     this.save();
     return record;
+  }
+
+  /**
+   * A road trip's best (`id` 'taxi', 'van' or 'race'): the highest score, or for the race the lowest time. Returns
+   * the previous best (null if none) and whether this beat it.
+   */
+  recordBest(id, value, lowerWins = false) {
+    const prev = this.bests[id] ?? null, record = prev === null || (lowerWins ? value < prev : value > prev);
+    if (record) this.bests[id] = value;
+    this.save();
+    return { prev, record };
   }
 
   /** Today's best daily score, or null if today's challenge hasn't been flown. */

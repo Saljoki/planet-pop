@@ -8,13 +8,14 @@ const SHORE = -0.012;       // a boat needs at least this much water under it
 const MOUNTAIN_WALL = 0.2;  // how far up a mountain (0 = its foot, 1 = the peak) a car can drive before it's a wall
 const BUILDING_PAD = 0.035; // about half a car's width: how close to a wall its middle can get
 const _d = new THREE.Vector3(), _a = new THREE.Vector3();
+const STOPS = new WeakMap(); // town → its stops, worked out once
 
-/** Points on a ring of angular radius `ang` around c, with the way round the ring at each. */
+/** Points on a ring of angular radius `ang` around c: each with its bearing `a` round the ring and the way `along` it. */
 function* ring(c, ang, steps) {
   const [u, v] = tangentBasis(c), t = Math.tan(ang);
   for (let k = 0; k < steps; k++) {
     const a = (k / steps) * TAU, d = c.clone().addScaledVector(u, Math.cos(a) * t).addScaledVector(v, Math.sin(a) * t).normalize();
-    yield { d, along: u.clone().multiplyScalar(-Math.sin(a)).addScaledVector(v, Math.cos(a)) };
+    yield { d, a, along: u.clone().multiplyScalar(-Math.sin(a)).addScaledVector(v, Math.cos(a)) };
   }
 }
 
@@ -96,6 +97,27 @@ export class Ground {
       for (const p of ring(site.c, ang, 32)) if (this.carFits(p.d, p.along)) return { at: p.d, heading: p.along };
     }
     return null;
+  }
+
+  /**
+   * Places to pull in at the edge of a town (for taxi fares and van drops): up to `n` drivable spots spread round it,
+   * just outside its buildings. Each is { at, heading, town }.
+   */
+  stops(site, n = 4) {
+    if (STOPS.has(site)) return STOPS.get(site);
+    const found = [];
+    for (let k = 0; k < n; k++) { // one in each slice of the compass, as close to the buildings as fits
+      const lo = (k / n) * TAU, hi = ((k + 1) / n) * TAU;
+      search: for (let ang = CITY_A * 1.05; ang < CITY_A * 1.9; ang += 0.015) {
+        for (const p of ring(site.c, ang, 48)) {
+          if (p.a < lo || p.a >= hi || !this.carFits(p.d, p.along)) continue;
+          found.push({ at: p.d, heading: p.along, town: site });
+          break search;
+        }
+      }
+    }
+    STOPS.set(site, found);
+    return found;
   }
 
   /** Open water near direction d for a boat, with room all round: { at, heading }, or null if there is none within reach. */

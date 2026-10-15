@@ -55,7 +55,7 @@ export class GroundVehicle extends Vehicle {
 
   /** Speed up, slow down and turn for one frame, then move. */
   drive(dt) {
-    const L = this.limits(), th = this.throttle(), st = this.stats;
+    const L = this.limits(), th = this.locked ? 0 : this.throttle(), st = this.stats;
     const boosting = this.boostStep(dt) && th > 0;
     const max = L.max * st.speed * this.engine * (boosting ? L.boost : 1);
     if (th !== 0 && Math.sign(th) !== Math.sign(this.v) && Math.abs(this.v) > 0.02) { // braking

@@ -43,6 +43,9 @@ export class DeliveryRun extends Run {
   /** Whether the results card offers 🔗 Share. */
   get shareable() { return false; }
 
+  /** The results card's play-again button. */
+  get againLabel() { return '✈️ Fly again'; }
+
   takeoff() {
     const sites = this.planet.cities.sites;
     Object.assign(this, { score: 0, combo: 1, time: this.stats.startTime, deliveries: 0, coins: 0, stolen: 0, rivalStreak: 0 });
@@ -56,9 +59,30 @@ export class DeliveryRun extends Run {
   }
 
   begin() {
-    this.game.props.placeBeacon(this.dest);
+    this.markDest();
     this.app.hud.toast(this.intro);
   }
+
+  /** Whether Rex turns up after the first delivery. */
+  get hasRival() { return true; }
+
+  /** What the goal line says once the destination is close. */
+  get arriveHint() { return `swoop down over ${this.dest.name}!`; }
+
+  /** Show where the parcel goes: the beacon over its town. */
+  markDest() { this.game.props.placeBeacon(this.dest); }
+
+  /** Where the arrow points for the parcel (a direction). */
+  destPoint() { return this.dest.c; }
+
+  /** Delivered: swooped low over the destination town. */
+  arrived() {
+    const pl = this.player;
+    return pl.up.angleTo(this.dest.c) < 0.07 && pl.alt < this.planet.surfR(this.dest.c) + 3.2;
+  }
+
+  /** Seconds to beat for a combo from `here` to the destination (before the parcel's own factor). */
+  parFor(here) { return (here.angleTo(this.dest.c) * (R + 2)) / SPEED * 1.25 + 6; }
 
   /** Which cities can be the next destination (missions can narrow it down). */
   destinations(sites) { return sites; }
@@ -73,11 +97,11 @@ export class DeliveryRun extends Run {
     this.cargo = rollCargo(first, this.rand, this.cargoBias);
     this.broken = false;
     const here = g.player?.up ?? this.from.c; // after a steal the player isn't at `from`
-    this.par = ((here.angleTo(this.dest.c) * (R + 2)) / SPEED * 1.25 + 6) * this.cargo.par; // beat this for a combo
+    this.par = this.parFor(here) * this.cargo.par; // beat this for a combo
     this.elapsed = 0;
     g.player?.setCargo(this.cargo);
     this.rival?.newLeg(this.from);
-    g.props?.placeBeacon(this.dest);
+    if (g.props) this.markDest();
     if (!first) this.app.hud.toast(`${this.cargo.icon} New ${this.cargo.name.toLowerCase()} for ${this.dest.name}: ${this.cargo.tip}`);
   }
 
@@ -116,10 +140,9 @@ export class DeliveryRun extends Run {
   inAsh(dt) { this.tally.ash += dt; }
 
   update(dt) {
-    const pl = this.player;
     this.time -= dt;
     this.elapsed += dt;
-    const arrived = pl.up.angleTo(this.dest.c) < 0.07 && pl.alt < this.planet.surfR(this.dest.c) + 3.2;
+    const arrived = this.arrived();
     if (arrived) this.deliver();
     if (this.rival?.update(dt, this.dest, this.cargo) && !arrived) this.steal();
     this.checkEnd();
@@ -158,8 +181,10 @@ export class DeliveryRun extends Run {
     this.tally.rexStreak = Math.max(this.tally.rexStreak, this.rival ? this.rivalStreak : 0);
     this.from = this.dest;
     this.pickDest();
-    if (!this.rival) this.spawnRival();
-    this.rival.setLevel(this.deliveries);
+    if (this.hasRival) {
+      if (!this.rival) this.spawnRival();
+      this.rival.setLevel(this.deliveries);
+    }
   }
 
   /** Rex takes off right after your first delivery, from the same city, and races you from then on. */
@@ -213,11 +238,12 @@ export class DeliveryRun extends Run {
       html: `${this.resultHead}Score <b>${this.score}</b> · ${this.deliveries} deliveries${stolen}<br>
       🪙 +${this.coins} coins (you have ${this.game.progress.coins})<br>${best}`,
       share: this.shareable,
+      again: this.againLabel,
     });
   }
 
   hud(h) {
-    const d = h.dom, pl = this.player, aim = this.target(pl.up), c = aim?.c ?? this.dest.c;
+    const d = h.dom, pl = this.player, aim = this.target(pl.up), c = aim?.c ?? this.destPoint();
     d.score.textContent = `⭐ ${this.score}`;
     d.time.textContent = `⏱ ${Math.max(0, Math.ceil(this.time))}`;
     d.time.classList.toggle('low', this.time <= 10);
@@ -229,7 +255,7 @@ export class DeliveryRun extends Run {
     const what = `${this.cargo.icon} ${this.cargo.name}${this.broken ? ' (broken!)' : ''}`;
     const rex = this.rival ? ` · 😈 ${this.rival.kmTo(c)} km` : '';
     d.goal.textContent = aim ? `${aim.text} · ${km} km` : km < 90
-      ? `${what}: swoop down over ${this.dest.name}!${rex}`
+      ? `${what}: ${this.arriveHint}${rex}`
       : `${what} → ${this.dest.name} · ${km} km · combo ${comboLeft}s${rex}`;
   }
 

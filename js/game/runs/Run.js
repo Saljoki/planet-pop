@@ -30,6 +30,9 @@ export class Run {
   get planet() { return this.game.planet; }
   get player() { return this.game.player; }
 
+  /** How many blue rings to put out (the road runs have none: they'd be out of reach). */
+  get rings() { return 7; }
+
   /** Which HUD pieces show: a mode badge ('daily' | 'mission' | 'free' | null), the score badges, the arrow. */
   get layout() { return { badge: null, stats: true, arrow: true }; }
 
