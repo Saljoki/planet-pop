@@ -440,6 +440,11 @@ await scene('pause-menu', 'The pause menu', async () => {
   await page.evaluate(() => app.togglePause());
   await frames(2);
 });
+await scene('pause-resume', 'Clicking Resume on the pause menu carries on flying', async () => {
+  await page.click('#pResume'); // a real click: the menu sits inside the click-through game layer
+  await frames(2);
+  if (await page.evaluate(() => app.paused)) throw new Error('Resume did not respond to a click');
+});
 await page.evaluate(() => { if (app.paused) app.togglePause(); app.game.stop(); });
 for (const theme of ['ice', 'desert', 'candy', 'lava']) {
   await scene(`theme-${theme}`, `The ${theme} world`, async () => {
@@ -497,7 +502,9 @@ await scene('mobile-pause', 'Pause menu on a phone: tilt steering and vibration 
   await page.evaluate(() => app.togglePause());
   await frames(2);
 });
-await page.evaluate(() => app.togglePause());
+await page.tap('#pResume');
+if (await page.evaluate(() => app.paused)) problems.push('mobile-pause: tapping Resume did not resume');
+await page.evaluate(() => { if (app.paused) app.togglePause(); });
 await scene('landscape-courier', 'Phone on its side, flying', async () => {
   await page.setViewport({ width: 844, height: 390, deviceScaleFactor: 2, isMobile: true, hasTouch: true, isLandscape: true });
   await frames(5);

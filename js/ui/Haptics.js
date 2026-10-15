@@ -4,7 +4,8 @@ const PATTERNS = { tap: 12, ring: 15, deliver: [30, 50, 40], crash: 140, zap: [6
 /** Little buzzes on phones that support vibration (Android; iPhones don't let web pages vibrate). */
 export class Haptics {
   constructor() {
-    this.supported = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
+    // desktop Chrome has navigator.vibrate too, but nothing to buzz: only offer it on touch screens
+    this.supported = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function' && matchMedia('(pointer: coarse)').matches;
     let saved = null;
     try { saved = localStorage.getItem(KEY); } catch { /* storage unavailable */ }
     this.enabled = saved !== '0';

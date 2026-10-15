@@ -230,9 +230,16 @@ describe('phone modes on a planet', () => {
     assert.ok(app.unlocked.includes('sightseer'));
     // the thumbstick steers: full right turns the plane right
     const right = new THREE.Vector3().crossVectors(g.player.fwd, g.player.up), before = g.player.fwd.clone();
-    g.stick = { steer: 1, climb: 0 };
+    g.stick = { steer: 1, climb: 0, reset() {} };
     run(app, 0.3, { game: true });
     assert.ok(g.player.fwd.clone().sub(before).dot(right) > 0, 'stick right did not turn right');
+    // …and banks into the turn: the plane's own up leans to the right, right wing down
+    const tilted = new THREE.Vector3(0, 1, 0).applyQuaternion(g.player.group.quaternion);
+    assert.ok(tilted.dot(new THREE.Vector3().crossVectors(g.player.fwd, g.player.up)) > 0.2, 'plane banks the wrong way turning right');
+    g.stick = { steer: -1, climb: 0, reset() {} };
+    run(app, 0.6, { game: true });
+    const tiltedL = new THREE.Vector3(0, 1, 0).applyQuaternion(g.player.group.quaternion);
+    assert.ok(tiltedL.dot(new THREE.Vector3().crossVectors(g.player.up, g.player.fwd)) > 0.2, 'plane banks the wrong way turning left');
     g.stick = null;
     g.stop();
     assert.ok(!g.active && !app.wakeLock.reasons.has('game'));

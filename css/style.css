@@ -96,7 +96,7 @@ input[type=checkbox] { accent-color: var(--pink); width: 18px; height: 18px; }
   background: #3fa7ff; color: #fff; font-size: 19px; text-shadow: 2px 2px 0 var(--ink); pointer-events: auto; touch-action: none; padding: 0; }
 #gPause .col { display: flex; flex-direction: column; gap: 10px; min-width: 240px; }
 #gFree { background: var(--blue); }
-#gOver { pointer-events: auto; }
+#gOver, #gPause { pointer-events: auto; } /* the game layer lets clicks through to the stick; its menus take them */
 #gDaily { background: var(--blue); }
 #gStats .badge { white-space: nowrap; }
 .tag { position: fixed; z-index: 3; pointer-events: none; background: #8f5cff; color: #fff; font-size: 15px; white-space: nowrap;

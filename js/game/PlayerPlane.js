@@ -95,7 +95,7 @@ export class PlayerPlane {
     this.fwd.addScaledVector(this.up, -this.fwd.dot(this.up)).normalize();
     this.alt = clamp(this.alt + climb * CLIMB * this.cargoClimb * dt, MIN_ALT, MAX_ALT);
 
-    this.roll += (turn * 0.6 - this.roll) * Math.min(1, dt * 5);
+    this.roll += (-turn * 0.6 - this.roll) * Math.min(1, dt * 5); // bank into the turn: left wing down turning left
     this.pitchV += (climb * 0.35 - this.pitchV) * Math.min(1, dt * 5);
     this.invuln = Math.max(0, this.invuln - dt);
     this.shake = Math.max(0, this.shake - dt * 2);
