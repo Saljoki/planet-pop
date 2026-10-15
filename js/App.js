@@ -12,6 +12,7 @@ import { CameraRig } from './camera/CameraRig.js';
 import { CourierGame } from './game/CourierGame.js';
 import { DebugStats } from './ui/DebugStats.js';
 import { Ambience } from './ui/Ambience.js';
+import { PhotoMode } from './ui/PhotoMode.js';
 import { dailyParams } from './game/Daily.js';
 import { THEME_IDS, pickTheme } from './world/Themes.js';
 
@@ -70,6 +71,8 @@ export class App {
     this.game = new CourierGame(this);
     this.quality = new Quality(this);
     this.debug = new DebugStats(this);
+    this.photo = new PhotoMode(this);
+    this.onRendered = null; // one-shot callback with the canvas right after a frame is drawn (photo mode)
 
     addEventListener('resize', () => this.resize());
     this.clock = new THREE.Clock();
@@ -174,6 +177,7 @@ export class App {
     if (this.quality.shadowFrame()) this.renderer.shadowMap.needsUpdate = true;
     this.debug.begin();
     this.postfx.render(this.scene, this.camera);
+    if (this.onRendered) { const done = this.onRendered; this.onRendered = null; done(this.renderer.domElement); }
     this.debug.end(real);
   }
 

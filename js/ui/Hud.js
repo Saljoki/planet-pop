@@ -14,7 +14,7 @@ export class Hud {
       <div id="title" class="badge">Planet Pop!</div>
       <div id="hint" class="badge">${hint}</div>
       <div id="worldTag" class="badge"></div>
-      <button id="panelToggle">☰ Controls</button>
+      <div id="topBtns"><button id="photoBtn" title="Photo mode (C)">📷</button><button id="panelToggle">☰ Controls</button></div>
       <div id="panel" class="panel">
         <div class="row"><button id="pauseBtn">⏸ Pause</button><button id="newBtn">🌍 New planet</button></div>
         <button id="shareBtn">🔗 Share this planet</button>
@@ -51,6 +51,7 @@ export class Hud {
     this.panel = $('panel');
     if (innerWidth < 700) this.panel.classList.add('hidden');
     $('panelToggle').onclick = () => this.panel.classList.toggle('hidden');
+    $('photoBtn').onclick = () => app.photo?.enter();
     $('pauseBtn').onclick = () => app.togglePause();
     $('newBtn').onclick = () => app.newPlanet();
     $('shareBtn').onclick = () => app.sharePlanet();
@@ -115,7 +116,7 @@ export class Hud {
   setGameMode(on) {
     if (on) this.panelOpen = !this.panel.classList.contains('hidden');
     this.panel.classList.toggle('hidden', on || !this.panelOpen);
-    this.$('panelToggle').classList.toggle('hidden', on);
+    this.$('topBtns').classList.toggle('hidden', on);
     this.$('hint').classList.toggle('hidden', on);
     this.$('worldTag').classList.toggle('hidden', on);
     document.body.classList.toggle('in-game', on); // lets phones drop the title to make room for the game HUD

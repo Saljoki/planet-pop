@@ -89,6 +89,7 @@ export class Sfx {
       case 'choo': N(0.16, 0.25, 3000, 900); N(0.16, 0.25, 3000, 900, 0.25); break;
       case 'toot': T(330, 0, 0.4, 'triangle', 0.09); break;
       case 'screech': N(0.5, 0.12, 5000, 1400); T(1400, 900, 0.35, 'sawtooth', 0.02); break;
+      case 'shutter': N(0.06, 0.4, 6000, 2500); N(0.09, 0.3, 4000, 1200, 0.09); break;
       case 'rumble': N(1.6, 0.35, 160, 60); break;
       case 'ufo': T(300, 1300, 0.5, 'sine', 0.06); T(1300, 250, 0.7, 'sine', 0.06, 0.5); break;
       case 'chirp': T(700, 1100, 0.08, 'triangle', 0.05); T(900, 1300, 0.08, 'triangle', 0.05, 0.1); break;

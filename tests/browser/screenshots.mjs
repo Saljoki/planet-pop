@@ -204,17 +204,37 @@ await scene('11-ufo', 'A UFO hovering with its tractor beam on', async () => {
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
+await scene('12-photo-live', 'Photo mode: comic frame, caption and the Pop filter, previewed live', async () => {
+  await page.evaluate(() => {
+    const ph = app.photo, u = app.planet.ufo;
+    if (!u.hovering) { u.arrive(); u.update(3.01, app.simTime); }
+    ph.enter();
+    Object.assign(ph.opts, { frame: 'comic', filter: 'pop', caption: 'We are not alone!' });
+    ph.refresh();
+    app.rig.focus(u.entity);
+  });
+  await until(() => app.rig.mode === 'local');
+  await frames(3);
+});
+await scene('13-photo-result', 'The finished photo, ready to save or share', async () => {
+  await page.evaluate(() => app.photo.snap());
+  await until(() => document.getElementById('photoImg').naturalWidth > 0);
+  const size = await page.evaluate(() => { const i = document.getElementById('photoImg'); return [i.naturalWidth, i.naturalHeight]; });
+  if (size[0] < 1000) throw new Error(`photo is only ${size.join('×')}`);
+  await frames(2);
+});
+await page.evaluate(() => app.photo.exit());
 await page.evaluate(() => app.togglePause());
-await scene('12-hangar', 'Sky Courier hangar', async () => {
+await scene('14-hangar', 'Sky Courier hangar', async () => {
   await page.evaluate(() => { app.rig.release(true); app.game.progress.addCoins(400); app.game.openHangar(); });
   await frames(3);
 });
-await scene('13-courier', 'Sky Courier in flight', async () => {
+await scene('15-courier', 'Sky Courier in flight', async () => {
   await page.evaluate(() => { app.game.hangar.hide(); app.game.start(); });
   await until(() => app.rig.mode === 'game');
   await frames(4);
 });
-await scene('14-lightning', 'Lightning striking the plane inside a thundercloud', async () => {
+await scene('16-lightning', 'Lightning striking the plane inside a thundercloud', async () => {
   await page.evaluate(() => { // pause the world, park the plane in a storm, let the chase camera catch up
     app.togglePause();
     const { planet, game } = app, storm = planet.weather.storms[0], pl = game.player;
@@ -233,7 +253,7 @@ await scene('14-lightning', 'Lightning striking the plane inside a thundercloud'
   });
   await frames(2);
 });
-await scene('15-rival', 'Rival Rex racing just ahead, with his name tag', async () => {
+await scene('17-rival', 'Rival Rex racing just ahead, with his name tag', async () => {
   await page.evaluate(() => { // still paused: one delivery spawns Rex, then park him ahead and to the left
     const { game, planet } = app, pl = game.player;
     game.deliver();
@@ -252,7 +272,7 @@ await scene('15-rival', 'Rival Rex racing just ahead, with his name tag', async 
   await page.evaluate(() => app.game.rival.placeTag());
   await frames(2);
 });
-await scene('16-daily-over', 'End of a daily challenge run, with the share button', async () => {
+await scene('18-daily-over', 'End of a daily challenge run, with the share button', async () => {
   await page.evaluate(() => {
     const { game } = app;
     game.stop();
@@ -265,7 +285,7 @@ await scene('16-daily-over', 'End of a daily challenge run, with the share butto
   await frames(2);
 });
 for (const [i, theme] of ['ice', 'desert', 'candy', 'lava'].entries()) {
-  await scene(`${17 + i}-theme-${theme}`, `The ${theme} world`, async () => {
+  await scene(`${19 + i}-theme-${theme}`, `The ${theme} world`, async () => {
     await page.evaluate(() => app.game.stop());
     await page.goto(`${base}index.html?${PLANET}&theme=${theme}`, { waitUntil: 'domcontentloaded' });
     await until(() => window.app?.planet && !window.app.building, 240000);
@@ -273,14 +293,14 @@ for (const [i, theme] of ['ice', 'desert', 'candy', 'lava'].entries()) {
     await frames(4);
   });
 }
-await scene('21-mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
+await scene('23-mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
   await page.evaluate(() => app.game.stop());
   await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await page.goto(`${base}index.html?${PLANET}&debug`, { waitUntil: 'domcontentloaded' });
   await until(() => window.app?.planet && !window.app.building, 240000);
   await frames(4);
 });
-await scene('22-mobile-courier', 'Daily challenge HUD on a phone', async () => {
+await scene('24-mobile-courier', 'Daily challenge HUD on a phone', async () => {
   await page.evaluate(() => { app.game.start({ daily: true }); app.game.deliver(); });
   await until(() => app.rig.mode === 'game');
   await frames(6);

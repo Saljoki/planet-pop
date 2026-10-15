@@ -23,6 +23,7 @@ const DEFS = [
   ['ufo', '🛸', 'Close Encounter', 'Click the UFO before it flies away'],
   ['daily', '📅', 'Daily Flyer', 'Finish a daily challenge'],
   ['globetrotter', '🧳', 'Globetrotter', 'Visit all five kinds of world'],
+  ['photographer', '📸', 'Say Cheese', 'Take a picture in photo mode'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
 const KEY = 'planetpop.trophies', WORLDS_KEY = 'planetpop.worlds', WORLD_KINDS = 5;
