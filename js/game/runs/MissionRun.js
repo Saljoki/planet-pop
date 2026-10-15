@@ -11,6 +11,7 @@ export const FAIL_REASON = {
   time: '⏰ Out of time.',
   broken: '🥚 The fragile parcel broke.',
   ash: '🌋 You flew into the ash.',
+  wrecked: '💥 Wrecked.',
 };
 
 /**
@@ -110,6 +111,8 @@ export class MissionRun extends DeliveryRun {
     this.time = 0;
     this.endMission('time');
   }
+
+  wrecked() { this.endMission('wrecked'); }
 
   /** Mission over: 'done', or why it failed. Rewards are paid the first time a mission is completed. */
   endMission(result) {

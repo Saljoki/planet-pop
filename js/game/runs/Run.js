@@ -1,3 +1,5 @@
+import { Plane } from '../vehicles/Plane.js';
+
 /**
  * One kind of Sky Courier run (a courier run, the daily, a mission, free flight…). CourierGame owns the plane, the
  * props, the hazards and the controls, and calls these hooks; a run only decides the rules: where the plane starts,
@@ -28,6 +30,9 @@ export class Run {
   /** Set up the run before the plane exists. Returns where it takes off: { at, heading } (unit vectors). */
   takeoff() { throw new Error(`${this.constructor.name} must say where the plane takes off`); }
 
+  /** What the player drives (a Vehicle), starting at `at` facing `heading`. The courier plane unless a run says otherwise. */
+  vehicle(at, heading) { return new Plane(this.planet, at, heading, this.stats, this.game.progress.skinDef); }
+
   /** The plane and props now exist: place things, set up special conditions, say hello. */
   begin() {}
 
@@ -51,6 +56,15 @@ export class Run {
 
   /** Each frame inside a volcano's ash plume. */
   inAsh() {}
+
+  /** Out of health. In a free mode a fresh one turns up at the nearest town; scored runs end (see DeliveryRun). */
+  wrecked() { this.game.respawnSoon(); }
+
+  /** Where a fresh vehicle turns up after a wreck: { at, heading, name }. */
+  respawnPoint() {
+    const up = this.player.up, town = this.planet.cities.sites.reduce((a, b) => (a.c.angleTo(up) < b.c.angleTo(up) ? a : b));
+    return { at: town.c, heading: town.u, name: town.name };
+  }
 
   /** Once a frame, after the plane has moved: the run's own rules, and calling game.finish() when it's over. */
   update() {}

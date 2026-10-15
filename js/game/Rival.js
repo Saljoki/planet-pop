@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { R } from '../core/Geo.js';
-import { PlayerPlane } from './PlayerPlane.js';
+import { Plane } from './vehicles/Plane.js';
 
 export const RIVAL = { name: 'Rival Rex', skin: { body: '#8f5cff', trim: '#1b1530' }, streak: 5, rest: 3 };
 const _v = new THREE.Vector3();
@@ -17,7 +17,7 @@ export class Rival {
   /** from: the pickup city · start/heading: where he takes off · tag: his name label · toScreen: world → screen px. */
   constructor(planet, { from, start = from.c, heading, tag, toScreen }) {
     this.planet = planet;
-    this.plane = new PlayerPlane(planet, start, heading, statsFor(0), RIVAL.skin);
+    this.plane = new Plane(planet, start, heading, statsFor(0), RIVAL.skin);
     this.tag = tag;
     this.toScreen = toScreen;
     this.rest = 0;      // seconds spent circling after a steal, so he doesn't chain steals

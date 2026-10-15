@@ -62,11 +62,11 @@ export class FlightControls {
     for (const k of ['left', 'right', 'up', 'down', 'boost']) if (s[k] !== !!prev[k]) inp[k] = s[k];
   }
 
-  /** Once a frame: thumbstick and tilt add up, so either (or both) can steer. */
+  /** Once a frame: thumbstick and tilt add up, so either (or both) can steer. (Tilt only climbs and dives a plane.) */
   update() {
-    const inp = this.game.player.input, t = this.tilt;
+    const pl = this.game.player, inp = pl.input, t = this.tilt;
     inp.steer = clamp((this.stick?.steer ?? 0) + (t.on ? t.steer : 0));
-    inp.climb = clamp((this.stick?.climb ?? 0) + (t.on ? t.climb : 0));
+    inp.climb = clamp((this.stick?.climb ?? 0) + (t.on && pl.tiltClimbs ? t.climb : 0));
   }
 
   /** Let go of everything (the run just ended). */

@@ -3,13 +3,14 @@ import { loadJson, saveJson, loadNumber, forget } from '../core/Store.js';
 
 const KEY = 'planetpop.courier', OLD_BEST_KEY = 'planetpop.best';
 
-/** Hangar upgrades. Each entry in `costs` is one level. */
+/** Hangar upgrades (they work on every vehicle). Each entry in `costs` is one level. */
 export const UPGRADES = [
   { id: 'engine', icon: '🚀', name: 'Engine', desc: '+8% speed per level', costs: [150, 350, 700, 1200] },
   { id: 'wings', icon: '🛩️', name: 'Wings', desc: '+12% turning per level', costs: [120, 300, 600] },
   { id: 'tank', icon: '⛽', name: 'Boost tank', desc: 'Boost lasts longer and refills faster', costs: [150, 400, 800] },
   { id: 'magnet', icon: '🧲', name: 'Ring magnet', desc: 'Grab rings from further away', costs: [200, 500] },
   { id: 'clock', icon: '⏱️', name: 'Head start', desc: '+10 s on the clock per level', costs: [250, 600, 1100] },
+  { id: 'armour', icon: '🛡️', name: 'Armour', desc: 'Crashes and lightning do 20% less damage per level', costs: [200, 450, 900] },
 ];
 
 /** Plane paint jobs: bought with coins, or unlocked by a trophy. */
@@ -31,6 +32,7 @@ function statsFor(L) {
     regen: 0.08 * (1 + 0.4 * L('tank')),
     magnet: 0.55 + 0.3 * L('magnet'),
     startTime: 90 + 10 * L('clock'),
+    armour: 1 - 0.2 * L('armour'), // share of a knock's damage that gets through
   };
 }
 

@@ -7,16 +7,19 @@ const _m = new THREE.Matrix4();
 const NEAR = 0.9; // puffs closer than this to the camera vanish instead of filling the screen
 
 /** Toon puffs that disappear when the camera is right next to them (following a smoking train, chasing your own contrail). */
-function puffMaterial(color) {
+function puffMaterial(color, near) {
   return toon(color, { flatShading: true }, (sh) => {
     sh.fragmentShader = sh.fragmentShader.replace('#include <clipping_planes_fragment>',
-      `#include <clipping_planes_fragment>\n  if (vViewPosition.z < ${NEAR.toFixed(2)}) discard;`);
-  }, 'puff');
+      `#include <clipping_planes_fragment>\n  if (vViewPosition.z < ${near.toFixed(2)}) discard;`);
+  }, `puff${near.toFixed(2)}`);
 }
 
-/** Pooled comic puffs: train smoke, contrails, boat wakes, rocket exhaust. */
+/**
+ * Pooled comic puffs: train smoke, contrails, boat wakes, rocket exhaust. `near`: puffs closer than this to the camera
+ * vanish (smaller for things the camera chases closely, like a smoking car).
+ */
 export class Trails {
-  constructor(parent, { max = 200, color = '#ffffff', life = 2, grow = 2, drag = 0.8 } = {}) {
+  constructor(parent, { max = 200, color = '#ffffff', life = 2, grow = 2, drag = 0.8, near = NEAR } = {}) {
     Object.assign(this, { max, life, grow, drag });
     this.pos = new Float32Array(max * 3);
     this.vel = new Float32Array(max * 3);
@@ -25,7 +28,7 @@ export class Trails {
     this.next = 0;
     // Puffs carry their own ink outline and stay out of the edge-detection pass, so a puff that vanishes
     // next to the camera doesn't leave its silhouette behind.
-    this.mesh = addInstanced(parent, new THREE.IcosahedronGeometry(1, 1), puffMaterial(color), max, 0.008, { cast: false, near: NEAR });
+    this.mesh = addInstanced(parent, new THREE.IcosahedronGeometry(1, 1), puffMaterial(color, near), max, 0.008, { cast: false, near });
     this.mesh.layers.set(LAYER_FX);
     this.mesh.count = 0;
   }

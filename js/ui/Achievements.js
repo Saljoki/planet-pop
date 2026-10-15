@@ -36,6 +36,12 @@ const DEFS = [
   ['snowday', '⛄', 'Snow Day', 'Visit a town in the winter snow'],
   ['sightseer', '🕊️', 'Free as a Bird', 'Spend two minutes in free flight'],
   ['couchpotato', '📺', 'Couch Potato', 'Watch the tour for three minutes'],
+  ['totalled', '💥', 'Total Loss', 'Wreck a vehicle'],
+  ['joyrider', '🚗', 'Joyrider', 'Take over a car on the road and drive it for a minute'],
+  ['sailor', '⛵', 'Ahoy!', 'Take the helm of a boat'],
+  ['cabbie', '🚕', 'Cabbie', 'Drop off 5 passengers in one taxi shift'],
+  ['vanman', '🚐', 'Last Mile', 'Deliver 3 parcels by van in one run'],
+  ['racer', '🏁', 'Round the World', 'Beat Rex in the round-the-world race'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
 const KEY = 'planetpop.trophies', WORLDS_KEY = 'planetpop.worlds', WORLD_KINDS = 5;

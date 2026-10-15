@@ -16,6 +16,7 @@
   input[type=checkbox] { width: 24px; height: 24px; }
   #panel label.check { min-height: 32px; }
   .chips button { min-height: 40px; }
+  #gSpeed { bottom: calc(136px + var(--sb)); font-size: 18px; min-width: 96px; } /* above the BOOST button */
 }
 /* portrait phones: the controls and Find become sheets that slide up from the bottom (drag the bar down to close) */
 @media (max-width: 700px) {

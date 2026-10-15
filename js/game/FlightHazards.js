@@ -1,7 +1,8 @@
 import { TAU, tangentBasis } from '../core/Geo.js';
 import { HALF } from '../world/Airports.js';
+import { HARM } from './vehicles/Vehicle.js';
 
-const REFUEL = 0.9, ASH_ENGINE = 0.55;
+const REFUEL = 0.9, REPAIR = 0.3, ASH_ENGINE = 0.55;
 
 /**
  * What the planet does to the plane in any run: thunderstorms buffet and zap it, runways refuel it, volcanic ash
@@ -44,6 +45,7 @@ export class FlightHazards {
     }
     weather.strike(storm, aim);
     if (!hit) return;
+    pl.damage(HARM.lightning);
     g.run.zapped();
     pl.boost = 0;
     pl.shake = 1;
@@ -53,11 +55,14 @@ export class FlightHazards {
     app.achievements.unlock('lightningrod');
   }
 
-  /** Skimming low along a runway tops up the boost tank. */
+  /** Skimming low along a runway tops up the boost tank, and the ground crew patch up any damage. */
   runways(dt) {
     const g = this.game, pl = g.player, ap = g.planet.airports?.list.find((a) => a.c.angleTo(pl.up) < HALF + 0.02);
     const on = !!ap && pl.alt < ap.top + 0.9 && Math.abs(pl.up.dot(ap.side)) < 0.04;
-    if (on) pl.boost = Math.min(1, pl.boost + REFUEL * dt);
+    if (on) {
+      pl.boost = Math.min(1, pl.boost + REFUEL * dt);
+      pl.repair(REPAIR * dt);
+    }
     if (on && !this.refuelling) { g.run.refuelled(); g.app.sfx.pop(pl.pos.clone(), 'REFUEL!', '#3fa7ff', 'ring'); }
     this.refuelling = on;
   }

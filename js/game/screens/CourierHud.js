@@ -1,11 +1,13 @@
 import * as THREE from 'three';
 
 const _t = new THREE.Vector3(), _s = new THREE.Vector3();
+const KMH = 80; // world units per second → a cartoon km/h for the speedometer
 
 /**
  * Sky Courier's heads-up display, in the game layer: the badges along the top (score, time, combo, coins and a mode
- * badge), the arrow, the goal line, the boost bar, the ⏸ button, Rex's name tag and the help line. The run fills in
- * what they say each frame (Run.hud); this shows the right pieces for the run and does the common bits.
+ * badge), the arrow, the goal line, the health and boost bars, the speedometer (on the ground), the ⏸ button, Rex's
+ * name tag and the help line. The run fills in what they say each frame (Run.hud); this shows the right pieces for
+ * the run and does the common bits.
  */
 export class CourierHud {
   constructor(game) {
@@ -16,7 +18,9 @@ export class CourierHud {
       <div id="gRival" class="tag hidden">😈 Rex</div>
       <svg id="gArrow" viewBox="0 0 70 70"><polygon points="35,5 61,58 35,45 9,58" fill="#ff5fa2" stroke="#1b1530" stroke-width="5" stroke-linejoin="round"/></svg>
       <div id="gGoal" class="badge"></div>
-      <div id="gBoost" class="badge"><div></div></div>
+      <div id="gHealth" class="badge" title="Health"><div></div></div>
+      <div id="gBoost" class="badge" title="Boost"><div></div></div>
+      <div id="gSpeed" class="badge hidden"></div>
       <div id="gHelp" class="badge">←/→ steer · ↑/↓ climb · Space boost · P pause · Esc quit</div>
       <button id="gBoostBtn">BOOST</button>`);
     const $ = (id) => game.el.querySelector(`#${id}`);
@@ -24,26 +28,35 @@ export class CourierHud {
       daily: $('gDaily'), mission: $('gMission'), free: $('gFree'), rival: $('gRival'),
       score: $('gScore'), time: $('gTime'), combo: $('gCombo'), coins: $('gCoins'), arrow: $('gArrow'), goal: $('gGoal'),
       boost: $('gBoost').firstElementChild, help: $('gHelp'), boostBtn: $('gBoostBtn'),
+      healthBox: $('gHealth'), speed: $('gSpeed'),
     };
     this.dom.stats = [this.dom.score, this.dom.time, this.dom.combo, this.dom.coins];
+    this.dom.health = this.dom.healthBox.firstElementChild;
     // phones get the BOOST button instead of the keyboard help
     this.dom.boostBtn.classList.toggle('hidden', !game.touch);
     this.dom.help.classList.toggle('hidden', game.touch);
     $('gPauseBtn').addEventListener('click', () => { if (!game.over && !game.app.paused) game.app.togglePause(); });
   }
 
-  /** Show the pieces this run uses (see Run.layout). */
-  setLayout({ badge, stats, arrow }) {
+  /** Show the pieces this run uses (see Run.layout); the speedometer is for vehicles on the ground. */
+  setLayout({ badge, stats, arrow }, vehicle) {
     const d = this.dom, invert = this.game.app.settings?.get('invertY');
     for (const k of ['daily', 'mission', 'free']) d[k].classList.toggle('hidden', badge !== k);
     for (const b of d.stats) b.classList.toggle('hidden', !stats);
     d.arrow.classList.toggle('hidden', !arrow);
-    d.help.textContent = `←/→ steer · ↑/↓ ${invert ? 'dive / climb (inverted)' : 'climb / dive'} · Space boost · P pause · Esc quit`;
+    this.showSpeed = !!vehicle && vehicle.kind !== 'plane';
+    d.speed.classList.toggle('hidden', !this.showSpeed);
+    const move = vehicle?.kind === 'plane' || !vehicle ? `↑/↓ ${invert ? 'dive / climb (inverted)' : 'climb / dive'}` : '↑ go · ↓ brake / reverse';
+    d.help.textContent = `←/→ steer · ${move} · Space boost · P pause · Esc quit`;
   }
 
   update() {
-    const g = this.game;
-    this.dom.boost.style.width = `${Math.round(g.player.boost * 100)}%`;
+    const g = this.game, pl = g.player, d = this.dom;
+    d.boost.style.width = `${Math.round(pl.boost * 100)}%`;
+    d.health.style.width = `${Math.round(pl.health * 100)}%`;
+    d.healthBox.classList.toggle('mid', pl.health < 0.6 && pl.health >= 0.3);
+    d.healthBox.classList.toggle('low', pl.health < 0.3);
+    if (this.showSpeed) d.speed.textContent = `${Math.round(Math.abs(pl.speed) * KMH)} km/h`;
     g.run.hud(this);
   }
 

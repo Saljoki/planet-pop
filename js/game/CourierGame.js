@@ -1,4 +1,4 @@
-import { PlayerPlane } from './PlayerPlane.js';
+import { HARM } from './vehicles/Vehicle.js';
 import { Progress } from './Progress.js';
 import { dailyParams } from './Daily.js';
 import { CourierProps } from './CourierProps.js';
@@ -21,6 +21,8 @@ import { MissionBoard } from './screens/MissionBoard.js';
  * Which kind of run to start. opts: { free } free flight · { mission } a mission definition (see Missions.js) ·
  * { daily } today's challenge · {} a courier run. A new kind of run goes here (see runs/Run.js).
  */
+const RESPAWN = 1.8; // seconds of smoke after a wreck before a fresh vehicle turns up (free modes)
+
 function runFor(game, opts) {
   if (opts.free) return new FreeFlight(game, opts);
   if (opts.mission) return new MissionRun(game, opts);
@@ -39,8 +41,9 @@ export class CourierGame {
     this.active = false;
     this.over = false;  // the run has ended and the results card is up
     this.run = null;    // the current Run
-    this.player = null; // its PlayerPlane
+    this.player = null; // the Vehicle being driven
     this.props = null;  // its CourierProps
+    this.respawnT = 0;  // counting down to a fresh vehicle after a wreck
     this.progress = new Progress();
     this.touch = matchMedia('(pointer: coarse)').matches;
     // the game layer, in front of the planet; what's in it is stacked in this order
@@ -106,9 +109,9 @@ export class CourierGame {
     if (!p || app.building) { app.hud.toast('🌍 The planet is still being built. Try again in a moment.'); return; }
     if (p.cities.sites.length < 2) { app.hud.toast('📦 Sky Courier needs at least 2 cities. Try a new planet!'); return; }
     if (app.paused) app.togglePause();
-    Object.assign(this, { active: true, over: false, planet: p });
+    Object.assign(this, { active: true, over: false, planet: p, respawnT: 0 });
     const run = (this.run = runFor(this, opts)), { at, heading } = run.takeoff();
-    this.player = new PlayerPlane(p, at, heading, run.stats, this.progress.skinDef);
+    this.player = run.vehicle(at, heading);
     if (app.settings) this.player.controls = app.settings.values; // Invert Y and sensitivity, live
     this.player.setCargo(run.cargo);
     this.props = new CourierProps(p);
@@ -117,7 +120,7 @@ export class CourierGame {
     app.hud.setGameMode(true);
     this.layer.show();
     this.results.hide();
-    this.hud.setLayout(run.layout);
+    this.hud.setLayout(run.layout, this.player);
     this.controls.attach();
     app.wakeLock?.want('game', true);
     app.sfx.play('start');
@@ -146,14 +149,21 @@ export class CourierGame {
     this.app.rig.release();
   }
 
-  /** One frame of flying: move the plane, tell the run what happened, then let it apply its rules. */
+  /** One frame: move the vehicle, tell the run what happened, then let it apply its rules. */
   update(dt) {
     if (!this.active || this.over || dt <= 0) return;
     const app = this.app, run = this.run, pl = this.player;
+    if (this.respawnT > 0) { // wrecked in a free mode: a moment of smoke, then a fresh one
+      pl.smoke.update(dt);
+      if ((this.respawnT -= dt) <= 0) this.respawn();
+      this.hud.update();
+      return;
+    }
     this.controls.update();
     pl.update(dt);
     if (pl.crashed) {
       app.haptics?.buzz('crash');
+      pl.damage(pl.impact ?? HARM.crash);
       run.crashed();
     }
     this.hazards.update(dt);
@@ -169,8 +179,31 @@ export class CourierGame {
       run.placeRing(ring);
     }
     run.update(dt);
+    if (pl.wrecked && !this.over) this.wreck();
     this.props.update(dt);
     this.hud.update();
+  }
+
+  /** Out of health: up in smoke. The run decides what then (game over, or a fresh one in the free modes). */
+  wreck() {
+    const pl = this.player, app = this.app;
+    pl.explode();
+    app.sfx.pop(pl.pos.clone(), 'KABOOM!', '#ff8c42', 'boom');
+    app.haptics?.buzz('crash');
+    app.achievements.unlock('totalled');
+    this.run.wrecked();
+  }
+
+  /** A fresh vehicle at the nearest town in a moment (the free modes, after a wreck). */
+  respawnSoon() {
+    this.respawnT = RESPAWN;
+    this.controls.release();
+  }
+
+  respawn() {
+    const { at, heading, name } = this.run.respawnPoint();
+    this.player.respawn(at, heading);
+    this.app.hud.toast(`🔧 Good as new${name ? `, at ${name}` : ''}. Mind how you go!`);
   }
 
   /** The run is over: freeze the plane and show its results card (see ResultsScreen.show) with a sound. */

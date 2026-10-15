@@ -1,41 +1,33 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { R, clamp, frameFwd } from '../core/Geo.js';
-import { toon } from '../render/Toon.js';
-import { addMesh } from '../render/Outline.js';
-import { Trails } from '../life/Trails.js';
+import { R, clamp, frameFwd } from '../../core/Geo.js';
+import { toon } from '../../render/Toon.js';
+import { addMesh } from '../../render/Outline.js';
+import { Trails } from '../../life/Trails.js';
+import { Vehicle } from './Vehicle.js';
 
 export const SPEED = 1.7;
 const BOOST = 3.0, TURN = 1.6, CLIMB = 1.4, MIN_ALT = R + 0.4, MAX_ALT = R + 5.5;
+const STALL = 1.4; // seconds the engine splutters after hitting the ground
 const _a = new THREE.Vector3(), _f = new THREE.Vector3(), _u = new THREE.Vector3(), _m = new THREE.Matrix4();
-const BASE_STATS = { speed: 1, turn: 1, drain: 0.35, regen: 0.08 };
 const BASE_SKIN = { body: '#ffd23f', trim: '#ff4d4d' };
 
-/** The player's courier plane: flies great circles around the globe at a chosen altitude. */
-export class PlayerPlane {
-  constructor(planet, startDir, heading, stats = BASE_STATS, skin = BASE_SKIN) {
-    this.planet = planet;
-    this.stats = stats;
-    this.up = startDir.clone().normalize();
-    this.fwd = heading.clone().addScaledVector(this.up, -heading.dot(this.up)).normalize();
+/**
+ * The courier plane (Rex flies one too): flies great circles around the globe at a chosen altitude. Hitting the
+ * ground bounces it back up, but it costs health, and the engine splutters and the plane wobbles for a moment.
+ */
+export class Plane extends Vehicle {
+  constructor(planet, startDir, heading, stats, skin = BASE_SKIN) {
+    super(planet, stats);
+    this.place(startDir, heading);
     this.alt = planet.groundR(this.up) + 1.6;
-    this.pos = new THREE.Vector3();
-    this.boost = 1;
     this.roll = 0;
     this.pitchV = 0;
-    this.shake = 0;
-    this.invuln = 0;
-    this.crashed = false;
+    this.stall = 0;  // 0..1 after a crash: the engine splutters
     this.cargoSpeed = 1;
     this.cargoClimb = 1;
-    this.turbulence = 0; // 0..1, set by the game while flying through a thundercloud
-    this.engine = 1;     // < 1 while volcanic ash chokes the engine
-    this.t = 0;
-    // keys and buttons are on/off; a thumbstick or tilting the phone adds steer (-1 left … 1 right) and climb (-1 … 1)
-    this.input = { left: false, right: false, up: false, down: false, boost: false, steer: 0, climb: 0 };
-    this.controls = { invertY: false, sensitivity: 1 }; // the player's options (Rex flies with the defaults)
 
-    const g = (this.group = new THREE.Group());
+    const g = this.group;
     addMesh(g, new THREE.CapsuleGeometry(0.08, 0.4, 4, 12).rotateX(Math.PI / 2), toon(skin.body), 0.012);
     addMesh(g, mergeGeometries([
       new THREE.BoxGeometry(0.9, 0.03, 0.17).translate(0, -0.02, 0.04),
@@ -47,17 +39,28 @@ export class PlayerPlane {
     addMesh(g, new THREE.BoxGeometry(0.09, 0.07, 0.09).translate(0, 0.11, -0.08), this.crateMat, 0.006); // the parcel
     this.prop = addMesh(g, new THREE.BoxGeometry(0.34, 0.03, 0.012), toon('#2a2540'), 0.004);
     this.prop.position.z = 0.29;
-    planet.root.add(g);
     this.trail = new Trails(planet.root, { max: 200, color: '#fff4c2', life: 1.6, grow: 2, drag: 0.4 });
     this.trailT = 0;
     this.sync();
   }
 
+  get kind() { return 'plane'; }
+
+  get speed() { return SPEED * this.stats.speed * this.cargoSpeed * this.engine * (1 - 0.6 * this.stall); }
+
   /** Heavy cargo slows the plane down; the crate on top takes the cargo's colour. */
   setCargo(cargo) {
+    if (!cargo) return;
     this.cargoSpeed = cargo.speed ?? 1;
     this.cargoClimb = cargo.climb ?? 1;
     this.crateMat.color.set(cargo.color);
+  }
+
+  respawn(at, heading) {
+    super.respawn(at, heading);
+    this.alt = this.planet.groundR(this.up) + 1.6;
+    this.stall = 0;
+    this.sync();
   }
 
   /** Autopilot (the rival uses it): turn toward `target`, cruise above the ground, dive near the target. */
@@ -74,12 +77,9 @@ export class PlayerPlane {
   }
 
   update(dt) {
-    const inp = this.input;
-    const turn = clamp((inp.left ? 1 : 0) - (inp.right ? 1 : 0) - (+inp.steer || 0), -1, 1);
+    const inp = this.input, turn = this.turnInput();
     const climb = clamp((inp.up ? 1 : 0) - (inp.down ? 1 : 0) + (+inp.climb || 0), -1, 1) * (this.controls.invertY ? -1 : 1);
-    const st = this.stats;
-    const boosting = inp.boost && this.boost > 0.02;
-    this.boost = clamp(this.boost + (boosting ? -st.drain : st.regen) * dt, 0, 1);
+    const st = this.stats, boosting = this.boostStep(dt);
 
     this.fwd.applyAxisAngle(this.up, turn * TURN * st.turn * (this.controls.sensitivity ?? 1) * dt); // steer
     this.t += dt;
@@ -90,31 +90,34 @@ export class PlayerPlane {
       this.shake = Math.max(this.shake, 0.3 * k);
     }
     const axis = _a.crossVectors(this.up, this.fwd).normalize();
-    const ang = ((boosting ? BOOST : SPEED) * st.speed * this.cargoSpeed * this.engine * dt) / this.alt; // fly along a great circle
+    const ang = ((boosting ? BOOST : SPEED) * st.speed * this.cargoSpeed * this.engine * (1 - 0.6 * this.stall) * dt) / this.alt; // a great circle
     this.up.applyAxisAngle(axis, ang).normalize();
     this.fwd.applyAxisAngle(axis, ang);
     this.fwd.addScaledVector(this.up, -this.fwd.dot(this.up)).normalize();
     this.alt = clamp(this.alt + climb * CLIMB * this.cargoClimb * dt, MIN_ALT, MAX_ALT);
 
-    this.roll += (-turn * 0.6 - this.roll) * Math.min(1, dt * 5); // bank into the turn: left wing down turning left
-    this.pitchV += (climb * 0.35 - this.pitchV) * Math.min(1, dt * 5);
+    const wobble = this.stall * Math.sin(this.t * 17) * 0.7; // a shaken plane rocks its wings
+    this.roll += (-turn * 0.6 + wobble - this.roll) * Math.min(1, dt * 5); // bank into the turn: left wing down turning left
+    this.pitchV += (climb * 0.35 - this.stall * 0.25 - this.pitchV) * Math.min(1, dt * 5);
     this.invuln = Math.max(0, this.invuln - dt);
     this.shake = Math.max(0, this.shake - dt * 2);
+    this.stall = Math.max(0, this.stall - dt / STALL);
 
     this.crashed = false;
     const ground = this.planet.groundR(this.up);
     if (this.alt < ground + 0.12) {
-      if (this.invuln <= 0) { this.crashed = true; this.invuln = 1.5; this.shake = 1; this.alt = ground + 0.9; }
+      if (this.invuln <= 0) Object.assign(this, { crashed: true, invuln: 1.5, shake: 1, stall: 1, alt: ground + 0.9 });
       else this.alt = ground + 0.12;
     }
 
-    this.prop.rotation.z += dt * 40;
+    this.prop.rotation.z += dt * 40 * (1 - 0.7 * this.stall);
     this.sync();
     if ((this.trailT -= dt) <= 0) {
       this.trailT = boosting ? 0.03 : 0.07;
       this.trail.emit(_u.set(0, 0.02, -0.32).applyMatrix4(_m), boosting ? 0.05 : 0.03);
     }
     this.trail.update(dt);
+    this.smokeStep(dt, _u.set(0, 0.06, 0.1).applyMatrix4(_m));
   }
 
   sync() {
@@ -126,15 +129,5 @@ export class PlayerPlane {
     this.group.quaternion.setFromRotationMatrix(_m);
   }
 
-  dispose() {
-    const objs = [this.group, this.trail.mesh];
-    for (const root of objs) {
-      root.removeFromParent();
-      root.traverse((o) => {
-        o.geometry?.dispose();
-        [].concat(o.material || []).forEach((m) => m.dispose());
-        if (o.isInstancedMesh) o.dispose();
-      });
-    }
-  }
+  extraMeshes() { return [this.trail.mesh]; }
 }

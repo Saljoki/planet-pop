@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { R } from '../../core/Geo.js';
-import { SPEED } from '../PlayerPlane.js';
+import { SPEED } from '../vehicles/Plane.js';
 import { rollCargo } from '../Cargo.js';
 import { Rival, RIVAL } from '../Rival.js';
 import { Run } from './Run.js';
 
 const DELIVERY_BONUS = 20, RING_BONUS = 5, RING_COINS = 5, CRASH_PENALTY = 8, LIGHTNING_PENALTY = 5;
-const UFO_BONUS = 300, UFO_COINS = 30, ACE = 1500;
+const UFO_BONUS = 300, UFO_COINS = 30, ACE = 1500, REPAIR = 0.15;
 const _v = new THREE.Vector3(), _t = new THREE.Vector3(), _s = new THREE.Vector3();
 
 /**
@@ -140,6 +140,7 @@ export class DeliveryRun extends Run {
       app.achievements.unlock('courier');
       if (this.combo >= 4) app.achievements.unlock('combo');
     }
+    this.player.repair(REPAIR); // the customer's mechanic patches you up a little
     if (this.rival && ++this.rivalStreak >= RIVAL.streak) app.achievements.unlock('outrun');
     this.tally.rexStreak = Math.max(this.tally.rexStreak, this.rival ? this.rivalStreak : 0);
     this.from = this.dest;
@@ -186,13 +187,16 @@ export class DeliveryRun extends Run {
     return p.recordScore(this.score) ? '🎉 New best!' : `Best: ${prev}`;
   }
 
-  gameOver() {
+  /** Out of health: the run ends there, with what you'd scored. */
+  wrecked() { this.gameOver('💥 Wrecked!'); }
+
+  gameOver(title = "⏰ Time's up!") {
     this.time = 0;
     const best = this.recordBest();
     if (this.score >= ACE) this.app.achievements.unlock('ace');
     const stolen = this.stolen ? ` · 😈 ${this.stolen} stolen` : '';
     this.game.finish({
-      title: "⏰ Time's up!",
+      title,
       html: `${this.resultHead}Score <b>${this.score}</b> · ${this.deliveries} deliveries${stolen}<br>
       🪙 +${this.coins} coins (you have ${this.game.progress.coins})<br>${best}`,
       share: this.shareable,
