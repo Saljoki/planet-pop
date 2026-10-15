@@ -9,11 +9,14 @@ export const CARGO = {
   heavy: { id: 'heavy', icon: '🏋️', name: 'Heavy', tip: 'Slower plane, bigger payout', pay: 1.5, par: 1.35, color: '#8f86a8', weight: 15, speed: 0.8, climb: 0.7 },
 };
 
-/** Random parcel, weighted. The first parcel of a run is always a regular one. Pass a seeded `rand` for the daily route. */
-export function rollCargo(first = false, rand = Math.random) {
+/**
+ * Random parcel, weighted. The first parcel of a run is always a regular one. Pass a seeded `rand` for the daily
+ * route, and `bias` (e.g. { urgent: 3 }) to make some kinds more common for a mission.
+ */
+export function rollCargo(first = false, rand = Math.random, bias = null) {
   if (first) return CARGO.standard;
-  const list = Object.values(CARGO);
-  let r = rand() * list.reduce((sum, c) => sum + c.weight, 0);
-  for (const c of list) if ((r -= c.weight) < 0) return c;
+  const list = Object.values(CARGO), w = (c) => c.weight * (bias?.[c.id] ?? 1);
+  let r = rand() * list.reduce((sum, c) => sum + w(c), 0);
+  for (const c of list) if ((r -= w(c)) < 0) return c;
   return CARGO.standard;
 }

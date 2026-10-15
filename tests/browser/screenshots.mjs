@@ -284,8 +284,31 @@ await scene('18-daily-over', 'End of a daily challenge run, with the share butto
   await until(() => app.game.over);
   await frames(2);
 });
+const missionDefs = () => page.evaluate(async () => { window.MISSIONS = (await import('./js/game/Missions.js')).MISSIONS; });
+await scene('19-missions', 'The mission board, with the first mission done', async () => {
+  await missionDefs();
+  await page.evaluate(() => { app.game.stop(); app.game.hangar.hide(); app.game.progress.completeMission(MISSIONS[0]); app.game.board.show(); });
+  await frames(2);
+});
+await scene('20-mission-hud', 'Flying a mission: the goal next to the score, the arrow pointing at a runway', async () => {
+  await page.evaluate(() => { app.game.board.hide(); app.game.start({ mission: MISSIONS.find((m) => m.id === 'pitstop') }); });
+  await until(() => app.rig.mode === 'game');
+  await frames(4);
+});
+await scene('21-mission-complete', 'Mission complete, with the reward and the next mission', async () => {
+  await page.evaluate(() => {
+    const g = app.game;
+    g.stop();
+    g.progress.missions.delete('rush');
+    g.start({ mission: MISSIONS.find((m) => m.id === 'rush') });
+    g.tally.urgent = 2; // as if two urgent parcels just went out
+    g.update(1 / 60);
+  });
+  await until(() => app.game.over);
+  await frames(2);
+});
 for (const [i, theme] of ['ice', 'desert', 'candy', 'lava'].entries()) {
-  await scene(`${19 + i}-theme-${theme}`, `The ${theme} world`, async () => {
+  await scene(`${22 + i}-theme-${theme}`, `The ${theme} world`, async () => {
     await page.evaluate(() => app.game.stop());
     await page.goto(`${base}index.html?${PLANET}&theme=${theme}`, { waitUntil: 'domcontentloaded' });
     await until(() => window.app?.planet && !window.app.building, 240000);
@@ -293,14 +316,14 @@ for (const [i, theme] of ['ice', 'desert', 'candy', 'lava'].entries()) {
     await frames(4);
   });
 }
-await scene('23-mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
+await scene('26-mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
   await page.evaluate(() => app.game.stop());
   await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await page.goto(`${base}index.html?${PLANET}&debug`, { waitUntil: 'domcontentloaded' });
   await until(() => window.app?.planet && !window.app.building, 240000);
   await frames(4);
 });
-await scene('24-mobile-courier', 'Daily challenge HUD on a phone', async () => {
+await scene('27-mobile-courier', 'Daily challenge HUD on a phone', async () => {
   await page.evaluate(() => { app.game.start({ daily: true }); app.game.deliver(); });
   await until(() => app.rig.mode === 'game');
   await frames(6);

@@ -3,7 +3,7 @@ import { todayKey } from './Daily.js';
 
 /** Between-run screen: spend coins on upgrades and paint jobs, then take off (free flight or today's challenge). */
 export class Hangar {
-  constructor(app, progress, { onFly, onDaily }) {
+  constructor(app, progress, { onFly, onDaily, onMissions }) {
     this.app = app;
     this.progress = progress;
     const el = (this.el = document.createElement('div'));
@@ -17,7 +17,8 @@ export class Hangar {
       <h3>Paint jobs</h3>
       <div id="hSkins" class="skins"></div>
       <div class="hfoot">
-        <div class="hrow"><button id="hGo" class="big">✈️ Free flight</button><button id="hDaily" class="big daily">📅 Daily challenge</button></div>
+        <div class="hrow"><button id="hGo" class="big">✈️ Free flight</button><button id="hMissions" class="big missions">🎯 Missions</button>
+          <button id="hDaily" class="big daily">📅 Daily</button></div>
         <p class="note" id="hDailyNote"></p>
       </div>
     </div>`;
@@ -26,6 +27,7 @@ export class Hangar {
     this.dom = { coins: $('hCoins'), ups: $('hUpgrades'), skins: $('hSkins'), dailyNote: $('hDailyNote') };
     $('hGo').addEventListener('click', () => { this.hide(); onFly(); });
     $('hDaily').addEventListener('click', () => { this.hide(); onDaily(); });
+    $('hMissions').addEventListener('click', () => { this.hide(); onMissions(); });
     $('hClose').addEventListener('click', () => this.hide());
     el.addEventListener('click', (e) => {
       const b = e.target.closest?.('button[data-buy], button[data-skin]');

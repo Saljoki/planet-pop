@@ -13,6 +13,7 @@ import { CourierGame } from './game/CourierGame.js';
 import { DebugStats } from './ui/DebugStats.js';
 import { Ambience } from './ui/Ambience.js';
 import { PhotoMode } from './ui/PhotoMode.js';
+import { Gamepad } from './game/Gamepad.js';
 import { dailyParams } from './game/Daily.js';
 import { THEME_IDS, pickTheme } from './world/Themes.js';
 
@@ -72,6 +73,7 @@ export class App {
     this.quality = new Quality(this);
     this.debug = new DebugStats(this);
     this.photo = new PhotoMode(this);
+    this.gamepad = new Gamepad(this);
     this.onRendered = null; // one-shot callback with the canvas right after a frame is drawn (photo mode)
 
     addEventListener('resize', () => this.resize());
@@ -168,6 +170,7 @@ export class App {
       this.planet?.update(h, this.simTime);
     }
     if (this.planet) this.checkFollow();
+    this.gamepad.update();
     if (this.game.active) this.game.update(dt, real);
     this.rig.update(real);
     this.sfx.update(real);

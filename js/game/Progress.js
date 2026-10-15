@@ -1,3 +1,5 @@
+import { MISSIONS } from './Missions.js';
+
 const KEY = 'planetpop.courier';
 
 /** Hangar upgrades. Each entry in `costs` is one level. */
@@ -47,10 +49,12 @@ export class Progress {
     this.owned = new Set(s.owned || ['classic']);
     this.skin = this.owned.has(s.skin) ? s.skin : 'classic';
     this.daily = s.daily || null; // { date, best } for the most recent daily challenge played
+    this.missions = new Set(s.missions || []); // ids of completed missions
   }
 
   save() {
-    const data = { coins: this.coins, best: this.best, levels: this.levels, owned: [...this.owned], skin: this.skin, daily: this.daily };
+    const data = { coins: this.coins, best: this.best, levels: this.levels, owned: [...this.owned], skin: this.skin, daily: this.daily,
+      missions: [...this.missions] };
     try { localStorage.setItem(KEY, JSON.stringify(data)); } catch { /* storage unavailable */ }
   }
 
@@ -111,6 +115,20 @@ export class Progress {
     if (record) this.daily = { date, best: score };
     this.save();
     return record;
+  }
+
+  missionDone(id) { return this.missions.has(id); }
+
+  /** Missions open up one at a time: the first, then each one after a completed one. */
+  missionUnlocked(i) { return i === 0 || this.missions.has(MISSIONS[i - 1].id); }
+
+  /** Marks a mission complete. Returns the coin reward: paid the first time only. */
+  completeMission(def) {
+    if (this.missions.has(def.id)) return 0;
+    this.missions.add(def.id);
+    this.coins += def.reward;
+    this.save();
+    return def.reward;
   }
 
   get skinDef() { return SKINS.find((s) => s.id === this.skin) || SKINS[0]; }

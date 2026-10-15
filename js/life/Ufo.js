@@ -76,7 +76,7 @@ export class Ufo {
   leave() {
     const app = this.planet.app;
     this.state = 'away';
-    this.timer = 80 + Math.random() * 60;
+    this.timer = this.returnTime ?? 80 + Math.random() * 60;
     this.group.visible = false;
     if (app.rig?.entity === this.entity) app.rig.release();
   }
@@ -98,7 +98,7 @@ export class Ufo {
       }
     } else if (this.state === 'hover') {
       g.position.copy(this.at).addScaledVector(this.up, Math.sin(t * 2.3) * 0.06);
-      if (this.t >= HOVER) { this.state = 'leave'; this.t = 0; this.from.copy(g.position); }
+      if (this.t >= (this.hoverTime ?? HOVER)) { this.state = 'leave'; this.t = 0; this.from.copy(g.position); }
     } else if (this.state === 'leave') {
       const k = this.t / LEAVE;
       g.position.copy(this.from).addScaledVector(this.up, k * k * 14).addScaledVector(this.fwd, k * k * 6);
@@ -117,7 +117,7 @@ export class Ufo {
 
   /** Sky Courier: true the first time the player flies through the hovering saucer. */
   catchBy(pos) {
-    if (this.state !== 'hover' || this.caught || _q.copy(this.group.position).distanceTo(pos) > 0.55) return false;
+    if (this.state !== 'hover' || this.caught || _q.copy(this.group.position).distanceTo(pos) > 0.8) return false;
     this.caught = true;
     return true;
   }
