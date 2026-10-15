@@ -12,7 +12,7 @@ export class Run {
   constructor(game, opts = {}) {
     this.game = game;
     this.opts = opts;
-    this.time = 0;
+    this.time = 0;                     // the run's clock (s): counts down in a courier run, up in free flight
     this.rand = Math.random;           // seeded by runs that must be the same for everyone
     this.stats = game.progress.stats;  // the plane: the player's upgrades, unless a run says otherwise
     this.cargo = null;                 // what the plane carries (just for looks unless the run says so)
