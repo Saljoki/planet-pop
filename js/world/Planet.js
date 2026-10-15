@@ -71,50 +71,64 @@ export class Planet {
 
   get entities() { return this.modules.flatMap((m) => m.entities || []); }
 
+  /**
+   * Keep a part of the world as `this[name]`: from then on it's updated every frame (update(dt, t)), disposed with the
+   * planet (dispose()), and its `entities` can be clicked, followed and found. Adding a new feature to the world is
+   * one of these in the right phase of build().
+   */
+  add(name, module) {
+    if (name) this[name] = module;
+    this.modules.push(module);
+    return module;
+  }
+
   async build() {
-    this.roads = new Roads(this);
-    this.cities = new Cities(this);
-    this.railway = new Railway(this);
+    // 1. Lay out the land. Each of these claims its spots, so nothing later gets built on top of them.
+    this.add('roads', new Roads(this));
+    this.add('cities', new Cities(this));
+    this.add('railway', new Railway(this));
     this.padSite = this.findPadSite();
-    this.airports = new Airports(this);  // sites are claimed now, so nothing else gets built on them
-    this.harbours = new Harbours(this);
-    this.trams = new Trams(this);        // tram lines are picked before the towns, so buildings leave room
+    this.add('airports', new Airports(this));
+    this.add('harbours', new Harbours(this));
+    this.add('trams', new Trams(this));          // tram lines are picked before the towns, so buildings leave room
     if (this.hf.flats.length) this.roads.retrace(); // highways follow the levelled ground
-    this.terrain = new Terrain(this);
-    const terrainReady = this.terrain.build(); // worker runs while everything else is placed
+
+    // 2. The terrain mesh builds in a worker; meanwhile everything that only needs the heightfield goes up.
+    this.add('terrain', new Terrain(this));
+    const terrainReady = this.terrain.build();
     this.roads.build();
     this.railway.build();
     await yieldFrame();
     this.volcanoes = Array.from({ length: this.theme.volcanoes }, (_, i) => new Volcano(this, i)).filter((v) => v.cone);
+    this.volcanoes.forEach((v) => this.add(null, v));
     this.volcano = this.volcanoes[0] || new Volcano(this, 0); // (an empty one if no site was found)
-    this.nature = new Nature(this);
+    this.add('nature', new Nature(this));
     for (const v of this.volcanoes) this.nature.mountains.push(v.cone); // solid for planes, bombs and the camera
     this.cities.build();
     await yieldFrame();
-    this.traffic = new Traffic(this);
-    this.balloons = new Balloons(this);
-    this.birds = new Birds(this);
-    this.space = new Space(this);
-    this.weather = new Weather(this);
-    this.aurora = new Aurora(this);
-    this.ufo = new Ufo(this);
-    this.helicopters = new Helicopters(this);
-    this.fireworks = new Fireworks(this);
-    this.meteors = new Meteors(this);
-    this.rainbows = new Rainbows(this);
-    this.seasons = new Seasons(this);
+    this.add('traffic', new Traffic(this));
+    this.add('balloons', new Balloons(this));
+    this.add('birds', new Birds(this));
+    this.add('space', new Space(this));
+    this.add('weather', new Weather(this));
+    this.add('aurora', new Aurora(this));
+    this.add('ufo', new Ufo(this));
+    this.add('helicopters', new Helicopters(this));
+    this.add('fireworks', new Fireworks(this));
+    this.add('meteors', new Meteors(this));
+    this.add('rainbows', new Rainbows(this));
+    this.add('seasons', new Seasons(this));
+
+    // 3. Things that sit on the exact rendered ground wait for the terrain mesh.
     await terrainReady;
-    // these sit on the exact rendered ground, so they wait for the terrain mesh
     this.airports.build();
     this.harbours.build();
-    this.boats = new Boats(this);
-    this.planes = new Planes(this);
+    this.add('boats', new Boats(this));
+    this.add('planes', new Planes(this));
     this.trams.build();
-    this.whales = new Whales(this);
-    this.people = new People(this);
-    this.modules = [this.roads, this.cities, this.nature, this.railway, this.airports, this.harbours, ...this.volcanoes, this.traffic,
-      this.boats, this.balloons, this.planes, this.birds, this.people, this.trams, this.whales, this.helicopters, this.space, this.weather, this.aurora, this.ufo,
-      this.fireworks, this.meteors, this.rainbows, this.seasons];
+    this.add('whales', new Whales(this));
+    this.add('people', new People(this));
+
     this.update(0, this.app.simTime);
     this.app.scene.add(this.root);
   }
