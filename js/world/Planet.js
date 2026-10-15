@@ -7,6 +7,7 @@ import { Roads } from './Roads.js';
 import { Cities, CITY_A } from './Cities.js';
 import { Railway } from './Railway.js';
 import { Nature } from './Nature.js';
+import { ForestFloor } from './ForestFloor.js';
 import { Airports } from './Airports.js';
 import { Harbours } from './Harbours.js';
 import { Volcano } from './Volcano.js';
@@ -121,6 +122,7 @@ export class Planet {
 
     // 3. Things that sit on the exact rendered ground wait for the terrain mesh.
     await terrainReady;
+    this.add('forestFloor', new ForestFloor(this));
     this.airports.build();
     this.harbours.build();
     this.add('boats', new Boats(this));

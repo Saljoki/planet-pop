@@ -3,9 +3,13 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, TAU, frame, tangentBasis } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { addInstanced, shareMatrices, cutaway } from '../render/Outline.js';
+import { InstanceFade } from '../render/InstanceFade.js';
 import { ROAD_W } from './Roads.js';
 import { CITY_A } from './Cities.js';
 import { TREE_SHAPES } from './TreeShapes.js';
+
+/** Trees shrink away between these distances (units) from the camera; from further off a forest is its floor colour (ForestFloor). */
+export const TREE_FADE = { near: 6, far: 10 };
 
 const _m = new THREE.Matrix4(), _r = new THREE.Matrix4(), _p = new THREE.Vector3(), _c = new THREE.Color();
 
@@ -115,6 +119,7 @@ export class Nature {
       });
       this.treeGroups.push({ mesh, list, deciduous: k === 1 });
     });
+    this.treeFade = new InstanceFade([trunks, ...this.treeGroups.map((g) => g.mesh)], TREE_FADE.near, TREE_FADE.far);
   }
 
   buildTurbines() {
@@ -139,6 +144,7 @@ export class Nature {
   }
 
   update(dt) {
+    this.treeFade?.update(this.planet.app.camera.position);
     if (!this.blades) return;
     this.turbines.forEach((t, i) => {
       t.spin += t.speed * dt;

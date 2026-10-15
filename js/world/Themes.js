@@ -9,7 +9,7 @@ export const THEMES = {
     pal: { seabed: '#2c6fbf', sand: '#ffe08a', g1: '#a6e35d', g2: '#66c94e', g3: '#3f9f4d', rock: '#a28fd0', snow: '#ffffff', city: '#d9d2ea' },
     sea: { color: '#3ea2f2', shallow: '#7fe3ff', glow: null, boats: true },
     trees: {
-      density: 1, trunk: '#8a5a3c',
+      density: 1, trunk: '#8a5a3c', floor: '#2c8a4e', // floor: the ground under a forest, as it looks from afar
       a: { shape: 'pine', colors: ['#2f9e5a', '#23874d', '#3bb36a'] },
       b: { shape: 'round', colors: ['#55c95a', '#7fd65b', '#3daa4a'], odd: ['#ffb347', '#ff7a6b', '#ffd23f'] },
       useA: (h, r) => h > 0.5 || r < 0.3,
@@ -27,7 +27,7 @@ export const THEMES = {
     pal: { seabed: '#5b8fc9', sand: '#eef8ff', g1: '#ffffff', g2: '#e6f2fb', g3: '#c9e0f1', rock: '#9fb4d8', snow: '#ffffff', city: '#d6e4f2' },
     sea: { color: '#7cc4f0', shallow: '#e8f8ff', glow: null, boats: true },
     trees: {
-      density: 0.75, trunk: '#6b5a7a',
+      density: 0.75, trunk: '#6b5a7a', floor: '#9cc7d6',
       a: { shape: 'pine', colors: ['#e8f4ff', '#bfe3f2', '#9cc9b8'] },
       b: { shape: 'crystal', colors: ['#bfe9ff', '#9fd8ff', '#e0f7ff', '#c9b8ff'] },
       useA: (h, r) => r < 0.7,
@@ -44,7 +44,7 @@ export const THEMES = {
     pal: { seabed: '#2b8f9e', sand: '#ffe7a8', g1: '#f6c978', g2: '#eeb25e', g3: '#dc9a52', rock: '#c0704a', snow: '#f4e3c3', city: '#f1dcc0' },
     sea: { color: '#2fc6c9', shallow: '#a8f5e6', glow: null, boats: true },
     trees: {
-      density: 0.35, trunk: '#9a6a43',
+      density: 0.35, trunk: '#9a6a43', floor: '#6aa553',
       a: { shape: 'cactus', colors: ['#5fae5a', '#4c9a50', '#77c06a'] },
       b: { shape: 'palm', colors: ['#5ec45a', '#3faa4a', '#86d65f'] },
       useA: (h) => h > 0.18, // palms by the water, cacti inland
@@ -61,7 +61,7 @@ export const THEMES = {
     pal: { seabed: '#c25b9a', sand: '#fff1d6', g1: '#b8f2d0', g2: '#ffc4e1', g3: '#d9c2ff', rock: '#ffe08a', snow: '#ffffff', city: '#fde9f3' },
     sea: { color: '#ff8fc8', shallow: '#ffd6ec', foam: '#fff8fc', glow: null, boats: true },
     trees: {
-      density: 0.9, trunk: '#fff8f0',
+      density: 0.9, trunk: '#fff8f0', floor: '#ff7fb2',
       a: { shape: 'lollipop', colors: ['#ff5fa2', '#3fa7ff', '#ffd23f', '#2ee59d', '#ff8c42', '#8f5cff'] },
       b: { shape: 'gumdrop', colors: ['#ff4d6d', '#2ee59d', '#ffd23f', '#8f5cff', '#3fa7ff'] },
       useA: (h, r) => r < 0.55,
@@ -78,7 +78,7 @@ export const THEMES = {
     pal: { seabed: '#7a1f12', sand: '#4a3a52', g1: '#5a4a62', g2: '#4a3d55', g3: '#3d3248', rock: '#6a5070', snow: '#ff9a3c', city: '#7a6a84' },
     sea: { color: '#ff5a1f', shallow: '#ffd23f', foam: '#fff2b0', glow: '#ff3d00', boats: false }, // a sea of lava: no boats
     trees: {
-      density: 0.3, trunk: '#2a2433',
+      density: 0.3, trunk: '#2a2433', floor: '#3a2f44',
       a: { shape: 'deadtree', colors: ['#2a2433', '#3a2f44', '#1f1a28'] },
       b: { shape: 'crystal', colors: ['#ff7a2e', '#ffb21f', '#ff4d4d'] },
       useA: (h, r) => r < 0.75,

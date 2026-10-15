@@ -204,6 +204,30 @@ for (const params of PLANETS) {
       assert.equal(shared.uWinter.value.y, 1, 'no winter in the south at northern midsummer');
     });
 
+    it('from far away trees shrink into forest-coloured ground; up close they are full size', () => {
+      const fade = planet.nature.treeFade, g = planet.nature.treeGroups[0], m = new THREE.Matrix4(), cam = app.camera.position.clone();
+      const tree = g.list[0].d, size = () => { g.mesh.getMatrixAt(0, m); return new THREE.Vector3().setFromMatrixScale(m).x; };
+      const full = g.list[0].s;
+      app.camera.position.copy(tree).multiplyScalar(11.5); // just above it
+      planet.update(0, app.simTime);
+      assert.ok(Math.abs(size() - full) < 1e-4, 'a tree right below the camera should be full size');
+      app.camera.position.copy(tree).multiplyScalar(30); // orbit
+      planet.update(0, app.simTime);
+      assert.equal(size(), 0, 'from orbit the tree should be gone');
+      assert.ok(fade.items.length >= 2, 'the trunks shrink with the trees');
+      const w = planet.forestFloor.weights, pos = planet.terrain.land.geometry.getAttribute('position'), v = new THREE.Vector3();
+      const under = (d) => { // the forest weight of the terrain face a tree stands on
+        let near = 0, best = Infinity;
+        for (let i = 0; i < pos.count; i += 3) { const a = v.fromBufferAttribute(pos, i).normalize().distanceToSquared(d); if (a < best) { best = a; near = i; } }
+        return w[near];
+      };
+      const trees = g.list.slice(0, 20), mean = trees.reduce((n, t) => n + under(t.d), 0) / trees.length;
+      assert.ok(mean > 0.3, `the ground under trees should be forest floor (${mean.toFixed(2)})`);
+      assert.ok(w.every((x) => x >= 0 && x <= 1));
+      app.camera.position.copy(cam);
+      planet.update(0, app.simTime);
+    });
+
     it('rebuilds traffic from the slider', () => {
       planet.traffic.rebuild(0);
       run(app, 1);

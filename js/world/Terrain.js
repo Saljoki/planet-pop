@@ -59,7 +59,7 @@ export class Terrain {
         vec3 sd = normalize(vWPos);
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.96, 0.97, 1.0), winterCover(sd, length(vWPos) - ${R.toFixed(1)}, 0.5, 0.04));`);
     }, 'land');
-    addMesh(this.planet.root, g, land, 0.06, { outlineGeometry: hull });
+    this.land = addMesh(this.planet.root, g, land, 0.06, { outlineGeometry: hull });
   }
 
   /** Swelling toon ocean with lighter shallows and comic foam lines rolling toward the shore. */
