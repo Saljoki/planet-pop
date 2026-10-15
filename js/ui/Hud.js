@@ -106,7 +106,15 @@ export class Hud {
   }
 
   /** Names the current planet's theme in a tag under the title. */
-  setTheme(theme) { this.$('worldTag').textContent = `${theme.icon} ${theme.name}`; }
+  setTheme(theme) {
+    this.themeText = `${theme.icon} ${theme.name}`;
+    this.setSeason('');
+  }
+
+  /** Adds the season where the camera is ("🌍 Classic · 🍂 Autumn"), on worlds that have them. */
+  setSeason(season) {
+    if (this.themeText) this.$('worldTag').textContent = season ? `${this.themeText} · ${season}` : this.themeText;
+  }
 
   setLoading(on) { this.$('loading').classList.toggle('hidden', !on); }
   setPaused(p) { this.$('pauseBtn').textContent = p ? '▶ Play' : '⏸ Pause'; }

@@ -10,6 +10,7 @@ import { Nature } from './Nature.js';
 import { Airports } from './Airports.js';
 import { Harbours } from './Harbours.js';
 import { Volcano } from './Volcano.js';
+import { Seasons } from './Seasons.js';
 import { themeOf } from './Themes.js';
 import { Traffic } from '../life/Traffic.js';
 import { Boats } from '../life/Boats.js';
@@ -18,6 +19,9 @@ import { Planes } from '../life/Planes.js';
 import { Birds } from '../life/Birds.js';
 import { Space } from '../life/Space.js';
 import { People } from '../life/People.js';
+import { Trams } from '../life/Trams.js';
+import { Whales } from '../life/Whales.js';
+import { Helicopters } from '../life/Helicopters.js';
 import { Ufo } from '../life/Ufo.js';
 import { Aurora } from '../sky/Aurora.js';
 import { Fireworks } from '../sky/Fireworks.js';
@@ -74,6 +78,7 @@ export class Planet {
     this.padSite = this.findPadSite();
     this.airports = new Airports(this);  // sites are claimed now, so nothing else gets built on them
     this.harbours = new Harbours(this);
+    this.trams = new Trams(this);        // tram lines are picked before the towns, so buildings leave room
     if (this.hf.flats.length) this.roads.retrace(); // highways follow the levelled ground
     this.terrain = new Terrain(this);
     const terrainReady = this.terrain.build(); // worker runs while everything else is placed
@@ -93,19 +98,23 @@ export class Planet {
     this.weather = new Weather(this);
     this.aurora = new Aurora(this);
     this.ufo = new Ufo(this);
+    this.helicopters = new Helicopters(this);
     this.fireworks = new Fireworks(this);
     this.meteors = new Meteors(this);
     this.rainbows = new Rainbows(this);
+    this.seasons = new Seasons(this);
     await terrainReady;
     // these sit on the exact rendered ground, so they wait for the terrain mesh
     this.airports.build();
     this.harbours.build();
     this.boats = new Boats(this);
     this.planes = new Planes(this);
+    this.trams.build();
+    this.whales = new Whales(this);
     this.people = new People(this);
     this.modules = [this.roads, this.cities, this.nature, this.railway, this.airports, this.harbours, ...this.volcanoes, this.traffic,
-      this.boats, this.balloons, this.planes, this.birds, this.people, this.space, this.weather, this.aurora, this.ufo,
-      this.fireworks, this.meteors, this.rainbows];
+      this.boats, this.balloons, this.planes, this.birds, this.people, this.trams, this.whales, this.helicopters, this.space, this.weather, this.aurora, this.ufo,
+      this.fireworks, this.meteors, this.rainbows, this.seasons];
     this.update(0, this.app.simTime);
     this.app.scene.add(this.root);
   }

@@ -49,14 +49,14 @@ export class People {
         if (Math.hypot(x, z) / W > 0.88) continue;
         const d = city.c.clone().addScaledVector(city.u, x / R).addScaledVector(city.v, z / R).normalize();
         if (p.heightAt(d) < 0.03 || p.roads.near(d, (ROAD_W / 2 + 0.03) / R) || p.railway.near(d, 0.02) || p.isReserved(d)) continue;
-        grid.set(`${i},${j}`, { d, nb: [], edges: new Map() });
+        grid.set(`${i},${j}`, { d, x, z, nb: [], edges: new Map() });
       }
     }
     for (const [key, a] of grid) {
       const [i, j] = key.split(',').map(Number);
       for (const k of [`${i + 1},${j}`, `${i},${j + 1}`]) {
         const b = grid.get(k);
-        if (!b) continue;
+        if (!b || p.trams?.onTrack(city, a.x, a.z, b.x, b.z)) continue; // cross the tram tracks, don't stroll along them
         const radii = Array.from({ length: SAMPLES + 1 }, (_, s) => p.meshR(_p.lerpVectors(a.d, b.d, s / SAMPLES).normalize()));
         if (radii.some((r) => r < R + 0.02)) continue; // a pond or the sea between two blocks
         a.nb.push(b);

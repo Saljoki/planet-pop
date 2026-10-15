@@ -5,6 +5,7 @@ const SOUND_FOR = {
   'KRAKA-BOOM!': 'boom', 'WHOOOSH!': 'whoosh', 'FWOOSH!': 'whoosh', 'ZOOM!': 'zoom', 'VROOM!': 'vroom',
   'BEEP BEEP!': 'beep', 'CHOO CHOO!': 'choo', 'TOOT TOOT!': 'toot', 'SQUAWK!': 'squawk', 'BONK!': 'crash',
   'SCREECH!': 'screech', 'RUMBLE…': 'rumble', 'KABOOM!': 'boom', 'BWEE-OOO!': 'ufo', 'HI!': 'chirp', 'NICE DAY!': 'chirp', 'OOH!': 'chirp',
+  'PFFFT!': 'spout', 'SPLOOSH!': 'splash', 'DING DING!': 'ding', 'WHUP WHUP!': 'whup',
 };
 const AMBIENT = {
   plane: [['ZOOM!', '#3fa7ff']],
@@ -14,6 +15,8 @@ const AMBIENT = {
   bird: [['SQUAWK!', '#8f5cff']],
   balloon: [['FWOOSH!', '#ff5fa2']],
   person: [['HI!', '#ffd23f'], ['NICE DAY!', '#2ee59d'], ['OOH!', '#ff5fa2']],
+  tram: [['DING DING!', '#ffd23f']],
+  helicopter: [['WHUP WHUP!', '#3fa7ff']],
 };
 const _v = new THREE.Vector3(), _d = new THREE.Vector3(), _p = new THREE.Vector3(), _q = new THREE.Vector3();
 
@@ -91,6 +94,10 @@ export class Sfx {
       case 'screech': N(0.5, 0.12, 5000, 1400); T(1400, 900, 0.35, 'sawtooth', 0.02); break;
       case 'shutter': N(0.06, 0.4, 6000, 2500); N(0.09, 0.3, 4000, 1200, 0.09); break;
       case 'firework': N(0.5, 0.3, 2500, 200); [0.15, 0.25, 0.32, 0.41, 0.5].forEach((d) => N(0.05, 0.12, 6000, 3000, d)); break;
+      case 'spout': N(0.7, 0.22, 700, 2600); break;
+      case 'splash': N(0.6, 0.4, 3200, 300); N(0.35, 0.2, 1500, 250, 0.18); break;
+      case 'ding': T(1568, 0, 0.3, 'triangle', 0.07); T(1568, 0, 0.4, 'triangle', 0.07, 0.22); break;
+      case 'whup': [0, 0.12, 0.24, 0.36, 0.48].forEach((d) => N(0.07, 0.3, 320, 140, d)); break;
       case 'rumble': N(1.6, 0.35, 160, 60); break;
       case 'ufo': T(300, 1300, 0.5, 'sine', 0.06); T(1300, 250, 0.7, 'sine', 0.06, 0.5); break;
       case 'chirp': T(700, 1100, 0.08, 'triangle', 0.05); T(900, 1300, 0.08, 'triangle', 0.05, 0.1); break;

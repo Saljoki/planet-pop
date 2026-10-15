@@ -216,8 +216,11 @@ export class App {
     const { rig, planet: p, achievements: a } = this, e = rig.entity;
     if (rig.mode !== 'local' || !e) return;
     if (e.kind === 'plane' && rig.followTime > 10) a.unlock('copilot');
+    if (e.kind === 'helicopter' && rig.followTime > 10) a.unlock('chopper');
+    if (e.kind === 'tram' && rig.followTime > 3 && p.trams.atEnd(p.trams.entities.indexOf(e))) a.unlock('tramride');
     if (e.kind === 'train' && p.railway.justExited) a.unlock('tunnel');
     if (e.kind === 'car' && e.mesh === p.traffic.body && p.traffic.isWaiting(e.id)) a.unlock('redlight');
     if (e.kind === 'city' && p.nightAt(e.pos) > 0.6) a.unlock('nightowl');
+    if (e.kind === 'city' && p.seasons.snowAt(e.pos.clone().normalize()) > 0.5) a.unlock('snowday');
   }
 }

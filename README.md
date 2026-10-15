@@ -1,11 +1,12 @@
 # Planet Pop!
 
-A cartoony, comic-book 3D planet built with Three.js: day/night cycle, cities with people strolling the
-streets, traffic with signals, airports where planes land and take off, harbours with ferries, a train
-with a tunnel, balloons, bird flocks, weather, an erupting volcano, auroras over the poles, the odd UFO,
+A cartoony, comic-book 3D planet built with Three.js: day/night cycle and seasons, cities with people
+strolling the streets, trams and traffic with signals, airports where planes land and take off, harbours
+with ferries, sightseeing helicopters, whales, a train with a tunnel, balloons, bird flocks, weather with
+rainbows, an erupting volcano, midnight fireworks, meteor showers, auroras over the poles, the odd UFO,
 a rocket pad, satellites, a space station, a moon and an ambient soundscape. Planets come in five kinds:
 classic, ice, desert, candy and lava. Plus the **Sky Courier** mini-game with ten missions, a daily
-challenge, a photo mode and 27 trophies. It installs as an app and works offline.
+challenge, a photo mode and 34 trophies. It installs as an app and works offline.
 
 Every planet is generated from a seed. The address bar always holds the current planet
 (`?seed=…&land=…&cities=…&theme=…`), and **🔗 Share this planet** copies the link.
@@ -32,16 +33,23 @@ service worker picks up the new version (the tests check this).
 ## Controls
 
 - **Drag** to orbit, **scroll / pinch** to zoom — you can skim right down to the ground.
-- **Click / tap** anything (cars, people, train, planes, boats, balloons, birds, storms, airports,
-  harbours, the volcano, the UFO, rocket, satellites, station, moon, or any spot on the ground) to fly
-  there and follow it. People can be picked once you've zoomed in on a town. **Esc** returns to orbit.
+- **Click / tap** anything (cars, people, trams, the train, planes, helicopters, boats, whales, balloons,
+  birds, storms, airports, harbours, the volcano, the UFO, rocket, satellites, station, moon, or any spot on
+  the ground) to fly there and follow it. People and trams can be picked once you've zoomed in on a town,
+  whales while they're at the surface. **Esc** returns to orbit.
 - **World** (panel): *Any* gives every new planet a theme picked from its seed (about a third are classic),
   or pick Classic, Ice, Desert, Candy or Lava to rebuild this planet in it. Lava worlds have three volcanoes
   and a glowing lava sea instead of boats.
 - **📷 Photo mode** (or **C**): the interface steps aside and the world freezes. Pick a frame (comic,
   polaroid), a caption and a filter (Pop, Retro, Noir), then **Snap** to save or share the picture.
 - **Events:** the volcano rumbles and erupts every minute or so, the rocket launches, and every couple
-  of minutes a UFO drops in for a few seconds. Visit a pole at night for the aurora.
+  of minutes a UFO drops in for a few seconds. Visit a pole at night for the aurora. Around local midnight
+  most towns put on a firework show, meteor showers streak across the night side every couple of minutes,
+  and rain clouds trail rainbows by day. Whales surface to blow, now and then leaping clear of the sea.
+- **Seasons** (classic worlds): a year lasts eight days (20 minutes at 1x, faster with **Time speed**).
+  The hemisphere in winter gets snow creeping down from the pole, sea ice and frosted trees while the
+  other has summer; leaves turn in autumn and blossom in spring. The season where you are shows next to
+  the world's name.
 - **Sound** (panel) mutes everything; **Ambience** sets the volume of the soundscape (wind, surf, a
   town's murmur, birds by day, crickets by night, a hum out in space), which follows the camera.
 - **P** pause · **N** new planet · **H** show/hide the control panel.
@@ -92,10 +100,13 @@ planet-pop/
 │  ├─ core/                   Noise, Random, Geo (math helpers), Entity (focus targets)
 │  ├─ render/                 Toon (halftone shading), Outline (ink hulls), PostFX (edge ink), Quality (adaptive
 │  │                          resolution), Detail (skips sub-pixel things from high up)
-│  ├─ sky/                    Sky (sun, shadows, atmosphere, stars), Weather (clouds, rain, lightning, snow), Aurora
+│  ├─ sky/                    Sky (sun, shadows, atmosphere, stars), Weather (clouds, rain, lightning, snow), Aurora,
+│  │                          Sparks (pooled glowing particles), Fireworks, Meteors, Rainbows
 │  ├─ world/                  Planet, Themes, Terrain + TerrainCompute + terrain.worker, SurfaceIndex (exact ground
-│  │                          height), Roads, Cities, Nature, TreeShapes, Railway, Airports, Harbours, Volcano, Glow
-│  ├─ life/                   Trails, Traffic, People, Boats, Balloons, Planes, Birds, Ufo, Space
+│  │                          height), Roads, Cities, Nature, TreeShapes, Railway, Airports, Harbours, Volcano, Glow,
+│  │                          Seasons
+│  ├─ life/                   Trails, Traffic, People, Trams, Boats, Whales, Balloons, Planes, Helicopters, Birds,
+│  │                          Ufo, Space
 │  ├─ camera/                 CameraRig (orbit, fly-to, follow, chase, terrain collision)
 │  ├─ ui/                     Hud, Sfx (bubbles + synthesized sound), Ambience (soundscape), PhotoMode,
 │  │                          Achievements, DebugStats (?debug overlay)

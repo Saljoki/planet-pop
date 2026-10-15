@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-const MOVING = new Set(['car', 'plane', 'boat', 'balloon', 'bird', 'train', 'rocket', 'satellite', 'station', 'moon', 'person', 'ufo']);
+const MOVING = new Set(['car', 'plane', 'boat', 'balloon', 'bird', 'train', 'rocket', 'satellite', 'station', 'moon', 'person', 'ufo', 'tram', 'whale', 'helicopter']);
 const _m = new THREE.Matrix4();
 
 /** Anything the camera can focus on or follow. */

@@ -3,7 +3,7 @@ import { R, TAU, clamp, mod, smoothstep, ease, raySphere, tangentBasis } from '.
 import { PointEntity } from '../core/Entity.js';
 
 const FRAME = { car: 1.0, train: 1.3, boat: 1.2, plane: 1.7, balloon: 1.6, bird: 0.9, rocket: 2.2, satellite: 1.4, station: 3.2, moon: 6.5, storm: 5, city: 4.2, spot: 3,
-  airport: 3.2, harbour: 2.2, person: 0.45, volcano: 4.2, ufo: 1.6 };
+  airport: 3.2, harbour: 2.2, person: 0.45, volcano: 4.2, ufo: 1.6, tram: 0.75, whale: 1.3, helicopter: 1.2 };
 const MIN_DIST = { moon: 2.3, station: 0.9, storm: 1.5, city: 1, person: 0.12 };
 const _v = new THREE.Vector3(), _w = new THREE.Vector3(), _e = new THREE.Vector3(), _n = new THREE.Vector3();
 const _a = new THREE.Vector3(), _b = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
@@ -129,7 +129,7 @@ export class CameraRig {
   pick(x, y, radius = 28) {
     let best = null, bestD = radius;
     for (const e of this.app.planet.entities) {
-      if (e.object && !e.object.visible) continue;
+      if ((e.object && !e.object.visible) || e.hidden?.()) continue;
       e.getPos(_v);
       if (e.near && _v.distanceTo(this.camera.position) > e.near) continue; // tiny things (people) only up close
       if (this.occluded(_v)) continue;

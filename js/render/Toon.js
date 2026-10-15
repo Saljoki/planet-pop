@@ -5,7 +5,20 @@ export const shared = {
   uSun: { value: new THREE.Vector3(0, 0, 1) },
   uHalftone: { value: 6 },
   uTime: { value: 0 },
+  uAxis: { value: new THREE.Vector3(0, 1, 0) }, // the planet's spin axis (north)
+  uWinter: { value: new THREE.Vector2(0, 0) },  // how deep into winter the north (x) and south (y) are, 0..1
 };
+
+/** Seasonal snow line and sea ice: 0..1 cover at world position vWPos (needs uAxis, uWinter and WPOS). */
+export const WINTER_GLSL = /* glsl */ `
+uniform vec3 uAxis;
+uniform vec2 uWinter;
+float winterCover(vec3 od, float lift, float reach, float soft) {
+  float lat = dot(od, uAxis), w = lat > 0.0 ? uWinter.x : uWinter.y;
+  float edge = 1.05 - reach * w - max(lift, 0.0) * 0.18 + sin(dot(od, vec3(23.1, 17.7, 31.3))) * 0.025;
+  return w > 0.0 ? smoothstep(edge, edge + soft, abs(lat)) : 0.0;
+}
+`;
 
 // Replaces three's toon gradient: 3 hard bands, with screen-space halftone dots in the shaded bands.
 const HALFTONE = /* glsl */ `

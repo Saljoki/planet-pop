@@ -28,6 +28,10 @@ const DEFS = [
   ['fireworks', '🎆', 'Happy New Night', 'Watch a midnight firework show up close'],
   ['shootingstar', '🌠', 'Make a Wish', 'Be on the night side during a meteor shower'],
   ['rainbow', '🌈', 'Over the Rainbow', 'Fly close to a rainbow'],
+  ['whalewatcher', '🐋', 'Whale Watcher', 'See a whale leap out of the sea up close'],
+  ['chopper', '🚁', 'Chopper Ride', 'Follow a helicopter for 10 seconds'],
+  ['tramride', '🚋', 'End of the Line', 'Ride a tram all the way to the end of its line'],
+  ['snowday', '⛄', 'Snow Day', 'Visit a town in the winter snow'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
 const KEY = 'planetpop.trophies', WORLDS_KEY = 'planetpop.worlds', WORLD_KINDS = 5;

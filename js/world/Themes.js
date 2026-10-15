@@ -20,6 +20,7 @@ export const THEMES = {
     storms: 3, precip: { kind: 'rain', color: '#c4e8ff' },
     halo: { day: '#9fdcff', night: '#5a4fc9' },
     volcanoes: 1,
+    seasons: true,
   },
   ice: {
     id: 'ice', name: 'Ice world', icon: '❄️',

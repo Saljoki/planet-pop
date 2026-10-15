@@ -73,6 +73,7 @@ async function scene(label, note, steps) {
     await shot(name, note);
   } catch (err) {
     problems.push(`${name}: ${err.message}`);
+    if (process.env.DEBUG) console.log(err.stack);
     console.log(`  ✖ ${name}: ${err.message}`);
   }
 }
@@ -161,6 +162,33 @@ await scene('people', 'Following a pedestrian through town', async () => {
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
+await scene('tram', 'A tram on its line through town', async () => {
+  await page.evaluate(() => app.rig.focus(app.planet.entities.find((e) => e.kind === 'tram')));
+  await until(() => app.rig.mode === 'local');
+  await page.evaluate(() => Object.assign(app.rig.local, { pitch: 0.4, dist: 0.8, yaw: Math.PI }));
+  await frames(3);
+});
+await scene('whale', 'A whale leaping out of the sea', async () => {
+  await page.evaluate(() => app.rig.focus(app.planet.entities.find((e) => e.kind === 'whale')));
+  await until(() => app.rig.mode === 'local');
+  await page.evaluate(() => {
+    const { sky } = app, ws = app.planet.whales, w = ws.list[0];
+    window.savedAngle ??= sky.angle;
+    sky.angle = Math.atan2(w.c.dot(sky.sv), w.c.dot(sky.su)) - 0.6; // mid-morning over the whale
+    sky.update(0);
+    Object.assign(w, { state: 'breach', t: 0.62, dur: 1.8 });
+    Object.assign(app.rig.local, { pitch: 0.2, dist: 1.1, yaw: Math.PI * 0.55 });
+    ws.update(0);
+  });
+  await frames(2);
+});
+const restoreSky = () => page.evaluate(() => { // back to the time of day before a scene moved the sun
+  if (window.savedAngle === undefined) return;
+  app.sky.angle = window.savedAngle;
+  app.sky.update(0);
+  delete window.savedAngle;
+});
+await restoreSky();
 await scene('volcano', 'The volcano erupting: lava bombs, glow and a thick plume', async () => {
   const has = await page.evaluate(() => {
     const v = app.planet.volcano;
@@ -199,6 +227,18 @@ const midnightOver = (c) => page.evaluate((i) => { // turn the sun to the far si
   sky.angle = Math.atan2(c.dot(sky.sv), c.dot(sky.su)) + Math.PI;
   sky.update(0);
 }, c);
+await scene('helicopter', 'A helicopter sweeping its searchlight over a town at night', async () => {
+  const i = await page.evaluate(() => {
+    const h = app.planet.helicopters.list[0];
+    Object.assign(h, { state: 'hover', wait: 60 });
+    return app.planet.cities.sites.indexOf(h.at);
+  });
+  await midnightOver(i);
+  await page.evaluate(() => app.rig.focus(app.planet.helicopters.entities[0]));
+  await until(() => app.rig.mode === 'local');
+  await page.evaluate(() => Object.assign(app.rig.local, { pitch: 0.6, dist: 2.2 }));
+  await frames(3);
+});
 await scene('fireworks', 'Midnight fireworks over a city', async () => {
   await midnightOver(0);
   await page.evaluate(() => {
@@ -240,7 +280,28 @@ await scene('rainbow', 'A rainbow beside a rain cloud', async () => {
   await until(() => app.rig.mode === 'local');
   await frames(4);
 });
-await page.evaluate(() => { app.sky.angle = window.savedAngle; app.sky.update(0); });
+const season = (angle, lean, alt) => page.evaluate((angle, lean, alt) => { // that season in the north, seen by day
+  const { sky, rig } = app, s = app.planet.seasons;
+  window.savedOffset ??= s.offset;
+  s.offset = angle - sky.angle / 8;
+  s.timer = 0;
+  s.update(0);
+  const d = sky.axis.clone().multiplyScalar(lean).addScaledVector(sky.sunDir, 1 - lean).normalize();
+  rig.release(true);
+  Object.assign(rig.orbit, { yaw: Math.atan2(d.x, d.z), pitch: Math.asin(d.y), alt });
+}, angle, lean, alt);
+await scene('winter', 'Midwinter in the north: snow down to the mid-latitudes, sea ice and frosted trees', async () => {
+  await season(Math.PI, 0.6, 13);
+  await frames(3);
+});
+await scene('autumn', 'Autumn leaves in the northern forests', async () => {
+  await season(Math.PI / 2, 0.5, 2.6);
+  await frames(3);
+});
+await restoreSky();
+await page.evaluate(() => {
+  if (window.savedOffset !== undefined) { app.planet.seasons.offset = window.savedOffset; app.planet.seasons.timer = 0; }
+});
 await scene('photo-live', 'Photo mode: comic frame, caption and the Pop filter, previewed live', async () => {
   await page.evaluate(() => {
     const ph = app.photo, u = app.planet.ufo;

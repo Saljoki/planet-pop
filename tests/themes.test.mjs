@@ -33,8 +33,10 @@ describe('world themes', () => {
       assert.equal(planet.weather.storms.length, look.storms);
       assert.equal(planet.weather.precip, look.precip.kind);
       assert.equal(planet.weather.flakes.length > 0, look.mountains.snow, 'snow on the peaks only where the theme has it');
+      assert.ok(!planet.seasons.on && planet.seasons.snowAt(app.sky.axis) === 0, 'seasons on a world without them');
       if (theme === 'lava') {
         assert.equal(planet.boats.boats.length, 0, 'boats on a lava sea');
+        assert.equal(planet.whales.list.length, 0, 'whales in a lava sea');
         assert.equal(planet.harbours.list.length, 0);
         assert.ok(planet.volcanoes.length >= 2, `only ${planet.volcanoes.length} volcano`);
       } else {

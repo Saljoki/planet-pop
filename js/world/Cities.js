@@ -99,7 +99,13 @@ export class Cities {
           const d = city.c.clone().addScaledVector(city.u, x / R).addScaledVector(city.v, z / R).normalize();
           if (p.heightAt(d) < 0.03 || p.roads.near(d, (ROAD_W / 2 + 0.14) / R) || p.railway.near(d, 0.03) || p.isReserved(d)) continue;
           const h = 0.16 + Math.pow(1 - q, 1.6) * rng.range(0.35, 0.85) + (q < 0.45 && rng.chance(0.15) ? rng.range(0.3, 0.5) : 0);
-          data.push({ d, u: city.u, h, w: GRID * rng.range(0.55, 0.78), dp: GRID * rng.range(0.55, 0.78) });
+          const b = { d, u: city.u, h, w: GRID * rng.range(0.55, 0.78), dp: GRID * rng.range(0.55, 0.78) };
+          const room = p.trams?.room(city, x, z); // leave the tram tracks clear
+          if (room) {
+            if (room.max < 0.1) continue;
+            b[room.key] = Math.min(b[room.key], room.max);
+          }
+          data.push(b);
         }
       }
     }

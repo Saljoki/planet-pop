@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { makeWorld, run, assertFiniteInstances } from './helpers/world.mjs';
 import { todayKey, dailySeed } from '../js/game/Daily.js';
 import { HALF } from '../js/world/Airports.js';
+import { shared } from '../js/render/Toon.js';
 
 const PLANETS = [
   { seed: 20261014, land: 0.45, cities: 5 },
@@ -117,6 +118,91 @@ for (const params of PLANETS) {
       sun(storm(), Math.PI);
       planet.rainbows.update(0);
       assert.equal(planet.rainbows.strength(0), 0, 'a rainbow at night');
+    });
+
+    it('whales blow and breach in deep water', () => {
+      const ws = planet.whales, w = ws.list[0];
+      assert.ok(ws.list.length > 0, 'no whales');
+      for (const x of ws.list) assert.ok(planet.heightAt(x.c) < -0.4, 'a whale in the shallows');
+      Object.assign(w, { state: 'blow', t: 0, dur: 3, spoutT: 0 });
+      run(app, 1);
+      assert.ok(ws.spray.mesh.count > 0, 'no spout');
+      Object.assign(w, { state: 'breach', t: 0, dur: 1.8 });
+      let top = -Infinity;
+      run(app, 1.8, { each: () => { top = Math.max(top, ws.entities[0].getPos(new THREE.Vector3()).length() - 10); } });
+      assert.ok(top > 0.2, `breach only reached ${top.toFixed(2)}`);
+      assert.equal(w.state, 'dive');
+      assert.ok(ws.entities[0].hidden() === false, 'a surfaced whale cannot be clicked');
+      run(app, 2);
+      assert.ok(w.state === 'swim' && ws.entities[0].hidden(), 'whale still clickable deep under water');
+      assertFiniteInstances(planet.root, 'after whales');
+    });
+
+    it('trams shuttle along their lines with the buildings clear of the tracks', () => {
+      const t = planet.trams, m = new THREE.Matrix4(), pos = new THREE.Vector3(), q = new THREE.Quaternion(), sc = new THREE.Vector3();
+      assert.equal(t.lines.length, planet.cities.sites.length, 'a town without a tram line');
+      const b = planet.cities.buildings;
+      for (const l of t.lines) {
+        for (let s = 0; s <= l.len; s += 0.03) {
+          const d = t.point(l, s);
+          for (let i = 0; i < b.count; i++) {
+            b.getMatrixAt(i, m);
+            m.decompose(pos, q, sc);
+            const loc = d.clone().multiplyScalar(pos.length()).sub(pos).applyQuaternion(q.invert());
+            assert.ok(Math.abs(loc.x) > sc.x / 2 + 0.025 || Math.abs(loc.z) > sc.z / 2 + 0.025, `${l.city.name}: a building on the tram tracks`);
+          }
+        }
+      }
+      const start = t.trams.map((x) => x.s), stops = t.trams.map(() => new Set());
+      let ends = 0;
+      run(app, 40, { each: () => t.trams.forEach((x, i) => { stops[i].add(x.stop); if (t.atEnd(i)) ends++; }) });
+      t.trams.forEach((x, i) => {
+        assert.ok(x.s !== start[i] || stops[i].size > 1, `${x.line.city.name} tram never moved`);
+        assert.ok(x.s >= 0 && x.s <= x.line.len, 'tram ran off its line');
+      });
+      assert.ok(ends > 0, 'no tram ever reached the end of its line');
+    });
+
+    it('helicopters hop between towns, clear of the ground', () => {
+      const hs = planet.helicopters, towns = new Set(), v = new THREE.Vector3();
+      let clear = Infinity;
+      for (const h of hs.list) h.wait = Math.min(h.wait, 1);
+      run(app, 60, { each: () => hs.list.forEach((h, i) => {
+        towns.add(h.at.name);
+        hs.entities[i].getPos(v);
+        clear = Math.min(clear, v.length() - planet.groundR(v.clone().normalize()));
+      }) });
+      assert.ok(towns.size >= 2, `helicopters only visited ${[...towns]}`);
+      assert.ok(clear > 0.25, `a helicopter came within ${clear.toFixed(2)} of the ground`);
+    });
+
+    it('seasons: winter snow and sea ice in one hemisphere while the other has summer', () => {
+      const s = planet.seasons, { sky } = app, north = sky.axis.clone(), south = north.clone().negate();
+      assert.ok(s.on);
+      const at = (angle) => { sky.angle = (angle - s.offset) * 8; sky.update(0); s.timer = 0; s.update(0); };
+      at(Math.PI); // midwinter in the north
+      assert.equal(s.snowAt(north), 1);
+      assert.equal(s.snowAt(south), 0);
+      assert.equal(shared.uWinter.value.x, 1);
+      assert.match(s.nameAt(north), /Winter/);
+      assert.match(s.nameAt(south), /Summer/);
+      const c = new THREE.Color(), deciduous = s.trees.find((g) => g.deciduous);
+      const pick = (test) => deciduous.list.findIndex((t) => test(t.d.dot(north)));
+      const far = pick((lat) => lat > 0.75), mid = pick((lat) => lat > 0.45 && lat < 0.6);
+      if (far >= 0) {
+        deciduous.mesh.getColorAt(far, c);
+        assert.ok(Math.min(c.r, c.g, c.b) > 0.6, 'trees near the pole not frosted in winter');
+      }
+      at(Math.PI / 2); // northern autumn
+      assert.equal(s.snowAt(north), 0);
+      assert.match(s.nameAt(north), /Autumn/);
+      assert.match(s.nameAt(south), /Spring/);
+      if (mid >= 0) {
+        deciduous.mesh.getColorAt(mid, c);
+        assert.ok(c.r > c.g && c.r > c.b, 'leaves did not turn in autumn');
+      }
+      at(0);
+      assert.equal(shared.uWinter.value.y, 1, 'no winter in the south at northern midsummer');
     });
 
     it('rebuilds traffic from the slider', () => {

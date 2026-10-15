@@ -98,6 +98,7 @@ export class Nature {
       groups[look.useA(h, rng.next()) ? 0 : 1].push({ d, s: rng.range(0.8, 1.35) });
     }
     const kinds = [look.a, look.b], shapes = kinds.map((k) => TREE_SHAPES[k.shape]);
+    this.treeGroups = []; // for Seasons: each tree's own colour, so leaves can turn and come back
     const trunked = groups.reduce((n, g, k) => n + (shapes[k].trunk ? g.length : 0), 0);
     const trunks = addInstanced(root, new THREE.CylinderGeometry(0.022, 0.032, 0.2, 6).translate(0, 0.1, 0), toon(look.trunk), trunked, 0.005);
     let t = 0;
@@ -109,7 +110,10 @@ export class Nature {
         mesh.setMatrixAt(i, _m);
         const cols = kinds[k].odd && rng.chance(0.1) ? kinds[k].odd : kinds[k].colors; // the odd autumn tree
         mesh.setColorAt(i, _c.set(rng.pick(cols)));
+        tree.base = _c.clone();
+        tree.pick = (i * 7919) % 1009;
       });
+      this.treeGroups.push({ mesh, list, deciduous: k === 1 });
     });
   }
 
