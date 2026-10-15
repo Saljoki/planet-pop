@@ -40,6 +40,8 @@ file; there's no build step. After adding, renaming or removing any file under `
 4. If it's something happening (an event), add it to `happenings()` in `js/world/Happenings.js`, so Find and the
    tour show it.
 5. Theme-specific looks go in `js/world/Themes.js` (each theme is a plain object of colours and switches).
+   Lots of small instanced things that don't need to be seen from orbit can shrink away with distance like the trees
+   (`InstanceFade` in `js/render/`, updated from the module's `update()`).
 6. Test it in `tests/world.test.mjs` (the three test planets run 80 s of simulated life) and add a screenshot
    scene to `tests/browser/scenes/world.mjs` or `events.mjs`.
 
@@ -59,6 +61,9 @@ file; there's no build step. After adding, renaming or removing any file under `
    - `wrecked()`: out of health (by default a fresh vehicle turns up; scored runs end instead).
    - `hud(hud)`: fill in `hud.dom.*` and point the arrow with `hud.pointAt(c)`.
    - `layout`, `rings`: which HUD pieces show and how many blue rings; `end()`: undo anything that outlives the run.
+   The mini-map (`js/game/screens/MiniMap.js`) needs nothing from you: it marks wherever `hud.pointAt()` points, and
+   the beacon, pad, rings, arches and Rex (`run.rival` or `run.rex`) from the props. Something new to mark goes in
+   its `drawMarks()`; something new on the ground (a kind of road, say) in the shader in `js/render/MapGlobe.js`.
 2. Add it to `runClass()` in `js/game/runs/modes.js`, keyed on an option (`{ road: 'taxi' }`, say).
 3. Give it a way in: a line in `ROAD_TRIPS` (`js/game/screens/RoadBoard.js`) for something on the ground, or a
    hangar button (`js/game/screens/Hangar.js`); either calls `game.launch({ … })`.
@@ -90,7 +95,11 @@ the mission needs; `tests/missions.test.mjs` checks that.
 2. Add a control in `js/game/screens/OptionsMenu.js`, calling `app.settings.set(key, value)`.
 3. Read it with `app.settings.get(key)`, or listen with `app.settings.onChange((key, value) => …)`.
 
-A planet-view setting (like Ink lines) goes in the ☰ panel instead: `js/ui/ControlPanel.js`.
+A planet-view setting (like Ink lines) goes in the ☰ panel instead: `js/ui/ControlPanel.js`. The player's name is
+`app.settings.playerName` (always tidied by `cleanName()`; set it with `setPlayerName()`): show it with `textContent`.
+
+The version is `VERSION` in `js/core/Version.js`; bump it with `package.json` (a test checks they match). The About
+card (`js/ui/AboutCard.js`) shows it, with the credits.
 
 ## Add a trophy
 

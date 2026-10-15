@@ -7,7 +7,7 @@ rainbows, an erupting volcano, midnight fireworks, meteor showers, auroras over 
 a rocket pad, satellites, a space station, a moon and an ambient soundscape. Planets come in five kinds:
 classic, ice, desert, candy and lava. Plus the **Sky Courier** mini-game with ten missions, a daily
 challenge and free flight, **road trips** (drive any car or steer any boat, taxi, van courier and a race round
-the world), a 📍 Find menu, a hands-free 📺 tour, a photo mode and 42 trophies. It's built for
+the world) with a 🗺️ mini-map, a 📍 Find menu, a hands-free 📺 tour, a photo mode and 42 trophies. It's built for
 phones as much as laptops (touch gestures, a thumbstick, tilt steering), installs as an app and works offline.
 
 Every planet is generated from a seed. The address bar always holds the current planet
@@ -61,6 +61,8 @@ service worker picks up the new version (the tests check this).
   The hemisphere in winter gets snow creeping down from the pole, sea ice and frosted trees while the
   other has summer; leaves turn in autumn and blossom in spring. The season where you are shows next to
   the world's name.
+- **ℹ️ About** (bottom of the panel, with the version number): who made Planet Pop, the credits, and **your name**,
+  which the game then uses on results cards, in the hangar, in the daily share and to say hello.
 - **Sound** (panel) mutes everything; **Ambience** sets the volume of the soundscape (wind, surf, a
   town's murmur, birds by day, crickets by night, a hum out in space), which follows the camera.
 - **P** pause · **N** new planet · **H** show/hide the control panel · **F** Find · **T** tour.
@@ -70,7 +72,8 @@ service worker picks up the new version (the tests check this).
 - **Quality** (panel): *Auto* picks the best level your machine runs smoothly and remembers it;
   *Crisp* forces full resolution; *Balanced* and *Fast* trade shadow detail and the edge-ink pass for speed.
   Resolution never drops below one pixel per CSS pixel. Check it in DevTools with `app.quality.name` / `app.quality.pr`.
-  From high up, details smaller than a pixel (people, car lights, thin ink lines…) aren't drawn at all.
+  From high up, details smaller than a pixel (people, car lights, thin ink lines…) aren't drawn at all, and trees
+  shrink away into forest-coloured ground (up close they're all there).
 - Add `?debug` to the URL for a live overlay: FPS, frame time, quality level, draw calls, triangles and GPU resources.
 
 ### Sky Courier
@@ -84,11 +87,14 @@ tip the top away to dive) and **vibration** on deliveries, crashes and lightning
 it). **Controllers** work too: left stick or d-pad steers and climbs, A / RB / RT boost, Start pauses (or opens
 the hangar), A / B answer the end-of-run screen.
 
+- **🗺️ Mini-map:** a round, heading-up map in the corner of every run shows where you are, the towns and roads, and
+  where to go: the goal of the arrow, the delivery pin, pickups and drop-offs, rings, race checkpoints and Rex. Tap it
+  to zoom out. **🗺️** (next to ⏸) or **M** hides it on small screens, and that's remembered (also in Options).
 - **Briefing and Options:** before each run a briefing explains the goal and shows the controls for your
   device (keyboard, touch or controller), with **▶ Start**, **⚙️ Options** and **Back**; tick "Don't show this"
-  to skip it. **⚙️ Options** (in the briefing, the hangar and the pause menu) has **Invert Y axis** (up dives,
+  to skip it. **⚙️ Options** (in the briefing, the hangar and the pause menu) has **your name**, **Invert Y axis** (up dives,
   down climbs, for keys, thumbstick, tilt and controller alike), steering sensitivity, tilt steering and
-  vibration on phones, sound and ambience volume, the briefing switch, and a two-tap **Reset Sky Courier
+  vibration on phones, sound and ambience volume, the briefing and mini-map switches, and a two-tap **Reset Sky Courier
   progress** (trophies stay). Options are remembered.
 - **📦 Courier run:** the classic timed game below. **🕊️ Free flight:** no clock, no parcels, no Rex, no coins:
   fly anywhere you like. Rings refill your boost and runways still refuel.
@@ -138,19 +144,21 @@ planet-pop/
 │  ├─ main.js                 entry point, registers the service worker
 │  ├─ App.js                  renderer, frame loop, planet swapping
 │  ├─ core/                   Noise, Random, Geo (math helpers), Store (saved state), Entity + ObjectEntity,
-│  │                          InstanceEntity, PointEntity (things you can click and follow)
+│  │                          InstanceEntity, PointEntity (things you can click and follow), Version
 │  ├─ render/                 Toon (halftone shading), Outline (ink hulls), PostFX (edge ink), Quality (adaptive
-│  │                          resolution), Detail (skips sub-pixel things from high up)
+│  │                          resolution), Detail (skips sub-pixel things from high up), InstanceFade (trees that
+│  │                          shrink away with distance), MapGlobe (the mini-map's planet)
 │  ├─ sky/                    Sky (sun, shadows, atmosphere, stars), Weather (clouds, rain, lightning, snow), Aurora,
 │  │                          Sparks (pooled glowing particles), Fireworks, Meteors, Rainbows
 │  ├─ world/                  Planet (the module list), Themes, Terrain + TerrainCompute + terrain.worker,
 │  │                          SurfaceIndex (exact ground height), Roads, Cities, Nature, TreeShapes, Railway, Airports,
-│  │                          Harbours, Volcano, Glow, Seasons, Happenings (what's going on, for Find and the tour)
+│  │                          Harbours, Volcano, Glow, Seasons, ForestFloor (forest-coloured ground), Happenings
+│  │                          (what's going on, for Find and the tour)
 │  ├─ life/                   Trails, Traffic, People, Trams, Boats, Whales, Balloons, Planes, Helicopters, Birds,
 │  │                          Ufo, Space
 │  ├─ camera/                 CameraRig (modes and swoops), OrbitView, FollowView, ChaseView, Picker (what's under a
 │  │                          tap), Gestures (touch and mouse)
-│  ├─ ui/                     Widget + Overlay (UI building blocks), Hud, ControlPanel (☰), InfoCard, FindMenu,
+│  ├─ ui/                     Widget + Overlay (UI building blocks), Hud, ControlPanel (☰), AboutCard, InfoCard, FindMenu,
 │  │                          TourMode, PhotoMode, Sfx (bubbles + synthesized sound), Ambience (soundscape),
 │  │                          Achievements + TrophyWatch, Haptics, WakeLock, DebugStats (?debug)
 │  └─ game/                   CourierGame (runs the show), Rival + RoadRival (Rex in the air and on the road), Cargo,
@@ -160,7 +168,8 @@ planet-pop/
 │     │                       car or boat: roads, water, buildings, mountains, where to start and stop)
 │     ├─ runs/                Run (the hooks), modes.js (which run for which options), DeliveryRun (courier run),
 │     │                       DailyRun, MissionRun, FreeFlight, FreeDrive, TaxiRun, VanRun, RaceRun
-│     ├─ screens/             CourierHud, ResultsScreen, Briefing, OptionsMenu, PauseMenu, Hangar, MissionBoard, RoadBoard
+│     ├─ screens/             CourierHud, MiniMap, ResultsScreen, Briefing, OptionsMenu, PauseMenu, Hangar, MissionBoard,
+│     │                       RoadBoard
 │     └─ input/               FlightControls (keys, stick, tilt, boost), TouchStick, TiltSteer, Gamepad
 ├─ vendor/three/, fonts/      three.js and the Bangers font (with their licences)
 ├─ icons/                     app icons (drawn by scripts/icons.mjs)
