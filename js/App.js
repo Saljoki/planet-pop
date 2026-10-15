@@ -180,6 +180,7 @@ export class App {
     if (e.kind === 'station') a.unlock('astronaut');
     if (e.kind === 'city') a.visitCity(e.name);
     if (e.kind === 'person') a.unlock('peoplewatcher');
+    if (e.kind === 'ufo') a.unlock('ufo');
   }
 
   checkFollow() {

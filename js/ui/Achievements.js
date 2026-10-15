@@ -18,6 +18,9 @@ const DEFS = [
   ['outrun', '😈', 'Outrun', 'Beat Rival Rex to 5 cities in a row'],
   ['touchdown', '🛬', 'Touchdown', 'Watch a plane land at an airport'],
   ['peoplewatcher', '🚶', 'People Watcher', 'Follow someone on a stroll through town'],
+  ['aurora', '🌌', 'Northern Lights', 'Visit a pole at night to see the aurora'],
+  ['volcano', '🌋', 'Eruption!', 'Watch the volcano erupt up close'],
+  ['ufo', '🛸', 'Close Encounter', 'Click the UFO before it flies away'],
   ['daily', '📅', 'Daily Flyer', 'Finish a daily challenge'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];

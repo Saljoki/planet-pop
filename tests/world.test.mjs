@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { makeWorld, run, assertFiniteInstances } from './helpers/world.mjs';
 import { todayKey, dailySeed } from '../js/game/Daily.js';
+import { HALF } from '../js/world/Airports.js';
 
 const PLANETS = [
   { seed: 20261014, land: 0.45, cities: 5 },
@@ -26,22 +27,56 @@ for (const params of PLANETS) {
       }
       assert.ok(planet.cities.sites.length >= 2);
       assert.ok(planet.nature.mountains.length > 10);
+      assert.ok(planet.people.people.length > 20, 'hardly anyone in town');
+      assert.ok(planet.volcano.d, 'no volcano');
+      assert.ok(planet.airports.list.length + planet.harbours.list.length > 0, 'no airport or harbour anywhere');
     });
 
-    it('runs 80 s of life: traffic lights, train tunnel, rocket launch', () => {
-      let waited = false, exited = false;
-      const states = new Set();
+    it('airports sit on levelled ground, clear of towns and roads', () => {
+      for (const ap of planet.airports.list) {
+        for (let i = -4; i <= 4; i++) {
+          const d = planet.airports.at(ap, (i / 4) * HALF, 0, new THREE.Vector3());
+          assert.ok(planet.meshR(d) <= ap.top + 0.001, `${ap.name}: ground pokes through the runway`);
+          assert.ok(ap.top - planet.meshR(d) < 0.15, `${ap.name}: runway floats ${(ap.top - planet.meshR(d)).toFixed(2)} above the ground`);
+          assert.ok(!planet.cities.inCity(d) && !planet.roads.near(d, 0.012), `${ap.name}: runway overlaps a town or road`);
+        }
+      }
+    });
+
+    it('people stand on the rendered ground', () => {
+      const m = new THREE.Matrix4(), pos = new THREE.Vector3();
+      planet.people.people.forEach((_, i) => {
+        planet.people.body.getMatrixAt(i, m);
+        pos.setFromMatrixPosition(m);
+        const gap = pos.length() - planet.meshR(pos.clone().normalize());
+        assert.ok(gap > -0.004 && gap < 0.008, `person ${i} is ${gap.toFixed(3)} off the ground`);
+      });
+    });
+
+    it('runs 80 s of life: traffic lights, train tunnel, rocket, landings, ferries, eruption, UFO', () => {
+      let waited = false, exited = false, docked = false, bombs = false;
+      const states = new Set(), volcano = new Set(), ufo = new Set();
+      const start = planet.people.people.map((w) => w.from);
       run(app, 80, {
         each: () => {
           waited ||= planet.traffic.cars.some((c) => c.waiting);
           exited ||= planet.railway.justExited;
+          docked ||= planet.boats.boats.some((_, i) => planet.boats.isDocked(i));
+          bombs ||= planet.volcano.bombs.some((b) => b.live);
           if (planet.space.state) states.add(planet.space.state);
+          volcano.add(planet.volcano.state);
+          ufo.add(planet.ufo.state);
         },
       });
       assertFiniteInstances(planet.root, 'after simulation');
       assert.ok(waited, 'no car ever waited at a red light');
       if (planet.railway.tunnel) assert.ok(exited, 'train never left the tunnel');
       if (planet.padSite) assert.ok(states.has('flight'), `rocket never launched (${[...states]})`);
+      if (planet.airports.list.length) assert.ok(planet.planes.list.some((p) => p.landed), 'no plane ever landed');
+      if (planet.harbours.list.length) assert.ok(docked, 'no ferry ever docked');
+      assert.ok(volcano.has('erupt') && bombs, `volcano never erupted (${[...volcano]})`);
+      assert.ok(ufo.has('hover'), `the UFO never showed up (${[...ufo]})`);
+      assert.ok(planet.people.people.some((w, i) => w.from !== start[i]), 'nobody walked anywhere');
     });
 
     it('rebuilds traffic from the slider', () => {
@@ -128,6 +163,43 @@ for (const params of PLANETS) {
       assert.ok(rex.rest > 0, 'the rival should circle for a moment after stealing');
       for (let i = 0; i < 5; i++) game.deliver();
       assert.ok(app.unlocked.includes('outrun'));
+    });
+
+    it('Sky Courier: runways refuel, volcanic ash chokes the engine, the UFO pays a bonus', () => {
+      const game = app.game, pl = game.player;
+      game.over = false;
+      game.time = 100;
+      for (const k in pl.input) pl.input[k] = false; // hands off: no leftover steering from the autopilot
+      const ap = planet.airports.list[0];
+      if (ap) {
+        pl.up.copy(planet.airports.at(ap, -0.8 * HALF, 0, new THREE.Vector3()));
+        pl.fwd.copy(ap.fwd).addScaledVector(pl.up, -ap.fwd.dot(pl.up)).normalize();
+        pl.alt = ap.top + 0.5;
+        pl.boost = 0;
+        for (let i = 0; i < 30; i++) game.update(1 / 60);
+        assert.ok(pl.boost > 0.3, `runway didn't refuel (boost ${pl.boost.toFixed(2)})`);
+      }
+      const v = planet.volcano;
+      Object.assign(v, { state: 'erupt', timer: -1 });
+      pl.up.copy(v.d);
+      pl.alt = v.top.length() + 1;
+      pl.boost = 1;
+      game.update(1 / 60);
+      assert.ok(pl.engine < 1, 'ash had no effect on the engine');
+      assert.ok(pl.boost < 1, 'ash had no effect on the boost');
+      Object.assign(v, { state: 'calm', timer: 60 });
+      game.update(1 / 60);
+      assert.equal(pl.engine, 1, 'engine still choking after the eruption');
+      const u = planet.ufo, score = game.score;
+      u.arrive();
+      u.update(3.01, app.simTime);
+      pl.up.copy(u.group.position).normalize();
+      pl.alt = u.group.position.length();
+      game.update(1 / 60);
+      assert.ok(game.score >= score + 300, 'flying through the UFO paid nothing');
+      game.update(1 / 60);
+      assert.ok(game.score < score + 600, 'the UFO bonus paid twice');
+      u.leave();
     });
 
     it('Sky Courier: a crash breaks fragile cargo, and it pays nothing', () => {

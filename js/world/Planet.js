@@ -9,6 +9,7 @@ import { Railway } from './Railway.js';
 import { Nature } from './Nature.js';
 import { Airports } from './Airports.js';
 import { Harbours } from './Harbours.js';
+import { Volcano } from './Volcano.js';
 import { Traffic } from '../life/Traffic.js';
 import { Boats } from '../life/Boats.js';
 import { Balloons } from '../life/Balloons.js';
@@ -16,6 +17,8 @@ import { Planes } from '../life/Planes.js';
 import { Birds } from '../life/Birds.js';
 import { Space } from '../life/Space.js';
 import { People } from '../life/People.js';
+import { Ufo } from '../life/Ufo.js';
+import { Aurora } from '../sky/Aurora.js';
 import { Weather } from '../sky/Weather.js';
 
 const _v = new THREE.Vector3();
@@ -72,7 +75,9 @@ export class Planet {
     this.roads.build();
     this.railway.build();
     await yieldFrame();
+    this.volcano = new Volcano(this);
     this.nature = new Nature(this);
+    if (this.volcano.cone) this.nature.mountains.push(this.volcano.cone); // solid for planes, bombs and the camera
     this.cities.build();
     await yieldFrame();
     this.traffic = new Traffic(this);
@@ -80,6 +85,8 @@ export class Planet {
     this.birds = new Birds(this);
     this.space = new Space(this);
     this.weather = new Weather(this);
+    this.aurora = new Aurora(this);
+    this.ufo = new Ufo(this);
     await terrainReady;
     // these sit on the exact rendered ground, so they wait for the terrain mesh
     this.airports.build();
@@ -87,8 +94,8 @@ export class Planet {
     this.boats = new Boats(this);
     this.planes = new Planes(this);
     this.people = new People(this);
-    this.modules = [this.roads, this.cities, this.nature, this.railway, this.airports, this.harbours, this.traffic, this.boats,
-      this.balloons, this.planes, this.birds, this.people, this.space, this.weather];
+    this.modules = [this.roads, this.cities, this.nature, this.railway, this.airports, this.harbours, this.volcano, this.traffic,
+      this.boats, this.balloons, this.planes, this.birds, this.people, this.space, this.weather, this.aurora, this.ufo];
     this.update(0, this.app.simTime);
     this.app.scene.add(this.root);
   }

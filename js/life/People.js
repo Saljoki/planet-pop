@@ -9,7 +9,7 @@ import { CITY_A, GRID } from '../world/Cities.js';
 const SHIRTS = ['#ff4d4d', '#3fa7ff', '#ffd23f', '#2ee59d', '#ff8c42', '#8f5cff', '#ff5fa2', '#f4f1ff'];
 const SKIN = ['#ffe0c4', '#f2c08f', '#d29a6a', '#9c6644', '#6e452c'];
 const NAMES = ['Bob', 'Dot', 'Ziggy', 'Pip', 'Lulu', 'Mo', 'Tess', 'Gus', 'Wanda', 'Ida', 'Benny', 'Coco', 'Otto', 'Mabel', 'Nico', 'Rosa'];
-const PER_CITY = 26, SAMPLES = 4, BOB = 0.004;
+const PER_CITY = 26, SAMPLES = 10, BOB = 0.004;
 const _p = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3(), _f = new THREE.Vector3(), _m = new THREE.Matrix4();
 
 /** Pedestrians strolling the lanes between city blocks, stopping now and then. Click one to tag along. */

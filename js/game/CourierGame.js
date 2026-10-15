@@ -9,8 +9,10 @@ import { Progress, BASE_STATS } from './Progress.js';
 import { Hangar } from './Hangar.js';
 import { Rival, RIVAL } from './Rival.js';
 import { todayKey, dailySeed, dailyParams } from './Daily.js';
+import { HALF } from '../world/Airports.js';
 
 const DELIVERY_BONUS = 20, RING_BONUS = 5, RING_COINS = 5, CRASH_PENALTY = 8, LIGHTNING_PENALTY = 5, RINGS = 7;
+const UFO_BONUS = 300, UFO_COINS = 30, REFUEL = 0.9, ASH_ENGINE = 0.55;
 const KEYMAP = {
   ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'up', KeyW: 'up',
   ArrowDown: 'down', KeyS: 'down', Space: 'boost', ShiftLeft: 'boost', ShiftRight: 'boost',
@@ -114,7 +116,7 @@ export class CourierGame {
     this.stats = daily ? BASE_STATS : this.progress.stats;
     Object.assign(this, {
       active: true, over: false, planet: p, score: 0, combo: 1, time: this.stats.startTime, deliveries: 0, anim: 0, runCoins: 0,
-      stormT: 1.2, warnedStorm: false, stolen: 0, rivalStreak: 0,
+      stormT: 1.2, warnedStorm: false, stolen: 0, rivalStreak: 0, refuelling: false, warnedAsh: false, ashT: 0,
     });
     this.from = sites[Math.floor(this.rand() * sites.length)];
     this.pickDest(true);
@@ -135,6 +137,7 @@ export class CourierGame {
     app.hud.toast(daily
       ? '📅 Daily challenge: stock plane, same route as everyone today. Good luck!'
       : '📦 Deliver parcels between cities! Swoop low through the pink beacon.');
+    if (p.airports?.list.length) app.hud.toast('✈️ Tip: skim low along an airport runway to refuel your boost.');
     this.updateHud();
   }
 
@@ -247,6 +250,14 @@ export class CourierGame {
       }
     }
     this.updateStorm(dt);
+    this.updateRunways(dt);
+    this.updateAsh(dt);
+    if (this.planet.ufo?.catchBy(pl.pos)) {
+      this.score += UFO_BONUS;
+      this.earn(UFO_COINS);
+      app.sfx.pop(pl.pos.clone(), `BEAMED UP! +${UFO_BONUS}`, '#7dffb0', 'ufo');
+      app.achievements.unlock('ufo');
+    }
     for (const ring of this.rings) {
       if (ring.position.distanceTo(pl.pos) > this.stats.magnet) continue;
       this.time += RING_BONUS;
@@ -342,6 +353,29 @@ export class CourierGame {
     pl.invuln = 1;
     app.sfx.pop(pl.pos.clone(), 'ZAP!', '#ffd23f', 'crash');
     app.achievements.unlock('lightningrod');
+  }
+
+  /** Skimming low along a runway tops up the boost tank. */
+  updateRunways(dt) {
+    const pl = this.player, ap = this.planet.airports?.list.find((a) => a.c.angleTo(pl.up) < HALF + 0.02);
+    const on = !!ap && pl.alt < ap.top + 0.9 && Math.abs(pl.up.dot(ap.side)) < 0.04;
+    if (on) pl.boost = Math.min(1, pl.boost + REFUEL * dt);
+    if (on && !this.refuelling) this.app.sfx.pop(pl.pos.clone(), 'REFUEL!', '#3fa7ff', 'ring');
+    this.refuelling = on;
+  }
+
+  /** An erupting volcano's ash plume chokes the engine and empties the boost tank. */
+  updateAsh(dt) {
+    const pl = this.player, app = this.app, ash = this.planet.volcano?.ashAt(pl.pos) ?? 0;
+    pl.engine = ash > 0 ? ASH_ENGINE : 1;
+    if (!ash) return;
+    pl.boost = Math.max(0, pl.boost - dt);
+    pl.shake = Math.max(pl.shake, 0.5);
+    if (!this.warnedAsh) {
+      this.warnedAsh = true;
+      app.hud.toast('🌋 Volcanic ash! Your engine is choking. Get out of the plume!');
+    }
+    if ((this.ashT -= dt) <= 0) { this.ashT = 0.6; app.sfx.pop(pl.pos.clone(), 'COUGH!', '#8a7f9e', 'crash'); }
   }
 
   /** Coins are banked as they're earned, so quitting mid-run keeps them. */

@@ -93,7 +93,7 @@ export class Weather {
   buildSnow() {
     const p = this.planet, rng = p.rng;
     const peaks = (p.nature?.mountains || [])
-      .filter((m) => m.base + m.hgt > R + 1.4)
+      .filter((m) => m.base + m.hgt > R + 1.4 && !m.volcano)
       .sort((a, b) => b.base + b.hgt - (a.base + a.hgt))
       .slice(0, 6);
     this.flakes = [];

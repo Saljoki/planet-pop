@@ -29,6 +29,7 @@ export class PlayerPlane {
     this.cargoSpeed = 1;
     this.cargoClimb = 1;
     this.turbulence = 0; // 0..1, set by the game while flying through a thundercloud
+    this.engine = 1;     // < 1 while volcanic ash chokes the engine
     this.t = 0;
     this.input = { left: false, right: false, up: false, down: false, boost: false };
 
@@ -87,7 +88,7 @@ export class PlayerPlane {
       this.shake = Math.max(this.shake, 0.3 * k);
     }
     const axis = _a.crossVectors(this.up, this.fwd).normalize();
-    const ang = ((boosting ? BOOST : SPEED) * st.speed * this.cargoSpeed * dt) / this.alt; // fly along a great circle
+    const ang = ((boosting ? BOOST : SPEED) * st.speed * this.cargoSpeed * this.engine * dt) / this.alt; // fly along a great circle
     this.up.applyAxisAngle(axis, ang).normalize();
     this.fwd.applyAxisAngle(axis, ang);
     this.fwd.addScaledVector(this.up, -this.fwd.dot(this.up)).normalize();
