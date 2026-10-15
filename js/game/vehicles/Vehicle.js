@@ -50,6 +50,9 @@ export class Vehicle {
   /** Speed over the ground right now, world units per second (for the speedometer). */
   get speed() { return 0; }
 
+  /** Show what it's carrying (a parcel's colour), if it carries anything. */
+  setCargo() {}
+
   /** Take a knock: `amount` of a full health bar, softened by armour. Returns true if that wrecked it. */
   damage(amount) {
     if (this.wrecked) return false;

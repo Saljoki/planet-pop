@@ -5,10 +5,7 @@ import { CourierProps } from './CourierProps.js';
 import { FlightHazards } from './FlightHazards.js';
 import { Widget } from '../ui/Widget.js';
 import { FlightControls } from './input/FlightControls.js';
-import { DeliveryRun } from './runs/DeliveryRun.js';
-import { DailyRun } from './runs/DailyRun.js';
-import { MissionRun } from './runs/MissionRun.js';
-import { FreeFlight } from './runs/FreeFlight.js';
+import { runClass } from './runs/modes.js';
 import { CourierHud } from './screens/CourierHud.js';
 import { ResultsScreen } from './screens/ResultsScreen.js';
 import { PauseMenu } from './screens/PauseMenu.js';
@@ -17,23 +14,13 @@ import { OptionsMenu } from './screens/OptionsMenu.js';
 import { Hangar } from './screens/Hangar.js';
 import { MissionBoard } from './screens/MissionBoard.js';
 
-/**
- * Which kind of run to start. opts: { free } free flight · { mission } a mission definition (see Missions.js) ·
- * { daily } today's challenge · {} a courier run. A new kind of run goes here (see runs/Run.js).
- */
 const RESPAWN = 1.8; // seconds of smoke after a wreck before a fresh vehicle turns up (free modes)
 
-function runFor(game, opts) {
-  if (opts.free) return new FreeFlight(game, opts);
-  if (opts.mission) return new MissionRun(game, opts);
-  if (opts.daily) return new DailyRun(game, opts);
-  return new DeliveryRun(game, opts);
-}
-
 /**
- * Sky Courier: fly a little plane around the planet. This runs the show: it starts and stops runs, flies the plane
- * each frame and hands what happens to the current run (runs/), which decides the rules. Around it are the menus
- * (screens/), the controls (input/), the beacon and rings (CourierProps) and the weather and volcanoes (FlightHazards).
+ * Sky Courier: fly a little plane (or drive a car, or sail a boat) around the planet. This runs the show: it starts
+ * and stops runs, moves the vehicle (vehicles/) each frame and hands what happens to the current run (runs/), which
+ * decides the rules. Around it are the menus (screens/), the controls (input/), the beacon and rings (CourierProps)
+ * and the weather and volcanoes (FlightHazards).
  */
 export class CourierGame {
   constructor(app) {
@@ -102,7 +89,7 @@ export class CourierGame {
     this.start(opts);
   }
 
-  /** Start a run straight away (launch() shows the briefing first). opts: see runFor(). */
+  /** Start a run straight away (launch() shows the briefing first). opts: see runClass() in runs/modes.js. */
   start(opts = {}) {
     const app = this.app, p = app.planet;
     if (this.active) return;
@@ -110,7 +97,7 @@ export class CourierGame {
     if (p.cities.sites.length < 2) { app.hud.toast('📦 Sky Courier needs at least 2 cities. Try a new planet!'); return; }
     if (app.paused) app.togglePause();
     Object.assign(this, { active: true, over: false, planet: p, respawnT: 0 });
-    const run = (this.run = runFor(this, opts)), { at, heading } = run.takeoff();
+    const run = (this.run = new (runClass(opts))(this, opts)), { at, heading } = run.takeoff();
     this.player = run.vehicle(at, heading);
     if (app.settings) this.player.controls = app.settings.values; // Invert Y and sensitivity, live
     this.player.setCargo(run.cargo);
@@ -126,8 +113,9 @@ export class CourierGame {
     app.sfx.play('start');
     run.begin();
     app.renderer.compileAsync?.(this.props.group, app.camera, app.scene)?.catch(() => {}); // new props: compile now, not mid-flight
-    if (this.touch) app.hud.toast(`👆 Drag on the left to steer and climb, hold BOOST to speed up.${this.controls.tilt.supported ? ' ⏸ has tilt steering.' : ''}`);
-    else if (p.airports?.list.length) app.hud.toast('✈️ Tip: skim low along an airport runway to refuel your boost.');
+    const flying = this.player.kind === 'plane', tilt = this.controls.tilt.supported ? ' ⏸ has tilt steering.' : '';
+    if (this.touch) app.hud.toast(flying ? `👆 Drag on the left to steer and climb, hold BOOST to speed up.${tilt}` : `👆 Drag on the left: sideways to steer, up to go, down to brake.${tilt}`);
+    else if (flying && p.airports?.list.length) app.hud.toast('✈️ Tip: skim low along an airport runway to refuel your boost and patch up the plane.');
     this.hud.update();
   }
 

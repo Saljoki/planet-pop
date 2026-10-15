@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 
 const _w = new THREE.Vector3(), _e = new THREE.Vector3();
+const DEFAULT = { back: 1.6, up: 0.6, ahead: 1.2 };
 
-/** Sky Courier's chase cam: behind and above the player's plane, shaking when it's hit. */
+/** Sky Courier's chase cam: behind and above whatever the player drives (each vehicle says how far), shaking when it's hit. */
 export class ChaseView {
   constructor(rig) {
     this.rig = rig;
@@ -11,9 +12,9 @@ export class ChaseView {
 
   /** Where the camera wants to be. */
   pose(out) {
-    const pl = this.player, k = Math.min(2, Math.max(1, 1.1 / this.rig.camera.aspect)); // pull back on portrait screens
-    out.pos.copy(pl.pos).addScaledVector(pl.fwd, -1.6 * k).addScaledVector(pl.up, 0.6 * k);
-    out.look.copy(pl.pos).addScaledVector(pl.fwd, 1.2);
+    const pl = this.player, c = pl.chase ?? DEFAULT, k = Math.min(2, Math.max(1, 1.1 / this.rig.camera.aspect)); // pull back on portrait screens
+    out.pos.copy(pl.pos).addScaledVector(pl.fwd, -c.back * k).addScaledVector(pl.up, c.up * k);
+    out.look.copy(pl.pos).addScaledVector(pl.fwd, c.ahead);
     out.up.copy(pl.up);
     return out;
   }

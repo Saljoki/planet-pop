@@ -59,13 +59,43 @@ export class Traffic {
 
   isWaiting(id) { return !!this.cars[id]?.waiting; }
 
+  /**
+   * The player takes over car `id`: it leaves the traffic (the car behind follows the one in front instead) and
+   * disappears, and the player gets a copy. Returns { color, pos, fwd } to build that copy from.
+   */
+  take(id) {
+    const c = this.cars[id];
+    if (!c || c.taken) return null;
+    c.taken = true;
+    c.follower = this.cars.find((o) => o.leader === c) || null;
+    if (c.follower) c.follower.leader = c.leader === c.follower ? null : c.leader;
+    this.body.getColorAt(id, _c);
+    const color = '#' + _c.getHexString();
+    const pos = this.planet.roads.point(c.road, c.a, c.lane * LANE, new THREE.Vector3());
+    const fwd = this.planet.roads.tangent(c.road, c.a, new THREE.Vector3()).multiplyScalar(c.lane);
+    this.update(0);
+    return { color, pos, fwd };
+  }
+
+  /** The player is done with car `id`: it rejoins the traffic where it was taken. */
+  giveBack(id) {
+    const c = this.cars[id];
+    if (!c?.taken) return;
+    c.taken = false;
+    if (c.follower && this.cars.includes(c.follower)) c.follower.leader = c;
+    c.v = 0;
+    this.update(0);
+  }
+
   update(dt) {
-    const roads = this.planet.roads;
+    const roads = this.planet.roads, b = this.blocker; // b: where the player's car is, if it's on a highway
     for (const c of this.cars) {
+      if (c.taken) continue;
       const dir = c.lane;
       let room = c.leader ? mod((c.leader.a - c.a) * dir, TAU) - MIN_GAP : Infinity;
       const red = roads.redAhead(c.road, c.a, dir, LOOK);
       if (red >= 0) room = Math.min(room, red);
+      if (b && b.road === c.road && Math.abs(b.lat - c.lane * LANE) < 0.08) room = Math.min(room, mod((b.a - c.a) * dir, TAU) - MIN_GAP * 1.4);
       const target = clamp(room * 1.4, 0, c.vmax);
       c.v += clamp(target - c.v, -BRAKE * dt, ACCEL * dt);
       if (room <= 0) c.v = 0;
@@ -73,6 +103,7 @@ export class Traffic {
       c.waiting = red >= 0 && red < 0.06 && c.v < 0.01;
     }
     this.cars.forEach((c, i) => {
+      if (c.taken) { this.body.setMatrixAt(i, _m.makeScale(0, 0, 0)); return; }
       const lat = c.lane * LANE;
       roads.point(c.road, c.a, lat, _p);
       roads.point(c.road, c.a + c.lane * 0.004, lat, _p2);

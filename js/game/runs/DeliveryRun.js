@@ -9,12 +9,25 @@ const DELIVERY_BONUS = 20, RING_BONUS = 5, RING_COINS = 5, CRASH_PENALTY = 8, LI
 const UFO_BONUS = 300, UFO_COINS = 30, ACE = 1500, REPAIR = 0.15;
 const _v = new THREE.Vector3(), _t = new THREE.Vector3(), _s = new THREE.Vector3();
 
+/** Briefing tips for every flavour of courier run. */
+export const COURIER_TIPS = [
+  'Follow the pink arrow to the town, then swoop down low through the pink beacon to deliver.',
+  'Deliver fast to build a combo, up to x5. Blue rings add 5 seconds and refill your boost.',
+  'Crashing costs 8 seconds and some health. Lightning hurts too; skim a runway or deliver a parcel to patch up.',
+  'After your first delivery, Rival Rex races you for every parcel.',
+];
+
 /**
  * 📦 The courier run: carry parcels from city to city before the clock runs out. Fast deliveries build a combo,
  * blue rings add time and refill boost, crashing costs time, and after the first delivery Rex races you for every
  * parcel. DailyRun and MissionRun are variations on this.
  */
 export class DeliveryRun extends Run {
+  static briefing() {
+    return { icon: '📦', title: 'Courier run', goal: 'Deliver as many parcels as you can before the clock runs out.',
+      tips: [...COURIER_TIPS, 'Coins from deliveries and rings buy upgrades in the hangar.'] };
+  }
+
   constructor(game, opts) {
     super(game, opts);
     this.cargoBias = null; // a mission can make one kind of parcel more likely

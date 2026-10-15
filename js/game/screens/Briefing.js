@@ -1,38 +1,19 @@
-import { themeOf } from '../../world/Themes.js';
 import { Overlay } from '../../ui/Overlay.js';
+import { runClass } from '../runs/modes.js';
 
-const COURIER = [
-  'Follow the pink arrow to the town, then swoop down low through the pink beacon to deliver.',
-  'Deliver fast to build a combo, up to x5. Blue rings add 5 seconds and refill your boost.',
-  'Crashing costs 8 seconds. Thunderclouds zap you, and volcanic ash chokes the engine.',
-  'After your first delivery, Rival Rex races you for every parcel.',
-];
+/** What a run is about: { icon, title, goal, tips }, from its Run class. */
+export function briefingFor(opts = {}) { return runClass(opts).briefing(opts); }
 
-/** What a run is about: { icon, title, goal, tips } for a courier run, the daily, a mission or free flight. */
-export function briefingFor({ daily = false, mission = null, free = false } = {}) {
-  if (free) {
-    return { icon: '🕊️', title: 'Free flight', goal: 'No clock, no parcels, no Rex. Fly anywhere you like.',
-      tips: ['Rings refill your boost, and skimming low along a runway refuels it.', 'Spot the UFO? Fly right through it.',
-        'Pause and pick Back to planet when you’re done. No score or coins in free flight.'] };
-  }
-  if (mission) {
-    const world = themeOf(mission.planet.theme);
-    return { icon: mission.icon, title: mission.name, goal: mission.brief,
-      tips: [`🪙 ${mission.reward} coins the first time you complete it.`, `Flown on a ${world.name.toLowerCase()} (${world.icon}), the same every time.`,
-        mission.failIf ? 'One slip ends the mission, so take it steady.' : 'Run out of time and you can try again straight away.'] };
-  }
-  if (daily) {
-    return { icon: '📅', title: 'Daily challenge', goal: 'Today’s planet and parcel route, the same for everyone, in the stock plane. Your best score today counts.',
-      tips: COURIER };
-  }
-  return { icon: '📦', title: 'Courier run', goal: 'Deliver as many parcels as you can before the clock runs out.',
-    tips: [...COURIER, 'Coins from deliveries and rings buy upgrades in the hangar.'] };
-}
-
-/** How to fly with whatever is plugged in or touching the screen. */
-export function controlsFor({ touch = false, pad = false, invertY = false } = {}) {
-  const climb = invertY ? 'dive, down to climb (Invert Y is on)' : 'climb, down to dive';
+/** How to fly (or drive: vehicle 'car' or 'boat') with whatever is plugged in or touching the screen. */
+export function controlsFor({ touch = false, pad = false, invertY = false, vehicle = 'plane' } = {}) {
   const lines = [];
+  if (vehicle !== 'plane') {
+    if (touch) lines.push('👆 Put a thumb on the left half and drag: sideways to steer, up to go, down to brake and reverse', '🔵 Hold BOOST to speed up', '⏸ Pause');
+    else lines.push('⬅️➡️ Arrow keys or A / D to steer', '⬆️ Up or W to go, ⬇️ down or S to brake and reverse', '⚡ Space or Shift to boost', '⏸ P pauses, Esc quits');
+    if (pad) lines.push('🎮 Left stick steers, up to go and down to brake, A / RB / RT boost, Start pauses');
+    return lines;
+  }
+  const climb = invertY ? 'dive, down to climb (Invert Y is on)' : 'climb, down to dive';
   if (touch) {
     lines.push(`👆 Put a thumb on the left half and drag: sideways to steer, up to ${climb}`, '🔵 Hold BOOST to speed up', '⏸ Pause, with tilt steering in ⚙️ Options');
   } else {
@@ -83,7 +64,8 @@ export class Briefing extends Overlay {
     $('bGoal').textContent = b.goal;
     const li = (t) => `<li>${t}</li>`;
     $('bTips').innerHTML = b.tips.map(li).join('');
-    $('bControls').innerHTML = controlsFor({ touch: this.game.touch, pad: !!app.gamepad?.state, invertY: app.settings.get('invertY') }).map(li).join('');
+    const vehicle = runClass(this.pending || {}).vehicleKind(this.pending || {});
+    $('bControls').innerHTML = controlsFor({ touch: this.game.touch, pad: !!app.gamepad?.state, invertY: app.settings.get('invertY'), vehicle }).map(li).join('');
     $('bSkip').checked = !app.settings.get('briefing');
   }
 
@@ -99,13 +81,15 @@ export class Briefing extends Overlay {
 
   options() { this.game.options.show(() => this.open && this.render()); }
 
-  /** Back to where the run was chosen: the mission board for missions, the hangar otherwise. */
+  /** Back to where the run was chosen: the mission board, the road trips, the planet (Drive this) or the hangar. */
   back() {
     if (!this.open) return;
     const opts = this.pending || {};
     this.hide();
     this.pending = null;
     if (opts.mission) this.game.board.show();
+    else if (opts.take) return;
+    else if (opts.drive || opts.road) this.game.roads.show();
     else this.game.openHangar();
   }
 }

@@ -9,6 +9,12 @@ const SIGHTSEER = 120; // seconds of free flight for the trophy
  * still refuel, storms still zap and the UFO can still be caught for fun. No score or coins, so nothing to farm.
  */
 export class FreeFlight extends Run {
+  static briefing() {
+    return { icon: '🕊️', title: 'Free flight', goal: 'No clock, no parcels, no Rex. Fly anywhere you like.',
+      tips: ['Rings refill your boost, and skimming low along a runway refuels it and patches up the plane.', 'Spot the UFO? Fly right through it.',
+        'Pause and pick Back to planet when you’re done. No score or coins in free flight.'] };
+  }
+
   get layout() { return { badge: 'free', stats: false, arrow: false }; }
 
   takeoff() {

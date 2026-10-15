@@ -4,13 +4,19 @@ import { Plane } from '../vehicles/Plane.js';
  * One kind of Sky Courier run (a courier run, the daily, a mission, free flight…). CourierGame owns the plane, the
  * props, the hazards and the controls, and calls these hooks; a run only decides the rules: where the plane starts,
  * what scores, what the HUD says and when it's over. To add a new kind of run, extend this (or DeliveryRun) and add
- * it to runFor() in CourierGame.js.
+ * it to runClass() in runs/modes.js.
  *
  * Each frame CourierGame flies the plane, then calls crashed() / zapped() / refuelled() / inAsh() / caughtUfo() /
  * ring() as those happen, then update(dt), then hud(). A run ends by calling game.finish() with its results card.
  */
 export class Run {
-  /** opts: what was asked for ({ daily, mission, free }), kept so "Fly again" can repeat it. */
+  /** For the briefing before it starts: { icon, title, goal, tips }. */
+  static briefing() { return { icon: '✈️', title: 'Sky Courier', goal: '', tips: [] }; }
+
+  /** What it's flown or driven in, for the briefing's controls: 'plane', 'car' or 'boat'. */
+  static vehicleKind() { return 'plane'; }
+
+  /** opts: what was asked for ({ daily, mission, free, drive, road… }), kept so "Fly again" can repeat it. */
   constructor(game, opts = {}) {
     this.game = game;
     this.opts = opts;

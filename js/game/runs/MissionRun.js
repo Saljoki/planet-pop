@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { mulberry32 } from '../../core/Noise.js';
 import { dailySeed } from '../Daily.js';
 import { MISSIONS, STAT_LABEL, missionIndex } from '../Missions.js';
+import { themeOf } from '../../world/Themes.js';
 import { DeliveryRun } from './DeliveryRun.js';
 
 const _v = new THREE.Vector3();
@@ -19,6 +20,13 @@ export const FAIL_REASON = {
  * counters. Its route is seeded by the mission, so it's the same every attempt.
  */
 export class MissionRun extends DeliveryRun {
+  static briefing({ mission }) {
+    const world = themeOf(mission.planet.theme);
+    return { icon: mission.icon, title: mission.name, goal: mission.brief,
+      tips: [`🪙 ${mission.reward} coins the first time you complete it.`, `Flown on a ${world.name.toLowerCase()} (${world.icon}), the same every time.`,
+        mission.failIf ? 'One slip ends the mission, so take it steady.' : 'Run out of time and you can try again straight away.'] };
+  }
+
   constructor(game, opts) {
     super(game, opts);
     this.def = opts.mission;

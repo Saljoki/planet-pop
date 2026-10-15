@@ -87,6 +87,27 @@ export class Cities {
 
   inCity(d) { return this.sites.some((s) => s.c.dot(d) > this.cosR); }
 
+  /** The town around direction d, if any. */
+  cityAt(d) { return this.sites.find((s) => s.c.dot(d) > this.cosR) || null; }
+
+  /**
+   * The building at direction d (grown by `pad` all round), if any. A building's footprint is a box on its town's grid:
+   * `hx` along the town's u, `hz` along its v.
+   */
+  buildingAt(d, pad = 0) {
+    const city = this.cityAt(d);
+    if (!city?.blocks) return null;
+    const k = R / d.dot(city.c), x = d.dot(city.u) * k, z = d.dot(city.v) * k; // undo the plots' projection onto the globe
+    const gx = Math.round(x / GRID), gz = Math.round(z / GRID);
+    for (let i = gx - 1; i <= gx + 1; i++) {
+      for (let j = gz - 1; j <= gz + 1; j++) {
+        const b = city.blocks.get(`${i},${j}`);
+        if (b && Math.abs(x - b.x) < b.hx + pad && Math.abs(z - b.z) < b.hz + pad) return b;
+      }
+    }
+    return null;
+  }
+
   build() {
     const p = this.planet, rng = p.rng, W = CITY_A * R, data = [];
     for (const city of this.sites) {
@@ -99,7 +120,7 @@ export class Cities {
           const d = city.c.clone().addScaledVector(city.u, x / R).addScaledVector(city.v, z / R).normalize();
           if (p.heightAt(d) < 0.03 || p.roads.near(d, (ROAD_W / 2 + 0.14) / R) || p.railway.near(d, 0.03) || p.isReserved(d)) continue;
           const h = 0.16 + Math.pow(1 - q, 1.6) * rng.range(0.35, 0.85) + (q < 0.45 && rng.chance(0.15) ? rng.range(0.3, 0.5) : 0);
-          const b = { d, u: city.u, h, w: GRID * rng.range(0.55, 0.78), dp: GRID * rng.range(0.55, 0.78) };
+          const b = { d, u: city.u, h, w: GRID * rng.range(0.55, 0.78), dp: GRID * rng.range(0.55, 0.78), city, gx, gz, x, z };
           const room = p.trams?.room(city, x, z); // leave the tram tracks clear
           if (room) {
             if (room.max < 0.1) continue;
@@ -109,6 +130,9 @@ export class Cities {
         }
       }
     }
+    // each town's footprints on its grid (x along u, z along v), so cars can bump into them
+    for (const city of this.sites) city.blocks = new Map();
+    for (const b of data) b.city.blocks.set(`${b.gx},${b.gz}`, { x: b.x, z: b.z, hx: b.dp / 2, hz: b.w / 2, h: b.h });
     const wall = wallMaterial(), roof = toon('#efeaff');
     const mesh = (this.buildings = addInstanced(p.root, new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0),
       [wall, wall, roof, roof, wall, wall], data.length, 0.012));

@@ -45,8 +45,28 @@ export class Boats {
   /** True while a ferry is tied up at its pier. */
   isDocked(id) { return this.boats[id]?.wait > 0; }
 
+  /** The player takes the helm of boat `id`: it disappears here and the player gets a copy. Returns { color, pos, fwd }. */
+  take(id) {
+    const b = this.boats[id];
+    if (!b || b.taken) return null;
+    b.taken = true;
+    const pos = smallCircle(new THREE.Vector3(), b.c, b.u, b.v, b.A, b.phi), cp = Math.cos(b.phi), sp = Math.sin(b.phi);
+    const fwd = b.u.clone().multiplyScalar(-sp).addScaledVector(b.v, cp).multiplyScalar(Math.sign(b.w));
+    this.hull.getColorAt(id, _c);
+    const color = '#' + _c.getHexString();
+    this.update(0, 0);
+    return { color, pos, fwd };
+  }
+
+  /** The player is done with boat `id`: it carries on its rounds. */
+  giveBack(id) {
+    const b = this.boats[id];
+    if (b) b.taken = false;
+  }
+
   update(dt, t) {
     this.boats.forEach((b, i) => {
+      if (b.taken) { this.hull.setMatrixAt(i, _m.makeScale(0, 0, 0)); return; }
       const moving = b.wait <= 0;
       if (!moving) {
         if ((b.wait -= dt) <= 0) this.depart(b);

@@ -1,13 +1,18 @@
 import { mulberry32 } from '../../core/Noise.js';
 import { BASE_STATS } from '../Progress.js';
 import { todayKey, dailySeed } from '../Daily.js';
-import { DeliveryRun } from './DeliveryRun.js';
+import { DeliveryRun, COURIER_TIPS } from './DeliveryRun.js';
 
 /**
  * 📅 Today's challenge: a courier run in the stock plane, on a route seeded by the date, so everyone flies the same
  * run today. It keeps its own best (separate from the hangar best) and can be shared.
  */
 export class DailyRun extends DeliveryRun {
+  static briefing() {
+    return { icon: '📅', title: 'Daily challenge', goal: 'Today’s planet and parcel route, the same for everyone, in the stock plane. Your best score today counts.',
+      tips: COURIER_TIPS };
+  }
+
   constructor(game, opts) {
     super(game, opts);
     this.date = todayKey();
