@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { R, TAU, clamp, mod, smoothstep, ease, raySphere, tangentBasis } from '../core/Geo.js';
 import { PointEntity } from '../core/Entity.js';
+import { Gestures } from './Gestures.js';
 
 const FRAME = { car: 1.0, train: 1.3, boat: 1.2, plane: 1.7, balloon: 1.6, bird: 0.9, rocket: 2.2, satellite: 1.4, station: 3.2, moon: 6.5, storm: 5, city: 4.2, spot: 3,
   airport: 3.2, harbour: 2.2, person: 0.45, volcano: 4.2, ufo: 1.6, tram: 0.75, whale: 1.3, helicopter: 1.2 };
@@ -25,69 +26,39 @@ export class CameraRig {
     this.look = new THREE.Vector3();
     this.pose = { pos: new THREE.Vector3(), look: new THREE.Vector3(), up: new THREE.Vector3() };
     const p = this.camera.position;
-    this.orbit = { yaw: Math.atan2(p.x, p.z), pitch: Math.asin(p.y / p.length()), alt: p.length() - R };
+    this.orbit = { yaw: Math.atan2(p.x, p.z), pitch: Math.asin(p.y / p.length()), alt: p.length() - R, heading: 0, tilt: 0 };
     this.local = { target: new THREE.Vector3(), up: new THREE.Vector3(0, 1, 0), fwd: new THREE.Vector3(0, 0, 1), yaw: Math.PI, pitch: 0.5, dist: 3 };
     this.minDist = 0.3;
     this.vel = { yaw: 0, pitch: 0 };
-    this.pointers = new Map();
-    this.press = null;
-    this.pinch = 0;
+    this.tween = null; // a smooth orbit move (double-tap zoom, compass reset)
     this.bindInput();
   }
 
   /* ---------------- input ---------------- */
 
   bindInput() {
-    const el = this.el;
-    el.addEventListener('pointerdown', (e) => {
-      el.setPointerCapture(e.pointerId);
-      this.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (this.pointers.size === 1) this.press = { x: e.clientX, y: e.clientY, t: performance.now(), moved: false };
-      this.pinch = this.pointers.size === 2 ? this.pinchDist() : 0;
-      this.idle = 0;
-      this.vel.yaw = this.vel.pitch = 0;
+    this.gestures = new Gestures(this.el, {
+      input: () => { this.idle = 0; this.vel.yaw = this.vel.pitch = 0; this.tween = null; this.app.onUserInput?.(); },
+      drag: (dx, dy) => this.drag(dx, dy),
+      zoom: (f) => this.zoom(f),
+      twist: (a) => this.twist(a),
+      tilt: (dy) => this.tilt(dy),
+      tap: (x, y) => this.click(x, y),
+      doubleTap: (x, y) => this.zoomAt(x, y),
+      hold: (x, y) => this.holdAt(x, y),
+      hover: (x, y) => this.hover(x, y),
+      leave: () => this.app.hud.hideLabel(),
     });
-    el.addEventListener('pointermove', (e) => {
-      const prev = this.pointers.get(e.pointerId);
-      if (!prev) { this.hover(e.clientX, e.clientY); return; }
-      const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
-      prev.x = e.clientX;
-      prev.y = e.clientY;
-      if (this.press && Math.hypot(e.clientX - this.press.x, e.clientY - this.press.y) > 6) this.press.moved = true;
-      if (this.pointers.size === 2) {
-        const d = this.pinchDist();
-        if (this.pinch) this.zoom(this.pinch / d);
-        this.pinch = d;
-        return;
-      }
-      this.drag(dx, dy);
-    });
-    const up = (e) => {
-      if (!this.pointers.has(e.pointerId)) return;
-      this.pointers.delete(e.pointerId);
-      const p = this.press;
-      if (e.type === 'pointerup' && p && !p.moved && this.pointers.size === 0 && performance.now() - p.t < 450) this.click(e.clientX, e.clientY);
-      if (this.pointers.size === 0) this.press = null;
-      this.pinch = this.pointers.size === 2 ? this.pinchDist() : 0;
-    };
-    el.addEventListener('pointerup', up);
-    el.addEventListener('pointercancel', up);
-    el.addEventListener('pointerleave', () => this.app.hud.hideLabel());
-    el.addEventListener('wheel', (e) => { e.preventDefault(); this.idle = 0; this.zoom(Math.exp(e.deltaY * 0.0012)); }, { passive: false });
     addEventListener('keydown', (e) => {
       if (e.code === 'Escape' && (this.mode === 'local' || (this.mode === 'fly' && this.entity))) this.release();
     });
   }
 
-  pinchDist() {
-    const [a, b] = [...this.pointers.values()];
-    return Math.hypot(a.x - b.x, a.y - b.y) || 1;
-  }
-
   drag(dx, dy) {
     this.idle = 0;
     if (this.mode === 'orbit') {
-      const s = 0.005 * clamp(this.orbit.alt / 14, 0.03, 1); // slower when close to the ground
+      const s = 0.005 * clamp(this.orbit.alt / 14, 0.03, 1), h = this.orbit.heading; // slower when close to the ground
+      [dx, dy] = [dx * Math.cos(h) + dy * Math.sin(h), dy * Math.cos(h) - dx * Math.sin(h)]; // the globe follows the finger when turned
       this.vel.yaw = -dx * s;
       this.vel.pitch = dy * s;
     } else if (this.mode === 'local') {
@@ -112,6 +83,65 @@ export class CameraRig {
   zoom(f) {
     if (this.mode === 'orbit') this.orbit.alt = clamp(this.orbit.alt * f, 0.4, 110);
     else if (this.mode === 'local') this.local.dist = clamp(this.local.dist * f, this.minDist, 14);
+  }
+
+  /** Two-finger twist: the view turns with the fingers. */
+  twist(a) {
+    this.idle = 0;
+    if (this.mode === 'orbit') this.orbit.heading = mod(this.orbit.heading + a + Math.PI, TAU) - Math.PI;
+    else if (this.mode === 'local') this.local.yaw += a;
+  }
+
+  /** Two fingers dragged up tilt the view toward the horizon; down looks more straight down. */
+  tilt(dy) {
+    this.idle = 0;
+    if (this.mode === 'orbit') this.orbit.tilt = clamp(this.orbit.tilt - dy * 0.004, -1.2, 1.2);
+    else if (this.mode === 'local') this.local.pitch = clamp(this.local.pitch + dy * 0.004, 0.04, 1.45);
+  }
+
+  /** True when the orbit view has been turned or tilted (the compass button resets it). */
+  get turned() { return this.mode === 'orbit' && (Math.abs(this.orbit.heading) > 0.02 || Math.abs(this.orbit.tilt) > 0.02); }
+
+  /** Smoothly turn the orbit view back to north-up and looking straight down. */
+  resetView() { this.tweenTo({ heading: 0, tilt: 0 }); }
+
+  /** Double-tap: swoop in on that spot (or closer to whatever is being followed). */
+  zoomAt(x, y) {
+    if (this.app.game.active || !this.app.planet) return;
+    if (this.mode === 'local') { this.local.dist = clamp(this.local.dist * 0.55, this.minDist, 14); return; }
+    if (this.mode !== 'orbit') return;
+    const spot = this.pickGround(x, y);
+    if (!spot) { this.tweenTo({ alt: clamp(this.orbit.alt * 0.55, 0.6, 110) }); return; }
+    const d = spot.pos.clone().normalize();
+    this.tweenTo({ yaw: Math.atan2(d.x, d.z), pitch: clamp(Math.asin(d.y), -1.35, 1.35), alt: clamp(this.orbit.alt * 0.45, 0.6, 110) });
+  }
+
+  /** Press and hold: an info card about whatever is under the finger. */
+  holdAt(x, y) {
+    if (this.app.game.active || !this.app.planet) return;
+    const e = this.pick(x, y, 40);
+    if (e) this.app.hud.info?.show(e);
+  }
+
+  /** Glide to an orbit view ({ yaw, pitch, alt, heading, tilt }), first flying back out if following something. */
+  orbitTo(view) {
+    if (this.mode === 'orbit') { this.tweenTo({ ...view }); return; }
+    this.queued = { ...view };
+    this.release();
+  }
+
+  tweenTo(to) {
+    const o = this.orbit, from = { yaw: o.yaw, pitch: o.pitch, alt: o.alt, heading: o.heading, tilt: o.tilt };
+    for (const k of ['yaw', 'heading']) if (k in to) to[k] = from[k] + mod(to[k] - from[k] + Math.PI, TAU) - Math.PI; // the short way round
+    this.tween = { from, to, t: 0, dur: 0.7 };
+  }
+
+  updateTween(dt) {
+    const tw = this.tween, o = this.orbit;
+    tw.t = Math.min(1, tw.t + dt / tw.dur);
+    const e = ease(tw.t);
+    for (const k in tw.to) o[k] = tw.from[k] + (tw.to[k] - tw.from[k]) * e;
+    if (tw.t >= 1) this.tween = null;
   }
 
   /* ---------------- picking ---------------- */
@@ -142,9 +172,15 @@ export class CameraRig {
   }
 
   pickGround(x, y) {
-    const cam = this.camera.position;
+    const cam = this.camera.position, p = this.app.planet;
     _v.set((x / innerWidth) * 2 - 1, -(y / innerHeight) * 2 + 1, 0.5).unproject(this.camera).sub(cam).normalize();
-    const t = raySphere(cam, _v, R + 0.2);
+    let t = raySphere(cam, _v, R + 0.2);
+    if (t < 0) { // low down, looking over the hills: walk along the ray until it meets the ground
+      for (let s = 0.05; s < 25; s *= 1.04) {
+        _w.copy(cam).addScaledVector(_v, s);
+        if (_w.length() < p.surfR(_e.copy(_w).normalize()) + 0.05) { t = s; break; }
+      }
+    }
     if (t < 0) return null;
     const d = _w.copy(cam).addScaledVector(_v, t).normalize();
     return new PointEntity(d.clone().multiplyScalar(this.app.planet.surfR(d) + 0.1), 'spot', 'Somewhere nice', tangentBasis(d)[0]);
@@ -172,6 +208,7 @@ export class CameraRig {
   focus(e) {
     if (this.app.game.active) return;
     const L = this.local;
+    this.queued = this.tween = null;
     this.entity = e;
     this.followTime = 0;
     e.getPos(L.target);
@@ -201,9 +238,13 @@ export class CameraRig {
     this.orbit.yaw = Math.atan2(pos.x, pos.z);
     this.orbit.pitch = clamp(Math.asin(clamp(pos.y / len, -1, 1)), -1.35, 1.35);
     this.orbit.alt = Math.max(len - R, instant ? 24 : 12);
+    this.orbit.heading = this.orbit.tilt = 0; // back to north-up, the way the fly-out ends
     this.vel.yaw = this.vel.pitch = 0;
-    if (instant) { this.mode = 'orbit'; return; }
-    this.startFly((pose) => this.orbitPose(pose), () => (this.mode = 'orbit'), 1.3);
+    if (instant) { this.mode = 'orbit'; this.queued = null; return; }
+    this.startFly((pose) => this.orbitPose(pose), () => {
+      this.mode = 'orbit';
+      if (this.queued) { this.tweenTo(this.queued); this.queued = null; }
+    }, 1.3);
   }
 
   setGame(player) {
@@ -278,6 +319,17 @@ export class CameraRig {
     this.camera.lookAt(this.look);
   }
 
+  /**
+   * Total orbit tilt: the automatic look toward the horizon near the ground, plus the user's two-finger tilt.
+   * Tilting up stops before the middle of the screen leaves the planet; tilting down goes as far as straight down.
+   */
+  tiltNow() {
+    const o = this.orbit, auto = this.orbitTilt(), r = this.camera.position.length();
+    const top = Math.max(auto, Math.asin(Math.min(1, R / r)) - 0.22), total = clamp(auto + o.tilt, 0, top);
+    if (!this.tween) o.tilt = total - auto; // no dead zone when the fingers come back
+    return total;
+  }
+
   /** Tilt toward the horizon when skimming low in orbit mode. */
   orbitTilt() {
     const pos = this.camera.position, g = this.app.planet ? this.app.planet.groundR(_w.copy(pos).normalize()) : R;
@@ -340,7 +392,7 @@ export class CameraRig {
   }
 
   update(dt) {
-    const still = this.pointers.size === 0;
+    const still = this.gestures.count === 0;
     this.idle += dt;
     if (still) {
       const damp = Math.exp(-dt * 5);
@@ -353,9 +405,11 @@ export class CameraRig {
       case 'local': this.updateLocal(dt); break;
       case 'game': this.updateGame(dt); break;
       default:
-        if (this.idle > 6 && still) this.orbit.yaw += dt * 0.05; // gentle auto-rotate
+        if (this.tween) this.updateTween(dt);
+        else if (this.idle > 6 && still) this.orbit.yaw += dt * 0.05; // gentle auto-rotate
         this.apply(this.orbitPose(this.pose));
-        this.camera.rotateX(this.orbitTilt());
+        this.camera.rotateZ(this.orbit.heading);
+        this.camera.rotateX(this.tiltNow());
     }
   }
 }

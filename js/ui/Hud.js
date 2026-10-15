@@ -1,4 +1,5 @@
 import { THEMES, THEME_IDS } from '../world/Themes.js';
+import { InfoCard } from './InfoCard.js';
 
 const SPEEDS = [0.5, 1, 2, 4, 8];
 
@@ -7,17 +8,20 @@ export class Hud {
   constructor(app) {
     this.app = app;
     const p = app.params;
-    const hint = matchMedia('(pointer: coarse)').matches
-      ? 'Drag to orbit · Pinch to zoom · Tap anything to fly there'
-      : 'Drag to orbit · Scroll to zoom · Click anything to fly there';
+    const touch = (this.touch = matchMedia('(pointer: coarse)').matches);
+    const hint = touch
+      ? 'Drag to orbit · Pinch to zoom · Two fingers to turn and tilt · Tap to fly there · Hold for info'
+      : 'Drag to orbit · Scroll to zoom · Right-drag to turn and tilt · Click anything to fly there';
+    const canFull = !!document.fullscreenEnabled && !matchMedia('(display-mode: standalone)').matches;
     document.getElementById('ui').innerHTML = `
       <div id="title" class="badge">Planet Pop!</div>
       <div id="hint" class="badge">${hint}</div>
       <div id="worldTag" class="badge"></div>
-      <div id="topBtns"><button id="installBtn" class="hidden" title="Install Planet Pop as an app">📲</button><button id="photoBtn" title="Photo mode (C)">📷</button><button id="panelToggle">☰ Controls</button></div>
-      <div id="panel" class="panel">
+      <div id="topBtns"><button id="compassBtn" class="hidden" title="Back to north-up">🧭</button><button id="installBtn" class="hidden" title="Install Planet Pop as an app">📲</button><button id="findBtn" title="Find things and events (F)">📍</button><button id="photoBtn" title="Photo mode (C)">📷</button><button id="panelToggle">☰<span class="wide"> Controls</span></button></div>
+      <div id="panel" class="panel sheet">
+        <div class="grab"></div>
         <div class="row"><button id="pauseBtn">⏸ Pause</button><button id="newBtn">🌍 New planet</button></div>
-        <button id="shareBtn">🔗 Share this planet</button>
+        <div class="row"><button id="shareBtn">🔗 Share this planet</button>${canFull ? '<button id="fullBtn" title="Full screen">⛶</button>' : ''}</div>
         <label>Time speed <b id="speedVal"></b><input id="speed" type="range" min="0" max="4" step="1" value="1"></label>
         <label>Land <b id="landVal"></b><input id="land" type="range" min="25" max="70" step="5" value="${Math.round(p.land * 100)}"></label>
         <label>Cities <b id="citiesVal"></b><input id="cities" type="range" min="2" max="8" step="1" value="${p.cities}"></label>
@@ -35,6 +39,8 @@ export class Hud {
           <label class="check"><input id="ink" type="checkbox" checked> Ink lines</label>
           <label class="check"><input id="shadows" type="checkbox" checked> Shadows</label>
           <label class="check"><input id="sound" type="checkbox" checked> Sound</label>
+          <label class="check" title="Start the tour after a minute with no input"><input id="autoTour" type="checkbox" checked> Idle tour</label>
+          ${app.haptics?.supported ? '<label class="check"><input id="buzz" type="checkbox" checked> Vibration</label>' : ''}
         </div>
         <label>Ambience <b id="ambienceVal"></b><input id="ambience" type="range" min="0" max="100" step="5" value="${Math.round((app.ambience?.volume ?? 0.5) * 100)}"></label>
         <button id="playBtn" class="big">✈️ Play Sky Courier</button>
@@ -49,8 +55,18 @@ export class Hud {
 
     const $ = (this.$ = (id) => document.getElementById(id));
     this.panel = $('panel');
+    this.info = new InfoCard(app);
     if (innerWidth < 700) this.panel.classList.add('hidden');
-    $('panelToggle').onclick = () => this.panel.classList.toggle('hidden');
+    $('panelToggle').onclick = () => { if (this.panel.classList.toggle('hidden')) return; app.find?.hide(); this.info.hide(); };
+    $('findBtn').onclick = () => app.find?.toggle();
+    $('compassBtn').onclick = () => app.rig.resetView();
+    $('fullBtn')?.addEventListener('click', () => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())?.catch?.(() => {}));
+    if (app.haptics?.supported) {
+      $('buzz').checked = app.haptics.enabled;
+      $('buzz').onchange = (e) => app.haptics.setEnabled(e.target.checked);
+    }
+    $('autoTour').onchange = (e) => app.tour?.setAuto(e.target.checked);
+    this.swipeToClose(this.panel, () => this.panel.classList.add('hidden'));
     $('photoBtn').onclick = () => app.photo?.enter();
     addEventListener('beforeinstallprompt', (e) => { // browsers that can install web apps offer it here
       e.preventDefault();
@@ -85,7 +101,50 @@ export class Hud {
       if (e.code === 'KeyP') app.togglePause();
       else if (e.code === 'KeyN' && !app.game.active) app.newPlanet();
       else if (e.code === 'KeyH' && !app.game.active) this.panel.classList.toggle('hidden');
+      else if (e.code === 'KeyT' && !app.game.active) app.tour?.toggle();
     });
+  }
+
+  /** Phones: a sheet closes when dragged down by its grab bar. */
+  swipeToClose(sheet, close) {
+    const grab = sheet.querySelector?.('.grab');
+    if (!grab) return;
+    let start = null;
+    grab.addEventListener('pointerdown', (e) => { start = e.clientY; grab.setPointerCapture?.(e.pointerId); });
+    grab.addEventListener('pointermove', (e) => {
+      if (start === null) return;
+      sheet.style.transform = `translateY(${Math.max(0, e.clientY - start)}px)`;
+    });
+    const end = (e) => {
+      if (start === null) return;
+      const dy = e.clientY - start;
+      start = null;
+      sheet.style.transform = '';
+      if (dy > 60) close();
+    };
+    grab.addEventListener('pointerup', end);
+    grab.addEventListener('pointercancel', end);
+  }
+
+  /** On phones the controls sheet and the Find sheet take turns. */
+  closePanel() { if (innerWidth < 700 || innerHeight < 500) this.panel.classList.add('hidden'); }
+
+  /** Called every frame: the compass shows while the view is turned or tilted; an open info card stays current. */
+  update(dt) {
+    const rig = this.app.rig, turned = rig.turned;
+    this.$('compassBtn').classList.toggle('hidden', !turned);
+    if (turned) this.$('compassBtn').style.transform = `rotate(${rig.orbit.heading}rad)`;
+    if (this.info.open && (this.infoT = (this.infoT ?? 0) - dt) <= 0) { this.infoT = 0.5; this.info.refresh(); }
+  }
+
+  /** The tour is cinematic: the panel and the hint step aside (and come back after). */
+  setTourMode(on) {
+    if (on) this.tourPanel = !this.panel.classList.contains('hidden');
+    this.panel.classList.toggle('hidden', on || !this.tourPanel);
+    this.$('hint').classList.toggle('hidden', on);
+    document.body.classList.toggle('touring', on); // the tour bar replaces the follow badge
+    this.info.hide();
+    this.app.find?.hide();
   }
 
   /** live = apply on every move; otherwise only when the slider is released (planet rebuilds). */
@@ -133,6 +192,7 @@ export class Hud {
 
   setGameMode(on) {
     if (on) this.panelOpen = !this.panel.classList.contains('hidden');
+    if (on) { this.info.hide(); this.app.find?.hide(); }
     this.panel.classList.toggle('hidden', on || !this.panelOpen);
     this.$('topBtns').classList.toggle('hidden', on);
     this.$('hint').classList.toggle('hidden', on);

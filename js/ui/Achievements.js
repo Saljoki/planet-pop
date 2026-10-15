@@ -32,6 +32,8 @@ const DEFS = [
   ['chopper', '🚁', 'Chopper Ride', 'Follow a helicopter for 10 seconds'],
   ['tramride', '🚋', 'End of the Line', 'Ride a tram all the way to the end of its line'],
   ['snowday', '⛄', 'Snow Day', 'Visit a town in the winter snow'],
+  ['sightseer', '🕊️', 'Free as a Bird', 'Spend two minutes in free flight'],
+  ['couchpotato', '📺', 'Couch Potato', 'Watch the tour for three minutes'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
 const KEY = 'planetpop.trophies', WORLDS_KEY = 'planetpop.worlds', WORLD_KINDS = 5;

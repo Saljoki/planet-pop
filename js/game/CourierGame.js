@@ -13,6 +13,10 @@ import { HALF } from '../world/Airports.js';
 import { MISSIONS, missionIndex } from './Missions.js';
 import { MissionRun, FAIL_REASON } from './MissionRun.js';
 import { MissionBoard } from './MissionBoard.js';
+import { TouchStick } from './TouchStick.js';
+import { TiltSteer } from './TiltSteer.js';
+import { PauseMenu } from './PauseMenu.js';
+import { FreeFlight } from './FreeFlight.js';
 
 const DELIVERY_BONUS = 20, RING_BONUS = 5, RING_COINS = 5, CRASH_PENALTY = 8, LIGHTNING_PENALTY = 5, RINGS = 7;
 const UFO_BONUS = 300, UFO_COINS = 30, REFUEL = 0.9, ASH_ENGINE = 0.55;
@@ -39,10 +43,16 @@ export class CourierGame {
     this.onKeyUp = (e) => this.key(e, false);
     this.progress = new Progress();
     this.rival = null;
+    this.touch = matchMedia('(pointer: coarse)').matches;
+    this.tilt = new TiltSteer();
     this.buildDom();
+    this.pauseMenu = new PauseMenu(this);
     this.mission = null;
+    this.free = null;
     this.board = new MissionBoard(app, this.progress, (m) => this.startMission(m));
-    this.hangar = new Hangar(app, this.progress, { onFly: () => this.start(), onDaily: () => this.startDaily(), onMissions: () => this.board.show() });
+    this.hangar = new Hangar(app, this.progress, {
+      onFly: () => this.start(), onFree: () => this.start({ free: true }), onDaily: () => this.startDaily(), onMissions: () => this.board.show(),
+    });
   }
 
   /** Build the planet a run needs (unless it's already loaded), then start. */
@@ -74,16 +84,14 @@ export class CourierGame {
     el.id = 'game';
     el.className = 'hidden';
     el.innerHTML = `
-      <div id="gStats"><div class="badge hidden" id="gDaily">📅<span class="wide"> Daily</span></div><div class="badge hidden" id="gMission"></div><div class="badge" id="gScore"></div><div class="badge" id="gTime"></div><div class="badge" id="gCombo"></div><div class="badge" id="gCoins"></div></div>
+      <div id="gStats"><div class="badge hidden" id="gDaily">📅<span class="wide"> Daily</span></div><div class="badge hidden" id="gMission"></div><div class="badge hidden" id="gFree"></div><div class="badge" id="gScore"></div><div class="badge" id="gTime"></div><div class="badge" id="gCombo"></div><div class="badge" id="gCoins"></div></div>
+      <button id="gPauseBtn" title="Pause (P)">⏸</button>
       <div id="gRival" class="tag hidden">😈 Rex</div>
       <svg id="gArrow" viewBox="0 0 70 70"><polygon points="35,5 61,58 35,45 9,58" fill="#ff5fa2" stroke="#1b1530" stroke-width="5" stroke-linejoin="round"/></svg>
       <div id="gGoal" class="badge"></div>
       <div id="gBoost" class="badge"><div></div></div>
       <div id="gHelp" class="badge">←/→ steer · ↑/↓ climb · Space boost · P pause · Esc quit</div>
-      <div id="gPad">
-        <span></span><button data-k="up">▲</button><button data-k="boost" class="boost">BOOST</button>
-        <button data-k="left">◀</button><button data-k="down">▼</button><button data-k="right">▶</button>
-      </div>
+      <button id="gBoostBtn">BOOST</button>
       <div id="gOver" class="overlay hidden"><div class="panel">
         <h2 id="gTitle">⏰ Time's up!</h2><p id="gResult"></p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
@@ -98,16 +106,17 @@ export class CourierGame {
       daily: $('gDaily'), rival: $('gRival'), share: $('gShare'), mission: $('gMission'), title: $('gTitle'),
       next: $('gNext'), again: $('gAgain'), board: $('gBoard'),
       score: $('gScore'), time: $('gTime'), combo: $('gCombo'), coins: $('gCoins'), arrow: $('gArrow'), goal: $('gGoal'),
-      boost: $('gBoost').firstElementChild, over: $('gOver'), result: $('gResult'), pad: $('gPad'), help: $('gHelp'),
+      boost: $('gBoost').firstElementChild, over: $('gOver'), result: $('gResult'), help: $('gHelp'), free: $('gFree'),
+      stats: ['gScore', 'gTime', 'gCombo', 'gCoins'].map($), boostBtn: $('gBoostBtn'),
     };
-    const touch = matchMedia('(pointer: coarse)').matches;
-    this.dom.pad.classList.toggle('hidden', !touch);
-    this.dom.help.classList.toggle('hidden', touch);
-    this.dom.pad.querySelectorAll('button').forEach((b) => {
-      const set = (on) => (e) => { e.preventDefault(); if (this.player && !this.over) this.player.input[b.dataset.k] = on; };
-      b.addEventListener('pointerdown', set(true));
-      for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) b.addEventListener(ev, set(false));
-    });
+    // phones: a floating thumbstick on the left, a big boost button on the right
+    this.stick = this.touch ? new TouchStick(el) : null;
+    this.dom.boostBtn.classList.toggle('hidden', !this.touch);
+    this.dom.help.classList.toggle('hidden', this.touch);
+    const boost = (on) => (e) => { e.preventDefault(); if (this.player && !this.over) this.player.input.boost = on; };
+    this.dom.boostBtn.addEventListener('pointerdown', boost(true));
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) this.dom.boostBtn.addEventListener(ev, boost(false));
+    $('gPauseBtn').addEventListener('click', () => { if (!this.over && !this.app.paused) this.app.togglePause(); });
     $('gAgain').addEventListener('click', () => this.again());
     $('gNext').addEventListener('click', () => { const next = MISSIONS[missionIndex(this.mission.def.id) + 1]; this.stop(); this.startMission(next); });
     $('gBoard').addEventListener('click', () => { this.stop(); this.board.show(); });
@@ -116,9 +125,9 @@ export class CourierGame {
     $('gExit').addEventListener('click', () => this.stop());
   }
 
-  /** Same kind of run again: free flight, today's daily, or the same mission. */
+  /** Same kind of run again: a courier run, free flight, today's daily, or the same mission. */
   again() {
-    const opts = { daily: this.daily, mission: this.mission?.def };
+    const opts = { daily: this.daily, mission: this.mission?.def, free: !!this.free };
     this.stop();
     this.start(opts);
   }
@@ -126,8 +135,9 @@ export class CourierGame {
   /**
    * daily: stock plane and a route seeded by today's date, so every player gets the same run.
    * mission: a mission definition (see Missions.js); its route is seeded by the mission too.
+   * free: free flight, with no clock, parcels, rival, score or coins.
    */
-  start({ daily = false, mission = null } = {}) {
+  start({ daily = false, mission = null, free = false } = {}) {
     const app = this.app, p = app.planet;
     if (this.active) return;
     if (!p || app.building) { app.hud.toast('🌍 The planet is still being built. Try again in a moment.'); return; }
@@ -137,6 +147,7 @@ export class CourierGame {
     this.daily = daily;
     this.dailyDate = todayKey();
     this.mission = mission ? new MissionRun(this, mission) : null;
+    this.free = free ? new FreeFlight(this) : null;
     this.rand = daily ? mulberry32(dailySeed(this.dailyDate) ^ 0x9e3779b9) : mission ? mulberry32(dailySeed(`mission:${mission.id}`)) : Math.random;
     this.cargoBias = mission?.cargo || null;
     this.stats = daily ? BASE_STATS : this.progress.stats;
@@ -147,8 +158,8 @@ export class CourierGame {
     // counters missions are judged on
     this.tally = { deliveries: 0, standard: 0, urgent: 0, fragile: 0, heavy: 0, broken: 0, rings: 0, refuels: 0, rexStreak: 0, ufo: 0, ash: 0, night: 0 };
     this.from = sites[Math.floor(this.rand() * sites.length)];
-    this.pickDest(true);
-    const heading = _t.copy(this.dest.c).addScaledVector(this.from.c, -this.dest.c.dot(this.from.c));
+    if (free) { this.dest = null; this.cargo = rollCargo(true, this.rand); } else this.pickDest(true);
+    const heading = free ? _t.copy(this.from.u) : _t.copy(this.dest.c).addScaledVector(this.from.c, -this.dest.c.dot(this.from.c));
     if (heading.lengthSq() < 1e-6) heading.copy(this.from.u);
     this.player = new PlayerPlane(p, this.from.c, heading, this.stats, this.progress.skinDef);
     this.player.setCargo(this.cargo);
@@ -160,14 +171,22 @@ export class CourierGame {
     this.dom.over.classList.add('hidden');
     this.dom.daily.classList.toggle('hidden', !daily);
     this.dom.mission.classList.toggle('hidden', !mission);
+    this.dom.free.classList.toggle('hidden', !free);
+    for (const b of this.dom.stats) b.classList.toggle('hidden', free);
+    this.dom.arrow.classList.toggle('hidden', free);
+    this.stick?.reset();
+    if (this.tilt.wanted) this.tilt.start();
+    app.wakeLock?.want('game', true);
     addEventListener('keydown', this.onKeyDown);
     addEventListener('keyup', this.onKeyUp);
     app.sfx.play('start');
     this.mission?.setup();
-    app.hud.toast(mission ? `${mission.icon} ${mission.name}: ${mission.brief}` : daily
-      ? '📅 Daily challenge: stock plane, same route as everyone today. Good luck!'
-      : '📦 Deliver parcels between cities! Swoop low through the pink beacon.');
-    if (p.airports?.list.length) app.hud.toast('✈️ Tip: skim low along an airport runway to refuel your boost.');
+    app.hud.toast(free ? '🕊️ Free flight: no clock, no parcels. Fly anywhere you like! Rings refill your boost.'
+      : mission ? `${mission.icon} ${mission.name}: ${mission.brief}` : daily
+        ? '📅 Daily challenge: stock plane, same route as everyone today. Good luck!'
+        : '📦 Deliver parcels between cities! Swoop low through the pink beacon.');
+    if (this.touch) app.hud.toast(`👆 Drag on the left to steer and climb, hold BOOST to speed up.${this.tilt.supported ? ' ⏸ has tilt steering.' : ''}`);
+    else if (p.airports?.list.length) app.hud.toast('✈️ Tip: skim low along an airport runway to refuel your boost.');
     this.updateHud();
   }
 
@@ -186,8 +205,13 @@ export class CourierGame {
     this.props.removeFromParent();
     this.props.traverse((o) => { o.geometry?.dispose(); [].concat(o.material || []).forEach((m) => m.dispose()); });
     this.props = this.beacon = this.rings = null;
+    this.free = null;
+    this.tilt.stop();
+    this.stick?.reset();
+    this.app.wakeLock?.want('game', false);
     this.el.classList.add('hidden');
     this.dom.over.classList.add('hidden');
+    this.pauseMenu.sync();
     this.app.hud.setGameMode(false);
     this.app.rig.release();
   }
@@ -228,7 +252,8 @@ export class CourierGame {
     this.beacon.add(beam);
     this.beaconRing = addMesh(this.beacon, new THREE.TorusGeometry(0.75, 0.07, 8, 32).rotateX(Math.PI / 2), toon('#ff5fa2'), 0.01, { cast: false });
     this.beaconRing.position.y = 2.4;
-    this.placeBeacon();
+    if (this.dest) this.placeBeacon();
+    else this.beacon.visible = false; // free flight: nowhere in particular to go
     const geo = new THREE.TorusGeometry(0.42, 0.06, 8, 28), mat = toon('#3fa7ff');
     this.rings = Array.from({ length: RINGS }, () => {
       const ring = addMesh(this.props, geo, mat, 0.01, { cast: false });
@@ -266,6 +291,8 @@ export class CourierGame {
 
   update(dt) {
     if (!this.active || this.over || dt <= 0) return;
+    this.applyAnalog();
+    if (this.free) { this.free.update(dt); return; }
     const pl = this.player, app = this.app;
     this.time -= dt;
     this.elapsed += dt;
@@ -275,6 +302,7 @@ export class CourierGame {
     if (pl.crashed) {
       this.time -= CRASH_PENALTY;
       this.combo = 1;
+      app.haptics?.buzz('crash');
       if (this.cargo.fragile && !this.broken) {
         this.broken = true;
         this.tally.broken++;
@@ -300,6 +328,7 @@ export class CourierGame {
       this.earn(RING_COINS);
       pl.boost = 1;
       this.tally.rings++;
+      app.haptics?.buzz('ring');
       app.sfx.pop(ring.position.clone(), `+${RING_BONUS}s!`, '#3fa7ff', 'ring');
       this.placeRing(ring);
     }
@@ -313,6 +342,13 @@ export class CourierGame {
     const result = this.mission?.check();
     if (result) this.endMission(result);
     else if (this.time <= 0) this.gameOver();
+  }
+
+  /** Thumbstick and tilt add up, so either (or both) can steer. */
+  applyAnalog() {
+    const inp = this.player.input, t = this.tilt, c = (v) => Math.max(-1, Math.min(1, v));
+    inp.steer = c((this.stick?.steer ?? 0) + (t.on ? t.steer : 0));
+    inp.climb = c((this.stick?.climb ?? 0) + (t.on ? t.climb : 0));
   }
 
   /** Controller input arrives as on/off states; only changes are applied, so the keyboard still works alongside. */
@@ -339,6 +375,7 @@ export class CourierGame {
       if (this.planet.nightAt(this.dest.c) > 0.5) t.night++;
       this.earn(Math.round(pts / 10));
       app.sfx.pop(this.player.pos.clone(), fast && this.combo > 1 ? `+${pts}! x${this.combo}` : `+${pts}!`, '#2ee59d', 'deliver');
+      app.haptics?.buzz('deliver');
       app.achievements.unlock('courier');
       if (this.combo >= 4) app.achievements.unlock('combo');
     }
@@ -400,6 +437,7 @@ export class CourierGame {
     pl.shake = 1;
     pl.invuln = 1;
     app.sfx.pop(pl.pos.clone(), 'ZAP!', '#ffd23f', 'crash');
+    app.haptics?.buzz('zap');
     app.achievements.unlock('lightningrod');
   }
 
@@ -451,10 +489,11 @@ export class CourierGame {
     d.share.classList.add('hidden');
     d.over.classList.remove('hidden');
     this.app.sfx.play(won ? 'trophy' : 'gameover');
+    if (won) this.app.haptics?.buzz('trophy');
     this.updateHud();
   }
 
-  /** Daily runs keep their own best (they're flown in the stock plane); free flights update the hangar best. */
+  /** Daily runs keep their own best (they're flown in the stock plane); courier runs update the hangar best. */
   gameOver() {
     if (this.mission) { this.time = 0; this.endMission('time'); return; }
     const p = this.progress, ach = this.app.achievements, d = this.dom;
@@ -498,6 +537,7 @@ export class CourierGame {
   }
 
   updateHud() {
+    if (this.free) { this.free.hud(); return; }
     const d = this.dom, pl = this.player, aim = this.mission?.target(pl.up), c = aim?.c ?? this.dest.c;
     d.score.textContent = `⭐ ${this.score}`;
     d.time.textContent = `⏱ ${Math.max(0, Math.ceil(this.time))}`;

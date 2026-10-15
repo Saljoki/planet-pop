@@ -6,7 +6,8 @@ with ferries, sightseeing helicopters, whales, a train with a tunnel, balloons, 
 rainbows, an erupting volcano, midnight fireworks, meteor showers, auroras over the poles, the odd UFO,
 a rocket pad, satellites, a space station, a moon and an ambient soundscape. Planets come in five kinds:
 classic, ice, desert, candy and lava. Plus the **Sky Courier** mini-game with ten missions, a daily
-challenge, a photo mode and 34 trophies. It installs as an app and works offline.
+challenge and free flight, a 📍 Find menu, a hands-free 📺 tour, a photo mode and 36 trophies. It's built for
+phones as much as laptops (touch gestures, a thumbstick, tilt steering), installs as an app and works offline.
 
 Every planet is generated from a seed. The address bar always holds the current planet
 (`?seed=…&land=…&cities=…&theme=…`), and **🔗 Share this planet** copies the link.
@@ -32,11 +33,19 @@ service worker picks up the new version (the tests check this).
 
 ## Controls
 
-- **Drag** to orbit, **scroll / pinch** to zoom — you can skim right down to the ground.
+- **Drag** to orbit, **scroll / pinch** to zoom — you can skim right down to the ground. **Two fingers** twist to
+  turn the view and slide up or down to tilt it (on a computer: **right-drag**); **🧭** puts north back up.
+  **Double-tap** swoops in on a spot.
 - **Click / tap** anything (cars, people, trams, the train, planes, helicopters, boats, whales, balloons,
   birds, storms, airports, harbours, the volcano, the UFO, rocket, satellites, station, moon, or any spot on
   the ground) to fly there and follow it. People and trams can be picked once you've zoomed in on a town,
-  whales while they're at the surface. **Esc** returns to orbit.
+  whales while they're at the surface. **Esc** returns to orbit. **Press and hold** on something for a card
+  saying what it is and what it's up to, with a Follow button.
+- **📍 Find** (or **F**): what's happening right now (an eruption, fireworks, a whale leaping, a plane about to
+  take off…) and a button for every kind of thing (towns, the train, trams, planes, helicopters, whales…).
+  Tap one to fly there; tapping a kind again visits the next one.
+- **📺 Tour** (in Find, or **T**): the camera hops between whatever is happening, with a caption, until you
+  touch the screen. It also starts by itself after a minute with no input (turn off **Idle tour** in the panel).
 - **World** (panel): *Any* gives every new planet a theme picked from its seed (about a third are classic),
   or pick Classic, Ice, Desert, Candy or Lava to rebuild this planet in it. Lava worlds have three volcanoes
   and a glowing lava sea instead of boats.
@@ -52,7 +61,10 @@ service worker picks up the new version (the tests check this).
   the world's name.
 - **Sound** (panel) mutes everything; **Ambience** sets the volume of the soundscape (wind, surf, a
   town's murmur, birds by day, crickets by night, a hum out in space), which follows the camera.
-- **P** pause · **N** new planet · **H** show/hide the control panel.
+- **P** pause · **N** new planet · **H** show/hide the control panel · **F** Find · **T** tour.
+- **On a phone** the control panel and Find slide up from the bottom (drag the bar down to close them), or in
+  from the right with the phone on its side. Buttons are finger-sized and keep clear of notches. The screen
+  stays on while you fly or watch the tour, and **⛶** goes full screen where the browser allows it.
 - **Quality** (panel): *Auto* picks the best level your machine runs smoothly and remembers it;
   *Crisp* forces full resolution; *Balanced* and *Fast* trade shadow detail and the edge-ink pass for speed.
   Resolution never drops below one pixel per CSS pixel. Check it in DevTools with `app.quality.name` / `app.quality.pr`.
@@ -63,9 +75,15 @@ service worker picks up the new version (the tests check this).
 
 Fly city to city and swoop low through the pink beacon to deliver. Blue rings add 5 s and refill
 boost; fast deliveries build a combo up to x5; crashing costs 8 s.
-Keyboard: arrows / WASD steer and climb, Space / Shift boost, P pause, Esc quit. Touch screens get an
-on-screen pad. **Controllers** work too: left stick or d-pad steers and climbs, A / RB / RT boost,
-Start pauses (or opens the hangar), A / B answer the end-of-run screen.
+Keyboard: arrows / WASD steer and climb, Space / Shift boost, P pause, Esc quit. **Phones:** put a thumb
+anywhere on the left half and drag to steer and climb, hold the big **BOOST** button; **⏸** pauses, and the pause
+menu switches on **tilt to steer** (hold the phone as you like when the run starts; tip it like a steering wheel,
+tip the top away to dive) and **vibration** on deliveries, crashes and lightning (Android; iPhones don't allow
+it). **Controllers** work too: left stick or d-pad steers and climbs, A / RB / RT boost, Start pauses (or opens
+the hangar), A / B answer the end-of-run screen.
+
+- **📦 Courier run:** the classic timed game below. **🕊️ Free flight:** no clock, no parcels, no Rex, no coins:
+  fly anywhere you like. Rings refill your boost and runways still refuel.
 
 - **Cargo:** 📦 parcels, ⚡ urgent (tight timer, double pay), 🥚 fragile (a crash breaks it: no pay),
   🏋️ heavy (slower plane, 1.5× pay).
@@ -104,22 +122,25 @@ planet-pop/
 │  │                          Sparks (pooled glowing particles), Fireworks, Meteors, Rainbows
 │  ├─ world/                  Planet, Themes, Terrain + TerrainCompute + terrain.worker, SurfaceIndex (exact ground
 │  │                          height), Roads, Cities, Nature, TreeShapes, Railway, Airports, Harbours, Volcano, Glow,
-│  │                          Seasons
+│  │                          Seasons, Happenings (what's going on, for Find and the tour)
 │  ├─ life/                   Trails, Traffic, People, Trams, Boats, Whales, Balloons, Planes, Helicopters, Birds,
 │  │                          Ufo, Space
-│  ├─ camera/                 CameraRig (orbit, fly-to, follow, chase, terrain collision)
+│  ├─ camera/                 CameraRig (orbit, fly-to, follow, chase, terrain collision), Gestures (touch and mouse)
 │  ├─ ui/                     Hud, Sfx (bubbles + synthesized sound), Ambience (soundscape), PhotoMode,
-│  │                          Achievements, DebugStats (?debug overlay)
+│  │                          Achievements, InfoCard, FindMenu, TourMode, Haptics, WakeLock, DebugStats (?debug)
 │  └─ game/                   CourierGame, PlayerPlane, Rival, Cargo, Progress (coins/upgrades), Hangar, Daily,
-│                             Missions + MissionRun + MissionBoard, Gamepad
+│                             Missions + MissionRun + MissionBoard, FreeFlight, PauseMenu, Gamepad, TouchStick,
+│                             TiltSteer
 ├─ vendor/three/, fonts/      three.js and the Bangers font (with their licences)
 ├─ icons/                     app icons (drawn by scripts/icons.mjs)
 ├─ scripts/                   vendor.mjs (copy three.js + font), icons.mjs, precache.mjs
 ├─ tests/
 │  ├─ *.test.mjs              node:test suites: quality, progress, daily, ambience, themes, missions + controller,
-│  │                          offline files, and 3 full planets simulated
+│  │                          touch (gestures, stick, tilt, Find, tour, free flight), offline files, and 3 full
+│  │                          planets simulated
 │  ├─ helpers/                a fake DOM and a headless App so the game runs under Node
-│  └─ browser/screenshots.mjs headless Chrome (software WebGL) plays key scenes, including an offline reload
+│  └─ browser/screenshots.mjs headless Chrome (software WebGL) plays key scenes on a laptop-sized screen and a
+│                             phone (upright and on its side), including an offline reload
 └─ .github/workflows/ci.yml   tests + screenshots on every push and pull request
 ```
 

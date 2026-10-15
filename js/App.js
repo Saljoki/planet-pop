@@ -15,6 +15,10 @@ import { DebugStats } from './ui/DebugStats.js';
 import { Ambience } from './ui/Ambience.js';
 import { PhotoMode } from './ui/PhotoMode.js';
 import { Gamepad } from './game/Gamepad.js';
+import { Haptics } from './ui/Haptics.js';
+import { WakeLock } from './ui/WakeLock.js';
+import { TourMode } from './ui/TourMode.js';
+import { FindMenu } from './ui/FindMenu.js';
 import { dailyParams } from './game/Daily.js';
 import { THEME_IDS, pickTheme } from './world/Themes.js';
 
@@ -64,6 +68,8 @@ export class App {
     this.scene.add(this.camera);
 
     this.ambience = new Ambience(this); // before the HUD, which shows its saved volume
+    this.haptics = new Haptics();       // likewise its vibration setting
+    this.wakeLock = new WakeLock();
     this.hud = new Hud(this);
     this.postfx = new PostFX(r);
     this.sky = new Sky(this.scene);
@@ -75,6 +81,8 @@ export class App {
     this.debug = new DebugStats(this);
     this.photo = new PhotoMode(this);
     this.gamepad = new Gamepad(this);
+    this.tour = new TourMode(this);
+    this.find = new FindMenu(this);
     this.detail = new Detail();
     this.onRendered = null; // one-shot callback with the canvas right after a frame is drawn (photo mode)
 
@@ -175,7 +183,9 @@ export class App {
     if (this.planet) this.checkFollow();
     this.gamepad.update();
     if (this.game.active) this.game.update(dt, real);
+    this.tour.update(real);
     this.rig.update(real);
+    this.hud.update(real);
     this.sfx.update(real);
     this.ambience.update(real);
     this.quality.tick(real);
@@ -188,7 +198,14 @@ export class App {
     this.debug.end(real);
   }
 
-  togglePause() { this.paused = !this.paused; this.hud.setPaused(this.paused); }
+  togglePause() {
+    this.paused = !this.paused;
+    this.hud.setPaused(this.paused);
+    this.game.pauseMenu?.sync();
+  }
+
+  /** A touch, click or key on the planet: the user is here (stops the tour). */
+  onUserInput() { this.tour?.input(); }
   setTimeScale(x) { this.timeScale = x; }
   setInk(on) { this.userInk = on; this.quality.apply(); }
   setShadows(on) { this.userShadows = on; this.quality.apply(); }
@@ -210,6 +227,7 @@ export class App {
     if (e.kind === 'city') a.visitCity(e.name);
     if (e.kind === 'person') a.unlock('peoplewatcher');
     if (e.kind === 'ufo') a.unlock('ufo');
+    this.hud.info.hide();
   }
 
   checkFollow() {

@@ -1,7 +1,9 @@
 /* Bangers (SIL Open Font License, see fonts/LICENSE), served from this folder so the game works offline */
 @font-face { font-family: 'Bangers'; font-style: normal; font-weight: 400; font-display: swap;
   src: url('../fonts/bangers-latin-400-normal.woff2') format('woff2'); }
-:root { --ink: #1b1530; --yellow: #ffd93d; --pink: #ff5fa2; --blue: #9fd8ff; }
+:root { --ink: #1b1530; --yellow: #ffd93d; --pink: #ff5fa2; --blue: #9fd8ff;
+  /* notches and home bars on phones (viewport-fit=cover) */
+  --st: env(safe-area-inset-top, 0px); --sb: env(safe-area-inset-bottom, 0px); --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px); }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; overflow: hidden; }
 body {
@@ -16,9 +18,9 @@ canvas { display: block; touch-action: none; }
 
 .badge, .panel { background: #fff; border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
 .badge { position: fixed; z-index: 5; padding: 6px 14px 3px; }
-#title { top: 14px; left: 16px; background: var(--yellow); font-size: 30px; transform: rotate(-2deg); pointer-events: none; }
-#worldTag { top: 66px; left: 26px; font-size: 16px; background: var(--blue); transform: rotate(-2deg); pointer-events: none; padding: 3px 10px 1px; }
-#hint { bottom: 14px; left: 50%; transform: translateX(-50%); border-radius: 14px; font-size: 16px; pointer-events: none;
+#title { top: calc(14px + var(--st)); left: calc(16px + var(--sl)); background: var(--yellow); font-size: 30px; transform: rotate(-2deg); pointer-events: none; }
+#worldTag { top: calc(66px + var(--st)); left: calc(26px + var(--sl)); font-size: 16px; background: var(--blue); transform: rotate(-2deg); pointer-events: none; padding: 3px 10px 1px; }
+#hint { bottom: calc(14px + var(--sb)); left: 50%; transform: translateX(-50%); border-radius: 14px; font-size: 16px; pointer-events: none;
   width: max-content; max-width: calc(100vw - 32px); text-align: center; }
 
 button { font: inherit; font-size: 17px; letter-spacing: 1px; color: var(--ink); background: var(--yellow);
@@ -26,12 +28,15 @@ button { font: inherit; font-size: 17px; letter-spacing: 1px; color: var(--ink);
 button:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 button.big { background: var(--pink); color: #fff; font-size: 22px; text-shadow: 2px 2px 0 var(--ink); }
 
-#topBtns { position: fixed; top: 14px; right: 16px; z-index: 6; display: flex; gap: 8px; }
-#photoBtn, #installBtn { padding: 4px 9px 1px; }
-#panel { position: fixed; top: 64px; right: 16px; width: 236px; padding: 12px; z-index: 6; display: flex; flex-direction: column; gap: 7px;
+#topBtns { position: fixed; top: calc(14px + var(--st)); right: calc(16px + var(--sr)); z-index: 6; display: flex; gap: 8px; }
+#photoBtn, #installBtn, #findBtn, #compassBtn { padding: 4px 9px 1px; }
+#compassBtn { background: #fff; transition: transform 0.2s; }
+#panel { position: fixed; top: calc(64px + var(--st)); right: calc(16px + var(--sr)); width: 236px; padding: 12px; z-index: 6; display: flex; flex-direction: column; gap: 7px;
   max-height: calc(100vh - 80px); overflow-y: auto; }
+#panel > * { flex-shrink: 0; } /* the panel scrolls rather than squashing its rows */
 #panel .row { display: flex; gap: 8px; }
 #panel .row button { flex: 1; }
+#panel .row #fullBtn { flex: none; padding: 5px 11px 2px; }
 #panel label { display: flex; flex-direction: column; font-size: 15px; }
 #panel label b { font-weight: normal; color: var(--pink); }
 #panel label.check { flex-direction: row; align-items: center; gap: 8px; }
@@ -44,13 +49,13 @@ input[type=range] { width: 100%; accent-color: var(--pink); }
 input[type=checkbox] { accent-color: var(--pink); width: 18px; height: 18px; }
 #trophies { text-align: center; font-size: 18px; cursor: pointer; }
 
-#follow { top: 14px; left: 50%; transform: translateX(-50%); background: var(--blue); display: flex; align-items: center; gap: 10px; font-size: 20px; white-space: nowrap; }
+#follow { top: calc(14px + var(--st)); left: 50%; transform: translateX(-50%); background: var(--blue); display: flex; align-items: center; gap: 10px; font-size: 20px; white-space: nowrap; }
 #follow button { font-size: 15px; padding: 2px 8px 0; }
 
 .label { position: fixed; z-index: 4; pointer-events: none; background: #fff; border: 3px solid var(--ink); border-radius: 12px;
   box-shadow: 3px 3px 0 var(--ink); padding: 4px 10px 2px; font-size: 18px; white-space: nowrap; transform: translate(-50%, calc(-100% - 16px)); }
 
-#toasts { position: fixed; left: 16px; bottom: 64px; z-index: 9; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+#toasts { position: fixed; left: calc(16px + var(--sl)); bottom: calc(64px + var(--sb)); z-index: 9; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
 .toast { background: var(--yellow); border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); padding: 6px 12px 3px; font-size: 19px;
   animation: slidein 0.35s ease-out, fadeout 0.6s ease-in 3.4s forwards; }
 
@@ -70,23 +75,64 @@ input[type=checkbox] { accent-color: var(--pink); width: 18px; height: 18px; }
 
 /* ---------- Sky Courier game ---------- */
 #game { position: fixed; inset: 0; z-index: 8; pointer-events: none; }
-#gStats { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+#gStats { position: fixed; top: calc(14px + var(--st)); left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
 #gStats .badge { position: static; font-size: 22px; }
 #gTime.low { background: #ff5f5f; color: #fff; }
-#gArrow { position: fixed; top: 74px; left: 50%; width: 70px; height: 70px; margin-left: -35px; }
-#gGoal { position: fixed; top: 152px; left: 50%; transform: translateX(-50%); font-size: 20px; white-space: nowrap; }
-#gBoost { position: fixed; left: 16px; bottom: 16px; width: 170px; height: 20px; padding: 0; }
+#gArrow { position: fixed; top: calc(74px + var(--st)); left: 50%; width: 70px; height: 70px; margin-left: -35px; }
+#gGoal { position: fixed; top: calc(152px + var(--st)); left: 50%; transform: translateX(-50%); font-size: 20px; white-space: nowrap; }
+#gBoost { position: fixed; left: calc(16px + var(--sl)); bottom: calc(16px + var(--sb)); width: 170px; height: 20px; padding: 0; }
 #gBoost div { height: 100%; width: 100%; background: #3fa7ff; }
-#gHelp { position: fixed; left: 16px; bottom: 50px; font-size: 15px; }
-#gPad { position: fixed; right: 16px; bottom: 16px; display: grid; grid-template-columns: repeat(3, 62px); gap: 8px; pointer-events: auto; }
-#gPad button { height: 62px; font-size: 26px; padding: 0; touch-action: none; }
-#gPad .boost { background: #3fa7ff; font-size: 16px; }
+#gHelp { position: fixed; left: calc(16px + var(--sl)); bottom: calc(50px + var(--sb)); font-size: 15px; }
+#gPauseBtn { position: fixed; top: calc(14px + var(--st)); right: calc(16px + var(--sr)); pointer-events: auto; font-size: 20px; padding: 4px 10px 1px; background: #fff; }
+/* touch flight controls: a floating stick anywhere on the left, a big boost button on the right */
+#gStick { position: fixed; left: 0; bottom: 0; width: 55vw; height: 70vh; pointer-events: auto; touch-action: none; }
+#gStick .base { position: fixed; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.85); background: rgba(27, 21, 48, 0.25); box-shadow: 3px 3px 0 var(--ink); }
+#gStick .knob { position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%;
+  background: var(--yellow); border: 3px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
+#gStick .ghost { position: fixed; left: calc(24px + var(--sl)); bottom: calc(56px + var(--sb)); font-size: 18px; color: #fff;
+  text-shadow: 2px 2px 0 var(--ink); opacity: 0.85; pointer-events: none; }
+#gBoostBtn { position: fixed; right: calc(20px + var(--sr)); bottom: calc(28px + var(--sb)); width: 96px; height: 96px; border-radius: 50%;
+  background: #3fa7ff; color: #fff; font-size: 19px; text-shadow: 2px 2px 0 var(--ink); pointer-events: auto; touch-action: none; padding: 0; }
+#gPause .col { display: flex; flex-direction: column; gap: 10px; min-width: 240px; }
+#gFree { background: var(--blue); }
 #gOver { pointer-events: auto; }
 #gDaily { background: var(--blue); }
 #gStats .badge { white-space: nowrap; }
 .tag { position: fixed; z-index: 3; pointer-events: none; background: #8f5cff; color: #fff; font-size: 15px; white-space: nowrap;
   border: 3px solid var(--ink); border-radius: 10px; box-shadow: 2px 2px 0 var(--ink); padding: 2px 8px 0; text-shadow: 1px 1px 0 var(--ink);
   transform: translate(-50%, calc(-100% - 10px)); }
+
+/* ---------- Info card, Find, tour ---------- */
+#info { position: fixed; left: 50%; bottom: calc(64px + var(--sb)); transform: translateX(-50%); z-index: 9; width: min(340px, calc(100vw - 32px));
+  padding: 12px 14px; }
+#info .iHead { display: flex; gap: 12px; align-items: center; }
+#iIcon { font-size: 36px; }
+#iName { display: block; font-weight: normal; font-size: 24px; }
+#info small, #find small { font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.7; }
+#iStatus { margin: 8px 0 10px; font-family: system-ui, sans-serif; letter-spacing: 0; font-size: 15px; }
+#info .row { display: flex; gap: 8px; }
+#info .row .big { flex: 1; font-size: 19px; }
+#find { position: fixed; top: calc(104px + var(--st)); left: calc(16px + var(--sl)); width: 330px; max-height: calc(100vh - 130px); overflow-y: auto;
+  z-index: 7; padding: 12px 14px; }
+#find .fHead { display: flex; justify-content: space-between; align-items: center; }
+#find h3 { margin: 0; font-weight: normal; font-size: 26px; }
+#find h4 { margin: 12px 0 6px; font-weight: normal; font-size: 18px; }
+#find #fTour { width: 100%; margin-top: 8px; font-size: 19px; }
+#fClose { background: #fff; font-size: 15px; padding: 3px 8px 0; }
+#fNow { display: flex; flex-direction: column; gap: 6px; }
+#fNow .event { text-align: left; background: #fff; font-size: 16px; }
+#find .quiet { margin: 0; font-family: system-ui, sans-serif; font-size: 13px; letter-spacing: 0; opacity: 0.7; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips button { font-size: 15px; padding: 4px 9px 1px; background: #fff; }
+.chips small { color: var(--pink); font-family: inherit !important; font-size: 14px !important; opacity: 1 !important; letter-spacing: 1px !important; }
+#tourBar { bottom: calc(14px + var(--sb)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; font-size: 18px;
+  width: max-content; max-width: calc(100vw - 24px); background: var(--yellow); z-index: 7; }
+#tourBar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#tourBar button { font-size: 15px; padding: 2px 8px 0; background: #fff; flex: none; }
+.grab { display: none; }
+.touring #follow { display: none; }
+button.free { background: var(--blue); }
 
 /* ---------- Hangar ---------- */
 button:disabled { opacity: 0.45; cursor: default; transform: none; box-shadow: 3px 3px 0 var(--ink); }
@@ -134,7 +180,7 @@ button.missions { background: #2ee59d; }
 @keyframes slidein { from { transform: translateX(-120%); } to { transform: none; } }
 @keyframes fadeout { to { opacity: 0; transform: translateY(10px); } }
 @media (max-width: 640px) {
-  #title { font-size: 22px; } #hint { font-size: 13px; } #panel { width: 210px; }
+  #title { font-size: 22px; } #hint { font-size: 13px; }
   #gStats { gap: 6px; } #gStats .badge { font-size: 16px; padding: 4px 8px 2px; } #gStats .wide { display: none; }
   .in-game #title { display: none; }
   #gGoal { font-size: 16px; white-space: normal; width: max-content; max-width: calc(100vw - 32px); text-align: center; }
@@ -165,3 +211,50 @@ body.photo #ui > :not(#photo) { display: none !important; }
 a.button { font: inherit; letter-spacing: 1px; color: var(--ink); background: var(--yellow); border: 3px solid var(--ink); box-shadow: 3px 3px 0 var(--ink);
   padding: 5px 12px 2px; text-decoration: none; display: inline-block; }
 a.button.big { background: var(--pink); color: #fff; font-size: 22px; text-shadow: 2px 2px 0 var(--ink); }
+
+/* ---------- Phones ---------- */
+/* bigger targets for fingers */
+@media (pointer: coarse) {
+  button { min-height: 42px; }
+  #topBtns button { min-width: 46px; }
+  input[type=range] { height: 30px; }
+  input[type=checkbox] { width: 24px; height: 24px; }
+  #panel label.check { min-height: 32px; }
+  .chips button { min-height: 40px; }
+}
+/* portrait phones: the controls and Find become sheets that slide up from the bottom (drag the bar down to close) */
+@media (max-width: 700px) {
+  #topBtns .wide { display: none; }
+  #panel.sheet, #find.sheet { position: fixed; left: 0; right: 0; bottom: 0; top: auto; width: auto; max-height: 72vh; z-index: 11;
+    border-width: 3px 0 0; border-radius: 18px 18px 0 0; box-shadow: 0 -4px 0 var(--ink); padding: 6px 16px calc(14px + var(--sb));
+    overflow-y: auto; animation: sheetup 0.22s ease-out; }
+  .sheet .grab { display: block; flex: none; position: relative; height: 24px; margin: -4px -16px 2px; touch-action: none; cursor: grab; }
+  .sheet .grab::before { content: ''; position: absolute; left: 50%; top: 9px; width: 56px; height: 6px; margin-left: -28px; border-radius: 3px;
+    background: rgba(27, 21, 48, 0.3); }
+  #panel.sheet .checks { grid-template-columns: 1fr 1fr; }
+  #follow { top: calc(112px + var(--st)); font-size: 17px; max-width: calc(100vw - 24px); }
+  #followName { overflow: hidden; text-overflow: ellipsis; }
+  #tourBar { font-size: 16px; }
+  #tourBar span { white-space: normal; }
+  #info { bottom: calc(16px + var(--sb)); }
+  #hint { bottom: calc(10px + var(--sb)); }
+  #gPauseBtn { top: calc(66px + var(--st)); }
+}
+/* phones on their side: little vertical room, so slimmer badges and the sheets come in from the right */
+@media (max-height: 500px) and (orientation: landscape) {
+  #title { font-size: 20px; } #worldTag { top: calc(50px + var(--st)); font-size: 13px; }
+  .in-game #title { display: none; }
+  #hint { display: none; }
+  #panel.sheet, #find.sheet { position: fixed; top: calc(60px + var(--st)); right: 0; bottom: 0; left: auto; width: min(320px, 46vw); max-height: none; z-index: 11;
+    border-width: 3px 0 0 3px; border-radius: 14px 0 0 0; box-shadow: -4px 0 0 var(--ink); padding: 10px calc(14px + var(--sr)) 14px 14px;
+    overflow-y: auto; animation: sheetin 0.22s ease-out; }
+  .sheet .grab { display: none; }
+  #gStats .badge { font-size: 15px; padding: 3px 7px 1px; }
+  #gArrow { top: calc(50px + var(--st)); width: 50px; height: 50px; margin-left: -25px; }
+  #gGoal { top: calc(104px + var(--st)); font-size: 15px; }
+  #gStick { width: 50vw; height: 80vh; }
+  #gBoostBtn { width: 84px; height: 84px; }
+  #info { bottom: calc(10px + var(--sb)); }
+}
+@keyframes sheetup { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes sheetin { from { transform: translateX(40%); opacity: 0; } to { transform: none; opacity: 1; } }

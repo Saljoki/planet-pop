@@ -61,12 +61,22 @@ export class Whales {
   /** True while whale `i` is in the air. */
   breaching(i) { return this.list[i]?.state === 'breach'; }
 
+  /** For the tour: come up now, blow briefly, then leap. */
+  showOff(i) {
+    const w = this.list[i];
+    if (!w) return;
+    w.force = true;
+    if (w.state === 'swim' || w.state === 'dive') Object.assign(w, { state: 'rise', t: 0, dur: TIME.rise[0] });
+  }
+
   next(w) {
-    const after = { swim: 'rise', rise: 'blow', blow: Math.random() < BREACH_CHANCE ? 'breach' : 'dive', breach: 'dive', dive: 'swim' };
+    const after = { swim: 'rise', rise: 'blow', blow: w.force || Math.random() < BREACH_CHANCE ? 'breach' : 'dive', breach: 'dive', dive: 'swim' };
     w.state = after[w.state];
     w.t = 0;
     const [a, b] = TIME[w.state];
     w.dur = a + Math.random() * (b - a);
+    if (w.force && w.state === 'blow') w.dur = 3;
+    if (w.state === 'breach') w.force = false;
     if (w.state === 'breach') this.say(w, 'WHOOSH!', '#9fe8ff', false);
   }
 

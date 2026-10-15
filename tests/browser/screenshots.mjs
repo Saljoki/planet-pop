@@ -84,6 +84,7 @@ await until(() => window.app?.planet && !window.app.building, 240000);
 const loadSeconds = (Date.now() - t0) / 1000;
 console.log(`Planet built and shaders warmed up in ${loadSeconds.toFixed(1)} s`);
 await page.keyboard.press('Shift'); // a key press unlocks audio, so the ambience graph gets built too
+await page.evaluate(() => app.tour.setAuto(false)); // no idle tour taking over the camera mid-run (remembered across reloads)
 await frames(4);
 
 const stats = await page.evaluate(async () => {
@@ -302,6 +303,31 @@ await restoreSky();
 await page.evaluate(() => {
   if (window.savedOffset !== undefined) { app.planet.seasons.offset = window.savedOffset; app.planet.seasons.timer = 0; }
 });
+await scene('turned-view', 'Orbit view turned and tilted (two fingers, or right-drag), with the compass to reset it', async () => {
+  await page.evaluate(() => { const rig = app.rig; rig.release(true); Object.assign(rig.orbit, { alt: 13, heading: 0.7, tilt: 0.4 }); });
+  await frames(3);
+});
+await scene('find', 'The Find menu: what is happening now, every kind of thing, and the towns', async () => {
+  await page.evaluate(() => {
+    const u = app.planet.ufo;
+    if (!u.hovering) { u.arrive(); u.update(3.01, app.simTime); }
+    app.rig.resetView();
+    app.find.show();
+  });
+  await frames(3);
+});
+await scene('info-card', 'Info card for a whale (press and hold on phones)', async () => {
+  await page.evaluate(() => { app.find.hide(); const w = app.planet.whales; w.showOff(0); app.rig.focus(w.entities[0]); });
+  await until(() => app.rig.mode === 'local');
+  await page.evaluate(() => app.hud.info.show(app.planet.whales.entities[0]));
+  await frames(3);
+});
+await scene('tour', 'Tour mode: hopping between sights with a caption', async () => {
+  await page.evaluate(() => { app.hud.info.hide(); if (app.paused) app.togglePause(); app.tour.start(); }); // the tour needs the world running
+  await until(() => app.rig.mode === 'local');
+  await frames(3);
+});
+await page.evaluate(() => { app.tour.stop(); if (!app.paused) app.togglePause(); });
 await scene('photo-live', 'Photo mode: comic frame, caption and the Pop filter, previewed live', async () => {
   await page.evaluate(() => {
     const ph = app.photo, u = app.planet.ufo;
@@ -405,6 +431,16 @@ await scene('mission-complete', 'Mission complete, with the reward and the next 
   await until(() => app.game.over);
   await frames(2);
 });
+await scene('free-flight', 'Free flight: no clock or parcels, just the plane and the planet', async () => {
+  await page.evaluate(() => { app.game.stop(); app.game.start({ free: true }); });
+  await until(() => app.rig.mode === 'game');
+  await frames(6);
+});
+await scene('pause-menu', 'The pause menu', async () => {
+  await page.evaluate(() => app.togglePause());
+  await frames(2);
+});
+await page.evaluate(() => { if (app.paused) app.togglePause(); app.game.stop(); });
 for (const theme of ['ice', 'desert', 'candy', 'lava']) {
   await scene(`theme-${theme}`, `The ${theme} world`, async () => {
     await page.evaluate(() => app.game.stop());
@@ -421,10 +457,55 @@ await scene('mobile', 'Phone-sized screen (390 × 844) with the ?debug stats ove
   await until(() => window.app?.planet && !window.app.building, 240000);
   await frames(4);
 });
-await scene('mobile-courier', 'Daily challenge HUD on a phone', async () => {
+const ufoHere = () => page.evaluate(() => { const u = app.planet.ufo; if (!u.hovering) { u.arrive(); u.update(3.01, app.simTime); } });
+await scene('mobile-sheet', 'Phone: the controls slide up from the bottom as a sheet', async () => {
+  await page.evaluate(() => document.getElementById('panelToggle').click());
+  await frames(2);
+});
+await scene('mobile-find', 'Phone: the Find sheet', async () => {
+  await ufoHere();
+  await page.evaluate(() => app.find.show());
+  await frames(2);
+});
+await scene('mobile-info', 'Phone: press and hold on something for its info card', async () => {
+  await page.evaluate(() => { app.find.hide(); app.rig.focus(app.planet.entities.find((e) => e.kind === 'train')); });
+  await until(() => app.rig.mode === 'local');
+  await page.evaluate(() => app.hud.info.show(app.planet.entities.find((e) => e.kind === 'train')));
+  await frames(3);
+});
+await scene('mobile-tour', 'Phone: tour mode', async () => {
+  await ufoHere();
+  await page.evaluate(() => { app.hud.info.hide(); app.tour.start(); });
+  await until(() => app.rig.mode === 'local');
+  await frames(3);
+});
+await page.evaluate(() => app.tour.stop());
+await scene('mobile-courier', 'Daily challenge on a phone, a thumb on the stick', async () => {
   await page.evaluate(() => { app.game.start({ daily: true }); app.game.deliver(); });
   await until(() => app.rig.mode === 'game');
+  await page.touchscreen.touchStart(110, 640);
+  await page.touchscreen.touchMove(150, 600);
   await frames(6);
+});
+await page.touchscreen.touchEnd().catch(() => {}); // (nothing to lift if that scene was filtered out)
+await scene('mobile-free', 'Free flight on a phone', async () => {
+  await page.evaluate(() => { app.game.stop(); app.game.start({ free: true }); });
+  await until(() => app.rig.mode === 'game');
+  await frames(5);
+});
+await scene('mobile-pause', 'Pause menu on a phone: tilt steering and vibration switches', async () => {
+  await page.evaluate(() => app.togglePause());
+  await frames(2);
+});
+await page.evaluate(() => app.togglePause());
+await scene('landscape-courier', 'Phone on its side, flying', async () => {
+  await page.setViewport({ width: 844, height: 390, deviceScaleFactor: 2, isMobile: true, hasTouch: true, isLandscape: true });
+  await frames(5);
+});
+await scene('landscape-panel', 'Phone on its side: the controls come in from the right', async () => {
+  await page.evaluate(() => { app.game.stop(); document.getElementById('panel').classList.remove('hidden'); });
+  await until(() => app.rig.mode === 'orbit');
+  await frames(3);
 });
 
 await scene('offline', 'Reloaded with the network off: the service worker serves every file', async () => {
