@@ -25,6 +25,9 @@ const DEFS = [
   ['globetrotter', '🧳', 'Globetrotter', 'Visit all five kinds of world'],
   ['photographer', '📸', 'Say Cheese', 'Take a picture in photo mode'],
   ['missions', '🎯', 'Mission Accomplished', 'Complete every Sky Courier mission'],
+  ['fireworks', '🎆', 'Happy New Night', 'Watch a midnight firework show up close'],
+  ['shootingstar', '🌠', 'Make a Wish', 'Be on the night side during a meteor shower'],
+  ['rainbow', '🌈', 'Over the Rainbow', 'Fly close to a rainbow'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
 const KEY = 'planetpop.trophies', WORLDS_KEY = 'planetpop.worlds', WORLD_KINDS = 5;

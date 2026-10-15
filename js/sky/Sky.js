@@ -45,6 +45,12 @@ export class Sky {
     this.sun.position.copy(this.sunDir).multiplyScalar(450);
   }
 
+  /** Local time of day at direction `d`, as the cosine of its hour angle: 1 at noon, -1 at midnight, at any latitude. */
+  clock(d) {
+    const x = d.dot(this.su), y = d.dot(this.sv);
+    return (x * Math.cos(this.angle) + y * Math.sin(this.angle)) / (Math.hypot(x, y) || 1);
+  }
+
   /**
    * Shadow box around what the camera sees: the whole planet from orbit, a few units across near the ground,
    * so close-up shadows get far more texels and fewer objects are drawn into the shadow map.

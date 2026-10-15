@@ -63,8 +63,11 @@ const shot = async (name, note) => {
   console.log(`  📸 ${name}: ${note}`);
 };
 const ONLY = process.env.SCENES?.split(','); // e.g. SCENES=airport,harbour renders just those (quick iteration)
-async function scene(name, note, steps) {
-  if (ONLY && !ONLY.some((k) => name.includes(k))) return;
+let sceneNo = 0;
+/** Scenes are numbered in the order they run (skipped ones keep their number, so file names stay stable). */
+async function scene(label, note, steps) {
+  const name = `${String(++sceneNo).padStart(2, '0')}-${label}`;
+  if (ONLY && !ONLY.some((k) => label.includes(k))) return;
   try {
     await steps();
     await shot(name, note);
@@ -100,23 +103,23 @@ const stats = await page.evaluate(async () => {
   return out;
 });
 
-await scene('01-orbit-day', 'Planet from orbit in daylight', () => frames(3));
-await scene('02-orbit-night', 'Night side: city windows, street lamps, city glow', async () => {
+await scene('orbit-day', 'Planet from orbit in daylight', () => frames(3));
+await scene('orbit-night', 'Night side: city windows, street lamps, city glow', async () => {
   await page.evaluate(() => { app.sky.angle += Math.PI; app.sky.update(0); });
   await frames(4);
 });
 await page.evaluate(() => { app.sky.angle -= Math.PI; app.sky.update(0); });
-await scene('03-city', 'Flown down to a city', async () => {
+await scene('city', 'Flown down to a city', async () => {
   await page.evaluate(() => app.rig.focus(app.planet.entities.find((e) => e.kind === 'city')));
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
-await scene('04-street', 'Following a car at street level', async () => {
+await scene('street', 'Following a car at street level', async () => {
   await page.evaluate(() => app.rig.focus(app.planet.entities.find((e) => e.kind === 'car')));
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
-await scene('05-train', 'Following the train', async () => {
+await scene('train', 'Following the train', async () => {
   const hasTrain = await page.evaluate(() => {
     const train = app.planet.entities.find((e) => e.kind === 'train');
     if (train) app.rig.focus(train);
@@ -127,7 +130,7 @@ await scene('05-train', 'Following the train', async () => {
   await frames(3);
 });
 await page.evaluate(() => app.togglePause()); // world scenes below are staged, so freeze it
-await scene('06-airport', 'Airport: one plane waiting to take off, another on final approach', async () => {
+await scene('airport', 'Airport: one plane waiting to take off, another on final approach', async () => {
   const has = await page.evaluate(() => {
     const { planet } = app, ap = planet.airports.list[0];
     if (!ap) return false;
@@ -142,7 +145,7 @@ await scene('06-airport', 'Airport: one plane waiting to take off, another on fi
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
-await scene('07-harbour', 'Harbour: ferry tied up at the pier, lighthouse on the shore', async () => {
+await scene('harbour', 'Harbour: ferry tied up at the pier, lighthouse on the shore', async () => {
   await page.evaluate(() => {
     const { planet } = app, boats = planet.boats;
     const i = boats.boats.findIndex((b) => b.harbour === planet.harbours.list[0]);
@@ -153,12 +156,12 @@ await scene('07-harbour', 'Harbour: ferry tied up at the pier, lighthouse on the
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
-await scene('08-people', 'Following a pedestrian through town', async () => {
+await scene('people', 'Following a pedestrian through town', async () => {
   await page.evaluate(() => app.rig.focus(app.planet.entities.find((e) => e.kind === 'person')));
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
-await scene('09-volcano', 'The volcano erupting: lava bombs, glow and a thick plume', async () => {
+await scene('volcano', 'The volcano erupting: lava bombs, glow and a thick plume', async () => {
   const has = await page.evaluate(() => {
     const v = app.planet.volcano;
     if (!v.d) return false;
@@ -172,7 +175,7 @@ await scene('09-volcano', 'The volcano erupting: lava bombs, glow and a thick pl
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
-await scene('10-aurora', 'Aurora over the pole on the night side', async () => {
+await scene('aurora', 'Aurora over the pole on the night side', async () => {
   await page.evaluate(() => {
     const { rig, sky } = app, pole = sky.axis, d = pole.clone().multiplyScalar(Math.cos(0.95)).addScaledVector(sky.sunDir, -Math.sin(0.95)).normalize();
     rig.release(true);
@@ -180,7 +183,7 @@ await scene('10-aurora', 'Aurora over the pole on the night side', async () => {
   });
   await frames(4);
 });
-await scene('11-ufo', 'A UFO hovering with its tractor beam on', async () => {
+await scene('ufo', 'A UFO hovering with its tractor beam on', async () => {
   await page.evaluate(() => {
     const u = app.planet.ufo;
     u.arrive();
@@ -190,7 +193,55 @@ await scene('11-ufo', 'A UFO hovering with its tractor beam on', async () => {
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
-await scene('12-photo-live', 'Photo mode: comic frame, caption and the Pop filter, previewed live', async () => {
+const midnightOver = (c) => page.evaluate((i) => { // turn the sun to the far side of city i
+  const { sky } = app, c = app.planet.cities.sites[i].c;
+  window.savedAngle ??= sky.angle;
+  sky.angle = Math.atan2(c.dot(sky.sv), c.dot(sky.su)) + Math.PI;
+  sky.update(0);
+}, c);
+await scene('fireworks', 'Midnight fireworks over a city', async () => {
+  await midnightOver(0);
+  await page.evaluate(() => {
+    const f = app.planet.fireworks, c = f.cities[0];
+    f.start(c);
+    for (let i = 0; i < 75; i++) f.update(1 / 30); // a couple of seconds into the show
+    app.rig.focus(app.planet.entities.find((e) => e.kind === 'city' && e.name === c.city.name));
+  });
+  await until(() => app.rig.mode === 'local');
+  await page.evaluate(() => { app.rig.local.pitch = 0.35; app.rig.local.dist = 5; });
+  await frames(4);
+});
+await scene('meteors', 'A meteor shower over the night side', async () => {
+  await midnightOver(0);
+  await page.evaluate(() => {
+    const m = app.planet.meteors;
+    app.rig.release(true);
+    const d = app.planet.cities.sites[0].c;
+    Object.assign(app.rig.orbit, { yaw: Math.atan2(d.x, d.z), pitch: Math.asin(d.y), alt: 3 }); // low: looking out at the sky
+  });
+  await frames(3); // let the camera settle first: meteors aim for where it looks
+  await page.evaluate(() => {
+    const m = app.planet.meteors;
+    m.start();
+    for (let i = 0; i < 40; i++) { m.spawn(); m.update(0.03); }
+  });
+  await frames(2);
+});
+await scene('rainbow', 'A rainbow beside a rain cloud', async () => {
+  await page.evaluate(() => {
+    const { sky, planet } = app, r = planet.rainbows.list[0], c = planet.weather.stormCenter(r.storm, app.camera.position.clone()).normalize();
+    window.savedAngle ??= sky.angle;
+    sky.angle = Math.atan2(c.dot(sky.sv), c.dot(sky.su)) - 0.9; // morning sun off to one side of the storm
+    sky.update(0);
+    r.t = 12;
+    planet.rainbows.update(0);
+    app.rig.focus(planet.entities.find((e) => e.kind === 'storm' && e.storm === r.storm));
+  });
+  await until(() => app.rig.mode === 'local');
+  await frames(4);
+});
+await page.evaluate(() => { app.sky.angle = window.savedAngle; app.sky.update(0); });
+await scene('photo-live', 'Photo mode: comic frame, caption and the Pop filter, previewed live', async () => {
   await page.evaluate(() => {
     const ph = app.photo, u = app.planet.ufo;
     if (!u.hovering) { u.arrive(); u.update(3.01, app.simTime); }
@@ -202,7 +253,7 @@ await scene('12-photo-live', 'Photo mode: comic frame, caption and the Pop filte
   await until(() => app.rig.mode === 'local');
   await frames(3);
 });
-await scene('13-photo-result', 'The finished photo, ready to save or share', async () => {
+await scene('photo-result', 'The finished photo, ready to save or share', async () => {
   await page.evaluate(() => app.photo.snap());
   await until(() => document.getElementById('photoImg').naturalWidth > 0);
   const size = await page.evaluate(() => { const i = document.getElementById('photoImg'); return [i.naturalWidth, i.naturalHeight]; });
@@ -211,16 +262,16 @@ await scene('13-photo-result', 'The finished photo, ready to save or share', asy
 });
 await page.evaluate(() => app.photo.exit());
 await page.evaluate(() => app.togglePause());
-await scene('14-hangar', 'Sky Courier hangar', async () => {
+await scene('hangar', 'Sky Courier hangar', async () => {
   await page.evaluate(() => { app.rig.release(true); app.game.progress.addCoins(400); app.game.openHangar(); });
   await frames(3);
 });
-await scene('15-courier', 'Sky Courier in flight', async () => {
+await scene('courier', 'Sky Courier in flight', async () => {
   await page.evaluate(() => { app.game.hangar.hide(); app.game.start(); });
   await until(() => app.rig.mode === 'game');
   await frames(4);
 });
-await scene('16-lightning', 'Lightning striking the plane inside a thundercloud', async () => {
+await scene('lightning', 'Lightning striking the plane inside a thundercloud', async () => {
   await page.evaluate(() => { // pause the world, park the plane in a storm, let the chase camera catch up
     app.togglePause();
     const { planet, game } = app, storm = planet.weather.storms[0], pl = game.player;
@@ -239,7 +290,7 @@ await scene('16-lightning', 'Lightning striking the plane inside a thundercloud'
   });
   await frames(2);
 });
-await scene('17-rival', 'Rival Rex racing just ahead, with his name tag', async () => {
+await scene('rival', 'Rival Rex racing just ahead, with his name tag', async () => {
   await page.evaluate(() => { // still paused: one delivery spawns Rex, then park him ahead and to the left
     const { game, planet } = app, pl = game.player;
     game.deliver();
@@ -258,7 +309,7 @@ await scene('17-rival', 'Rival Rex racing just ahead, with his name tag', async 
   await page.evaluate(() => app.game.rival.placeTag());
   await frames(2);
 });
-await scene('18-daily-over', 'End of a daily challenge run, with the share button', async () => {
+await scene('daily-over', 'End of a daily challenge run, with the share button', async () => {
   await page.evaluate(() => {
     const { game } = app;
     game.stop();
@@ -271,17 +322,17 @@ await scene('18-daily-over', 'End of a daily challenge run, with the share butto
   await frames(2);
 });
 const missionDefs = () => page.evaluate(async () => { window.MISSIONS = (await import('./js/game/Missions.js')).MISSIONS; });
-await scene('19-missions', 'The mission board, with the first mission done', async () => {
+await scene('missions', 'The mission board, with the first mission done', async () => {
   await missionDefs();
   await page.evaluate(() => { app.game.stop(); app.game.hangar.hide(); app.game.progress.completeMission(MISSIONS[0]); app.game.board.show(); });
   await frames(2);
 });
-await scene('20-mission-hud', 'Flying a mission: the goal next to the score, the arrow pointing at a runway', async () => {
+await scene('mission-hud', 'Flying a mission: the goal next to the score, the arrow pointing at a runway', async () => {
   await page.evaluate(() => { app.game.board.hide(); app.game.start({ mission: MISSIONS.find((m) => m.id === 'pitstop') }); });
   await until(() => app.rig.mode === 'game');
   await frames(4);
 });
-await scene('21-mission-complete', 'Mission complete, with the reward and the next mission', async () => {
+await scene('mission-complete', 'Mission complete, with the reward and the next mission', async () => {
   await page.evaluate(() => {
     const g = app.game;
     g.stop();
@@ -293,8 +344,8 @@ await scene('21-mission-complete', 'Mission complete, with the reward and the ne
   await until(() => app.game.over);
   await frames(2);
 });
-for (const [i, theme] of ['ice', 'desert', 'candy', 'lava'].entries()) {
-  await scene(`${22 + i}-theme-${theme}`, `The ${theme} world`, async () => {
+for (const theme of ['ice', 'desert', 'candy', 'lava']) {
+  await scene(`theme-${theme}`, `The ${theme} world`, async () => {
     await page.evaluate(() => app.game.stop());
     await page.goto(`${base}index.html?${PLANET}&theme=${theme}`, { waitUntil: 'domcontentloaded' });
     await until(() => window.app?.planet && !window.app.building, 240000);
@@ -302,20 +353,20 @@ for (const [i, theme] of ['ice', 'desert', 'candy', 'lava'].entries()) {
     await frames(4);
   });
 }
-await scene('26-mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
+await scene('mobile', 'Phone-sized screen (390 × 844) with the ?debug stats overlay', async () => {
   await page.evaluate(() => app.game.stop());
   await page.setViewport({ width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
   await page.goto(`${base}index.html?${PLANET}&debug`, { waitUntil: 'domcontentloaded' });
   await until(() => window.app?.planet && !window.app.building, 240000);
   await frames(4);
 });
-await scene('27-mobile-courier', 'Daily challenge HUD on a phone', async () => {
+await scene('mobile-courier', 'Daily challenge HUD on a phone', async () => {
   await page.evaluate(() => { app.game.start({ daily: true }); app.game.deliver(); });
   await until(() => app.rig.mode === 'game');
   await frames(6);
 });
 
-await scene('28-offline', 'Reloaded with the network off: the service worker serves every file', async () => {
+await scene('offline', 'Reloaded with the network off: the service worker serves every file', async () => {
   await page.evaluate(() => navigator.serviceWorker.ready);
   await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
   await page.setOfflineMode(true);

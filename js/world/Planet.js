@@ -20,6 +20,9 @@ import { Space } from '../life/Space.js';
 import { People } from '../life/People.js';
 import { Ufo } from '../life/Ufo.js';
 import { Aurora } from '../sky/Aurora.js';
+import { Fireworks } from '../sky/Fireworks.js';
+import { Meteors } from '../sky/Meteors.js';
+import { Rainbows } from '../sky/Rainbows.js';
 import { Weather } from '../sky/Weather.js';
 
 const _v = new THREE.Vector3();
@@ -90,6 +93,9 @@ export class Planet {
     this.weather = new Weather(this);
     this.aurora = new Aurora(this);
     this.ufo = new Ufo(this);
+    this.fireworks = new Fireworks(this);
+    this.meteors = new Meteors(this);
+    this.rainbows = new Rainbows(this);
     await terrainReady;
     // these sit on the exact rendered ground, so they wait for the terrain mesh
     this.airports.build();
@@ -98,7 +104,8 @@ export class Planet {
     this.planes = new Planes(this);
     this.people = new People(this);
     this.modules = [this.roads, this.cities, this.nature, this.railway, this.airports, this.harbours, ...this.volcanoes, this.traffic,
-      this.boats, this.balloons, this.planes, this.birds, this.people, this.space, this.weather, this.aurora, this.ufo];
+      this.boats, this.balloons, this.planes, this.birds, this.people, this.space, this.weather, this.aurora, this.ufo,
+      this.fireworks, this.meteors, this.rainbows];
     this.update(0, this.app.simTime);
     this.app.scene.add(this.root);
   }

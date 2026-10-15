@@ -79,6 +79,46 @@ for (const params of PLANETS) {
       assert.ok(planet.people.people.some((w, i) => w.from !== start[i]), 'nobody walked anywhere');
     });
 
+    it('sky events: midnight fireworks, meteor showers and rainbows by day', () => {
+      const { sky } = app, sun = (d, offset) => { sky.angle = Math.atan2(d.dot(sky.sv), d.dot(sky.su)) + offset; sky.update(0); };
+      const f = planet.fireworks, c = f.cities[0];
+      sun(c.city.c, 0); // noon over the city
+      f.update(0);
+      assert.ok(c.armed, 'fireworks not ready by day');
+      sun(c.city.c, Math.PI); // midnight
+      f.update(0);
+      assert.ok(!c.armed, 'midnight came and went without a decision on fireworks');
+      f.start(c);
+      let sparks = 0;
+      run(app, 4, { each: () => { sparks = Math.max(sparks, f.sparks.live); } });
+      assert.ok(sparks > 50, `hardly any sparks (${sparks})`);
+      run(app, 12);
+      assert.ok(f.showAt(c.city) <= 0, 'the show never ended');
+
+      const m = planet.meteors;
+      m.start();
+      let streaks = 0;
+      run(app, 4, { each: () => { streaks = Math.max(streaks, m.list.filter((x) => x.live).length); } });
+      assert.ok(streaks > 0, 'a meteor shower with no meteors');
+      run(app, 9);
+      assert.ok(!m.active && m.list.every((x) => !x.live), 'the meteor shower never ended');
+      assertFiniteInstances(planet.root, 'after sky events');
+
+      const r = planet.rainbows.list[0];
+      if (!r) return; // no rain on this world
+      const storm = () => planet.weather.stormCenter(r.storm, new THREE.Vector3()).normalize();
+      sun(storm(), -0.9); // morning sun off to one side of the storm
+      r.t = 12;
+      planet.rainbows.update(0);
+      assert.ok(planet.rainbows.strength(0) > 0.5, 'no rainbow by day');
+      const at = new THREE.Vector3().setFromMatrixPosition(r.mesh.matrix);
+      assert.ok(at.clone().normalize().sub(storm()).dot(sky.sunDir) < 0, 'rainbow on the sunny side of the storm');
+      assert.ok(Math.abs(at.length() - planet.surfR(at.clone().normalize())) < 0.1, 'rainbow not standing on the ground');
+      sun(storm(), Math.PI);
+      planet.rainbows.update(0);
+      assert.equal(planet.rainbows.strength(0), 0, 'a rainbow at night');
+    });
+
     it('rebuilds traffic from the slider', () => {
       planet.traffic.rebuild(0);
       run(app, 1);
