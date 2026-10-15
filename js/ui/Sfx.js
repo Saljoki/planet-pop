@@ -24,7 +24,11 @@ const _v = new THREE.Vector3(), _d = new THREE.Vector3(), _p = new THREE.Vector3
 export class Sfx {
   constructor(app) {
     this.app = app;
-    this.enabled = true;
+    this.enabled = app.settings?.get('sound') ?? true;
+    app.settings?.onChange((k, v) => {
+      if (k === 'sfxVolume' && this.out) this.out.gain.value = 0.6 * v;
+      if (k === 'sound') this.enabled = v;
+    });
     this.ctx = null;
     this.timer = 4;
     const unlock = () => this.unlock(); // browsers only allow audio after a user gesture
@@ -38,7 +42,7 @@ export class Sfx {
       if (!AC) return;
       this.ctx = new AC();
       this.out = this.ctx.createGain();
-      this.out.gain.value = 0.6;
+      this.out.gain.value = 0.6 * (this.app.settings?.get('sfxVolume') ?? 1);
       this.out.connect(this.ctx.destination);
     }
     if (this.ctx.state === 'suspended') this.ctx.resume();

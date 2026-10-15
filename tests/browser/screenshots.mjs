@@ -353,7 +353,28 @@ await scene('hangar', 'Sky Courier hangar', async () => {
   await page.evaluate(() => { app.rig.release(true); app.game.progress.addCoins(400); app.game.openHangar(); });
   await frames(3);
 });
+await scene('briefing', 'The briefing before a courier run: the goal, tips and the controls for this device', async () => {
+  await page.click('#hGo'); // a real click from the hangar
+  await until(() => app.game.briefing.open);
+  await frames(2);
+});
+await scene('options', 'Options: Invert Y, steering sensitivity, sound, briefing, reset progress', async () => {
+  await page.click('#bOptions');
+  await until(() => app.game.options.open);
+  await page.click('#oInvert'); // Jordan's favourite
+  if (!(await page.evaluate(() => app.settings.get('invertY')))) throw new Error('Invert Y did not switch on');
+  await frames(2);
+});
+await scene('briefing-inverted', 'Back on the briefing: the controls now say up dives', async () => {
+  await page.click('#oDone');
+  await until(() => !app.game.options.open && app.game.briefing.open);
+  const text = await page.evaluate(() => document.getElementById('bControls').textContent);
+  if (!/up to dive/.test(text)) throw new Error(`controls not updated for Invert Y: ${text}`);
+  await page.evaluate(() => app.settings.set('invertY', false));
+  await frames(1);
+});
 await scene('courier', 'Sky Courier in flight', async () => {
+  await page.click('#bStart').catch(() => {}); // Start on the briefing (if that scene ran)
   await page.evaluate(() => { app.game.hangar.hide(); app.game.start(); });
   await until(() => app.rig.mode === 'game');
   await frames(4);
@@ -493,12 +514,22 @@ await scene('mobile-courier', 'Daily challenge on a phone, a thumb on the stick'
   await frames(6);
 });
 await page.touchscreen.touchEnd().catch(() => {}); // (nothing to lift if that scene was filtered out)
+await scene('mobile-briefing', 'The briefing on a phone, with touch controls', async () => {
+  await page.evaluate(async () => {
+    const { MISSIONS } = await import('./js/game/Missions.js'); // (the page was reloaded at phone size)
+    app.game.stop();
+    app.game.launch({ mission: MISSIONS.find((m) => m.id === 'rings') });
+  });
+  await until(() => app.game.briefing.open);
+  await frames(2);
+});
+await page.evaluate(() => app.game.briefing.hide());
 await scene('mobile-free', 'Free flight on a phone', async () => {
   await page.evaluate(() => { app.game.stop(); app.game.start({ free: true }); });
   await until(() => app.rig.mode === 'game');
   await frames(5);
 });
-await scene('mobile-pause', 'Pause menu on a phone: tilt steering and vibration switches', async () => {
+await scene('mobile-pause', 'Pause menu on a phone', async () => {
   await page.evaluate(() => app.togglePause());
   await frames(2);
 });

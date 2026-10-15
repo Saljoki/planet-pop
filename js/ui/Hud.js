@@ -89,7 +89,8 @@ export class Hud {
     $('world').onchange = (e) => app.setWorld(e.target.value);
     $('ink').onchange = (e) => app.setInk(e.target.checked);
     $('shadows').onchange = (e) => app.setShadows(e.target.checked);
-    $('sound').onchange = (e) => (app.sfx.enabled = e.target.checked);
+    $('sound').checked = app.settings?.get('sound') ?? true;
+    $('sound').onchange = (e) => app.settings?.set('sound', e.target.checked);
     this.slider('ambience', (v) => (v ? `${v}%` : 'off'), (v) => app.ambience?.setVolume(v / 100), true);
     $('playBtn').onclick = () => app.game.openHangar();
     $('trophies').onclick = () => this.showTrophies(app.achievements.list());
@@ -103,6 +104,14 @@ export class Hud {
       else if (e.code === 'KeyH' && !app.game.active) this.panel.classList.toggle('hidden');
       else if (e.code === 'KeyT' && !app.game.active) app.tour?.toggle();
     });
+  }
+
+  /** Keep the panel's Sound switch and Ambience slider in step with the Options menu. */
+  syncSound() { this.$('sound').checked = this.app.sfx.enabled; }
+  syncAmbience() {
+    const v = Math.round((this.app.ambience?.volume ?? 0) * 100);
+    this.$('ambience').value = v;
+    this.$('ambienceVal').textContent = v ? `${v}%` : 'off';
   }
 
   /** Phones: a sheet closes when dragged down by its grab bar. */

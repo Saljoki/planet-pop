@@ -77,11 +77,17 @@ Fly city to city and swoop low through the pink beacon to deliver. Blue rings ad
 boost; fast deliveries build a combo up to x5; crashing costs 8 s.
 Keyboard: arrows / WASD steer and climb, Space / Shift boost, P pause, Esc quit. **Phones:** put a thumb
 anywhere on the left half and drag to steer and climb, hold the big **BOOST** button; **⏸** pauses, and the pause
-menu switches on **tilt to steer** (hold the phone as you like when the run starts; tip it like a steering wheel,
+menu's **⚙️ Options** switch on **tilt to steer** (hold the phone as you like when the run starts; tip it like a steering wheel,
 tip the top away to dive) and **vibration** on deliveries, crashes and lightning (Android; iPhones don't allow
 it). **Controllers** work too: left stick or d-pad steers and climbs, A / RB / RT boost, Start pauses (or opens
 the hangar), A / B answer the end-of-run screen.
 
+- **Briefing and Options:** before each run a briefing explains the goal and shows the controls for your
+  device (keyboard, touch or controller), with **▶ Start**, **⚙️ Options** and **Back**; tick "Don't show this"
+  to skip it. **⚙️ Options** (in the briefing, the hangar and the pause menu) has **Invert Y axis** (up dives,
+  down climbs, for keys, thumbstick, tilt and controller alike), steering sensitivity, tilt steering and
+  vibration on phones, sound and ambience volume, the briefing switch, and a two-tap **Reset Sky Courier
+  progress** (trophies stay). Options are remembered.
 - **📦 Courier run:** the classic timed game below. **🕊️ Free flight:** no clock, no parcels, no Rex, no coins:
   fly anywhere you like. Rings refill your boost and runways still refuel.
 
@@ -130,13 +136,14 @@ planet-pop/
 │  │                          Achievements, InfoCard, FindMenu, TourMode, Haptics, WakeLock, DebugStats (?debug)
 │  └─ game/                   CourierGame, PlayerPlane, Rival, Cargo, Progress (coins/upgrades), Hangar, Daily,
 │                             Missions + MissionRun + MissionBoard, FreeFlight, PauseMenu, Gamepad, TouchStick,
-│                             TiltSteer
+│                             TiltSteer, Settings, Briefing, OptionsMenu
 ├─ vendor/three/, fonts/      three.js and the Bangers font (with their licences)
 ├─ icons/                     app icons (drawn by scripts/icons.mjs)
 ├─ scripts/                   vendor.mjs (copy three.js + font), icons.mjs, precache.mjs
 ├─ tests/
 │  ├─ *.test.mjs              node:test suites: quality, progress, daily, ambience, themes, missions + controller,
-│  │                          touch (gestures, stick, tilt, Find, tour, free flight), offline files, and 3 full
+│  │                          touch (gestures, stick, tilt, Find, tour, free flight), options (briefing, Invert Y,
+│  │                          sensitivity, reset), offline files, and 3 full
 │  │                          planets simulated
 │  ├─ helpers/                a fake DOM and a headless App so the game runs under Node
 │  └─ browser/screenshots.mjs headless Chrome (software WebGL) plays key scenes on a laptop-sized screen and a

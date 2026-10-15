@@ -5,7 +5,7 @@ const ctx2d = new Proxy({}, {
 });
 
 export function fakeEl(tag = 'div') {
-  return {
+  const el = {
     tagName: tag.toUpperCase(), style: {}, children: [], dataset: {}, textContent: '', innerHTML: '', value: '1', checked: true,
     classList: {
       _s: new Set(),
@@ -21,6 +21,11 @@ export function fakeEl(tag = 'div') {
     get firstElementChild() { return this.children[0] ?? (this._first ??= fakeEl()); },
     offsetWidth: 0, getContext: () => ctx2d, width: 0, height: 0,
   };
+  Object.defineProperty(el, 'className', { // like the real thing: setting it replaces the class list
+    get() { return [...el.classList._s].join(' '); },
+    set(v) { el.classList._s = new Set(String(v).split(/\s+/).filter(Boolean)); },
+  });
+  return el;
 }
 
 const els = {};

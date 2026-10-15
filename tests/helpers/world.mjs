@@ -7,6 +7,7 @@ import { Sfx } from '../../js/ui/Sfx.js';
 import { Achievements } from '../../js/ui/Achievements.js';
 import { CameraRig } from '../../js/camera/CameraRig.js';
 import { CourierGame } from '../../js/game/CourierGame.js';
+import { Settings } from '../../js/game/Settings.js';
 
 /** An App-shaped object with everything except the WebGL renderer, post-processing and quality control. */
 export function makeApp(params) {
@@ -19,6 +20,7 @@ export function makeApp(params) {
     onFocus(e) { this.focused = e.kind; },
   };
   app.camera.position.set(0, 0.3, 1).normalize().multiplyScalar(36);
+  app.settings = new Settings();
   app.hud = new Hud(app);
   app.sky = new Sky(app.scene);
   app.sfx = new Sfx(app);

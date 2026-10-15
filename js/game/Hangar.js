@@ -3,7 +3,7 @@ import { todayKey } from './Daily.js';
 
 /** Between-run screen: spend coins on upgrades and paint jobs, then take off: a courier run, a mission, the daily or free flight. */
 export class Hangar {
-  constructor(app, progress, { onFly, onFree, onDaily, onMissions }) {
+  constructor(app, progress, { onFly, onFree, onDaily, onMissions, onOptions }) {
     this.app = app;
     this.progress = progress;
     const el = (this.el = document.createElement('div'));
@@ -11,6 +11,7 @@ export class Hangar {
     el.className = 'overlay hidden';
     el.innerHTML = `<div class="panel">
       <button id="hClose" class="close" title="Close">✕</button>
+      <button id="hOptions" class="opts" title="Options">⚙️</button>
       <h2>🛠️ Hangar</h2>
       <div class="coins" id="hCoins"></div>
       <div id="hUpgrades"></div>
@@ -30,6 +31,7 @@ export class Hangar {
     $('hFree').addEventListener('click', () => { this.hide(); onFree(); });
     $('hMissions').addEventListener('click', () => { this.hide(); onMissions(); });
     $('hClose').addEventListener('click', () => this.hide());
+    $('hOptions').addEventListener('click', () => { this.hide(); onOptions?.(); });
     el.addEventListener('click', (e) => {
       const b = e.target.closest?.('button[data-buy], button[data-skin]');
       if (!b || b.disabled) return;

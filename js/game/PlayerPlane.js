@@ -33,6 +33,7 @@ export class PlayerPlane {
     this.t = 0;
     // keys and buttons are on/off; a thumbstick or tilting the phone adds steer (-1 left … 1 right) and climb (-1 … 1)
     this.input = { left: false, right: false, up: false, down: false, boost: false, steer: 0, climb: 0 };
+    this.controls = { invertY: false, sensitivity: 1 }; // the player's options (Rex flies with the defaults)
 
     const g = (this.group = new THREE.Group());
     addMesh(g, new THREE.CapsuleGeometry(0.08, 0.4, 4, 12).rotateX(Math.PI / 2), toon(skin.body), 0.012);
@@ -75,12 +76,12 @@ export class PlayerPlane {
   update(dt) {
     const inp = this.input;
     const turn = clamp((inp.left ? 1 : 0) - (inp.right ? 1 : 0) - (+inp.steer || 0), -1, 1);
-    const climb = clamp((inp.up ? 1 : 0) - (inp.down ? 1 : 0) + (+inp.climb || 0), -1, 1);
+    const climb = clamp((inp.up ? 1 : 0) - (inp.down ? 1 : 0) + (+inp.climb || 0), -1, 1) * (this.controls.invertY ? -1 : 1);
     const st = this.stats;
     const boosting = inp.boost && this.boost > 0.02;
     this.boost = clamp(this.boost + (boosting ? -st.drain : st.regen) * dt, 0, 1);
 
-    this.fwd.applyAxisAngle(this.up, turn * TURN * st.turn * dt);             // steer
+    this.fwd.applyAxisAngle(this.up, turn * TURN * st.turn * (this.controls.sensitivity ?? 1) * dt); // steer
     this.t += dt;
     if (this.turbulence > 0) { // storm buffeting: the nose wanders and the plane bobs
       const k = this.turbulence, t = this.t;

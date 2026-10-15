@@ -97,6 +97,13 @@ export class Progress {
 
   addCoins(n) { this.coins += n; this.save(); }
 
+  /** Back to a brand-new pilot: no coins, upgrades, paint jobs, missions or best scores. */
+  reset() {
+    try { localStorage.removeItem(KEY); localStorage.removeItem('planetpop.best'); } catch { /* storage unavailable */ }
+    Object.assign(this, { coins: 0, best: 0, levels: {}, owned: new Set(['classic']), skin: 'classic', daily: null, missions: new Set() });
+    this.save();
+  }
+
   /** Returns true when this is a new best. */
   recordScore(score) {
     const record = score > this.best;

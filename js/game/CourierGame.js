@@ -17,6 +17,8 @@ import { TouchStick } from './TouchStick.js';
 import { TiltSteer } from './TiltSteer.js';
 import { PauseMenu } from './PauseMenu.js';
 import { FreeFlight } from './FreeFlight.js';
+import { Briefing } from './Briefing.js';
+import { OptionsMenu } from './OptionsMenu.js';
 
 const DELIVERY_BONUS = 20, RING_BONUS = 5, RING_COINS = 5, CRASH_PENALTY = 8, LIGHTNING_PENALTY = 5, RINGS = 7;
 const UFO_BONUS = 300, UFO_COINS = 30, REFUEL = 0.9, ASH_ENGINE = 0.55;
@@ -46,12 +48,15 @@ export class CourierGame {
     this.touch = matchMedia('(pointer: coarse)').matches;
     this.tilt = new TiltSteer();
     this.buildDom();
+    this.options = new OptionsMenu(app, this);
+    this.briefing = new Briefing(app, this);
     this.pauseMenu = new PauseMenu(this);
     this.mission = null;
     this.free = null;
     this.board = new MissionBoard(app, this.progress, (m) => this.startMission(m));
     this.hangar = new Hangar(app, this.progress, {
-      onFly: () => this.start(), onFree: () => this.start({ free: true }), onDaily: () => this.startDaily(), onMissions: () => this.board.show(),
+      onFly: () => this.launch(), onFree: () => this.launch({ free: true }), onDaily: () => this.startDaily(),
+      onMissions: () => this.board.show(), onOptions: () => this.options.show(() => this.hangar.show()),
     });
   }
 
@@ -66,7 +71,14 @@ export class CourierGame {
       app.hud.toast(note);
       await app.newPlanet(want.seed, false, want.theme);
     }
-    this.start(opts);
+    this.launch(opts);
+  }
+
+  /** The briefing first (unless switched off in Options), then the run. */
+  launch(opts = {}) {
+    if (this.active) return;
+    if (this.app.settings?.get('briefing') === false) this.start(opts);
+    else this.briefing.show(opts);
   }
 
   startMission(def) { return this.flyOn(def.planet, { mission: def }, `${def.icon} Building the planet for ${def.name}…`); }
@@ -162,6 +174,7 @@ export class CourierGame {
     const heading = free ? _t.copy(this.from.u) : _t.copy(this.dest.c).addScaledVector(this.from.c, -this.dest.c.dot(this.from.c));
     if (heading.lengthSq() < 1e-6) heading.copy(this.from.u);
     this.player = new PlayerPlane(p, this.from.c, heading, this.stats, this.progress.skinDef);
+    if (app.settings) this.player.controls = app.settings.values; // Invert Y and sensitivity, live
     this.player.setCargo(this.cargo);
     this.buildProps();
     app.renderer.compileAsync?.(this.props, app.camera, app.scene)?.catch(() => {}); // new props: compile now, not mid-flight
@@ -174,6 +187,7 @@ export class CourierGame {
     this.dom.free.classList.toggle('hidden', !free);
     for (const b of this.dom.stats) b.classList.toggle('hidden', free);
     this.dom.arrow.classList.toggle('hidden', free);
+    this.dom.help.textContent = `←/→ steer · ↑/↓ ${app.settings?.get('invertY') ? 'dive / climb (inverted)' : 'climb / dive'} · Space boost · P pause · Esc quit`;
     this.stick?.reset();
     if (this.tilt.wanted) this.tilt.start();
     app.wakeLock?.want('game', true);

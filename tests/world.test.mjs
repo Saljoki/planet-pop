@@ -412,6 +412,8 @@ for (const params of PLANETS) {
       await game.startDaily();
       assert.equal(built, dailySeed());
       assert.equal(app.params.seed, dailySeed());
+      assert.ok(game.briefing.open && !game.active, 'the briefing should come first');
+      game.briefing.start();
       assert.ok(game.active && game.daily);
       game.stop();
     });

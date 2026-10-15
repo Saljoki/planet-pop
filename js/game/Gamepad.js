@@ -26,16 +26,21 @@ export class Gamepad {
     const pads = navigator.getGamepads?.() || [], pad = [...pads].find((p) => p?.connected);
     const s = (this.state = pad ? readPad(pad) : null) || {};
     const edge = (k) => s[k] && !this.prev[k], { app } = this, game = app.game, hangar = game.hangar;
-    if (game.active) {
+    if (game.options?.open) {
+      if (edge('b') || edge('start')) game.options.hide();
+    } else if (game.briefing?.open) {
+      if (edge('a') || edge('start')) game.briefing.start();
+      else if (edge('b')) game.briefing.back();
+    } else if (game.active) {
       if (edge('start')) app.togglePause();
       if (game.over) {
         if (edge('a')) game.again();
         else if (edge('b')) game.stop();
       } else if (pad) game.padInput(s, this.prev);
     } else if (hangar.open) {
-      if (edge('a')) { hangar.hide(); game.start(); }
+      if (edge('a')) { hangar.hide(); game.launch(); }
       else if (edge('b')) hangar.hide();
-    } else if (edge('start') && !app.building) game.openHangar();
+    } else if (edge('start') && !app.building && !game.board.open) game.openHangar();
     this.prev = s;
   }
 }

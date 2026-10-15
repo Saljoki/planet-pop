@@ -19,6 +19,7 @@ import { Haptics } from './ui/Haptics.js';
 import { WakeLock } from './ui/WakeLock.js';
 import { TourMode } from './ui/TourMode.js';
 import { FindMenu } from './ui/FindMenu.js';
+import { Settings } from './game/Settings.js';
 import { dailyParams } from './game/Daily.js';
 import { THEME_IDS, pickTheme } from './world/Themes.js';
 
@@ -67,6 +68,7 @@ export class App {
     this.camera.position.set(0, 0.3, 1).normalize().multiplyScalar(start);
     this.scene.add(this.camera);
 
+    this.settings = new Settings();     // before anything that reads an option
     this.ambience = new Ambience(this); // before the HUD, which shows its saved volume
     this.haptics = new Haptics();       // likewise its vibration setting
     this.wakeLock = new WakeLock();
