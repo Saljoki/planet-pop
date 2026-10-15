@@ -117,6 +117,18 @@ describe('driving', () => {
     assert.ok(!car.taken && follower.leader === car && traffic.cars.length === before, 'the car should rejoin the traffic');
   });
 
+  it('Steer: takes the helm of a boat and gives it back', () => {
+    const boats = planet.boats, id = 0, b = boats.boats[id], m = new THREE.Matrix4();
+    boats.hull.getMatrixAt(id, m);
+    const where = new THREE.Vector3().setFromMatrixPosition(m);
+    game.start({ drive: 'boat', take: { kind: 'boat', id, name: b.harbour ? 'Ferry' : 'Boat' } });
+    assert.ok(b.taken && game.player.kind === 'boat');
+    assert.ok(game.player.pos.distanceTo(where) < 0.1, 'the player boat should start where the boat was');
+    game.stop();
+    assert.ok(!b.taken, 'the boat should carry on its rounds');
+    assert.ok(app.unlocked.includes('sailor'));
+  });
+
   it('traffic waits behind the player instead of driving through', () => {
     game.start({ drive: 'car' });
     const pl = game.player, traffic = planet.traffic;

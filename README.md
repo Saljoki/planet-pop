@@ -6,7 +6,8 @@ with ferries, sightseeing helicopters, whales, a train with a tunnel, balloons, 
 rainbows, an erupting volcano, midnight fireworks, meteor showers, auroras over the poles, the odd UFO,
 a rocket pad, satellites, a space station, a moon and an ambient soundscape. Planets come in five kinds:
 classic, ice, desert, candy and lava. Plus the **Sky Courier** mini-game with ten missions, a daily
-challenge and free flight, a 📍 Find menu, a hands-free 📺 tour, a photo mode and 36 trophies. It's built for
+challenge and free flight, **road trips** (drive any car or steer any boat, taxi, van courier and a race round
+the world), a 📍 Find menu, a hands-free 📺 tour, a photo mode and 42 trophies. It's built for
 phones as much as laptops (touch gestures, a thumbstick, tilt steering), installs as an app and works offline.
 
 Every planet is generated from a seed. The address bar always holds the current planet
@@ -40,7 +41,8 @@ service worker picks up the new version (the tests check this).
   birds, storms, airports, harbours, the volcano, the UFO, rocket, satellites, station, moon, or any spot on
   the ground) to fly there and follow it. People and trams can be picked once you've zoomed in on a town,
   whales while they're at the surface. **Esc** returns to orbit. **Press and hold** on something for a card
-  saying what it is and what it's up to, with a Follow button.
+  saying what it is and what it's up to, with a Follow button, and for cars and boats **🚗 Drive** / **⛵ Steer**:
+  take over that very car (it leaves the traffic) or boat and drive it about.
 - **📍 Find** (or **F**): what's happening right now (an eruption, fireworks, a whale leaping, a plane about to
   take off…) and a button for every kind of thing (towns, the train, trams, planes, helicopters, whales…).
   Tap one to fly there; tapping a kind again visits the next one.
@@ -90,6 +92,10 @@ the hangar), A / B answer the end-of-run screen.
   progress** (trophies stay). Options are remembered.
 - **📦 Courier run:** the classic timed game below. **🕊️ Free flight:** no clock, no parcels, no Rex, no coins:
   fly anywhere you like. Rings refill your boost and runways still refuel.
+- **Health ❤️:** hitting the ground costs a quarter of your health and makes the engine splutter; lightning hurts
+  too. Out of health is a wreck: KABOOM, and the run's over (free flight and free drive put a fresh one at the
+  nearest town instead). Skimming a runway repairs the plane, every delivery patches it up a little, and the
+  **🛡️ Armour** upgrade softens every knock.
 
 - **Cargo:** 📦 parcels, ⚡ urgent (tight timer, double pay), 🥚 fragile (a crash breaks it: no pay),
   🏋️ heavy (slower plane, 1.5× pay).
@@ -106,6 +112,16 @@ the hangar), A / B answer the end-of-run screen.
   Hour, Ring Master, Handle With Care, Pit Stop, Heavy Lifter, Outrun Rex, Night Shift, Close Encounter
   and Ash Dodger. The arrow points where a mission needs you (a runway, the next ring, the UFO), and
   each pays coins the first time you complete it.
+- **🚗 Road trips** (in the hangar), in a car on the ground: ↑ / W to go, ↓ / S to brake and reverse (on phones,
+  drag up and down on the left). Highways are quickest; grass, sand and snow are slower and hills slow you going up,
+  and you get a little air over crests. Buildings, steep mountains and the sea are walls: glance off them and you
+  scrape along, hit them square on and it hurts. Traffic keeps left, queues behind you and honks.
+  - **Free drive** (or take over a car from its info card) and **⛵ free sail**: no clock, just roam.
+  - **🚕 Taxi:** people wait on a green pad at the edge of town; pull in slowly to pick them up and take them to
+    the next town. Quick rides tip and build a combo, bumpy ones pay less, and every fare adds time to the shift.
+  - **🚐 Van courier:** the courier run by road, to a pad at one of the two nearest towns.
+  - **🏁 Round the world:** race Rex once round the planet on a highway through 8 checkpoints, after a 3-2-1-GO.
+    He keeps left, overtakes traffic and runs red lights. Your fastest win is kept.
 - **📅 Daily challenge** (in the hangar): today's planet and parcel route, the same for everyone and
   changing at midnight UTC, flown in the stock plane so upgrades don't count. Your best daily score is
   kept separately, and **Share result** copies your score with a `?daily` link that opens the challenge.
@@ -137,10 +153,14 @@ planet-pop/
 │  ├─ ui/                     Widget + Overlay (UI building blocks), Hud, ControlPanel (☰), InfoCard, FindMenu,
 │  │                          TourMode, PhotoMode, Sfx (bubbles + synthesized sound), Ambience (soundscape),
 │  │                          Achievements + TrophyWatch, Haptics, WakeLock, DebugStats (?debug)
-│  └─ game/                   CourierGame (runs the show), PlayerPlane, Rival, Cargo, CourierProps (beacon, rings),
-│     │                       FlightHazards (storms, runways, ash), Progress, Settings, Daily, Missions
-│     ├─ runs/                Run (the hooks), DeliveryRun (courier run), DailyRun, MissionRun, FreeFlight
-│     ├─ screens/             CourierHud, ResultsScreen, Briefing, OptionsMenu, PauseMenu, Hangar, MissionBoard
+│  └─ game/                   CourierGame (runs the show), Rival + RoadRival (Rex in the air and on the road), Cargo,
+│     │                       CourierProps (beacon, rings, pads, race arches), FlightHazards (storms, runways, ash),
+│     │                       Progress, Settings, Daily, Missions
+│     ├─ vehicles/            Vehicle (health, boost, smoke), Plane, GroundVehicle, Car, Boat, Ground (what's under a
+│     │                       car or boat: roads, water, buildings, mountains, where to start and stop)
+│     ├─ runs/                Run (the hooks), modes.js (which run for which options), DeliveryRun (courier run),
+│     │                       DailyRun, MissionRun, FreeFlight, FreeDrive, TaxiRun, VanRun, RaceRun
+│     ├─ screens/             CourierHud, ResultsScreen, Briefing, OptionsMenu, PauseMenu, Hangar, MissionBoard, RoadBoard
 │     └─ input/               FlightControls (keys, stick, tilt, boost), TouchStick, TiltSteer, Gamepad
 ├─ vendor/three/, fonts/      three.js and the Bangers font (with their licences)
 ├─ icons/                     app icons (drawn by scripts/icons.mjs)
@@ -148,7 +168,8 @@ planet-pop/
 ├─ docs/EXTENDING.md          where new things go: world modules, game modes, missions, options, trophies…
 ├─ tests/
 │  ├─ *.test.mjs              node:test suites: world (3 full planets simulated, camera, trophies), courier (Sky
-│  │                          Courier and the daily on the same planets), quality, progress, daily, ambience, themes,
+│  │                          Courier and the daily on the same planets), health, drive (cars, boats, traffic), road
+│  │                          (taxi, van, race), quality, progress, daily, ambience, themes,
 │  │                          missions + controller, touch (gestures, stick, tilt, Find, tour, free flight), options
 │  │                          (briefing, Invert Y, sensitivity, reset), offline files
 │  ├─ helpers/                a fake DOM and a headless App so the game runs under Node

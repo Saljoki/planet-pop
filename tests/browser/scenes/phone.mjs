@@ -49,6 +49,19 @@ export default async function phone({ page, frames, until, scene, open, ufoHere,
     await frames(2);
   });
   await page.evaluate(() => app.game.briefing.hide());
+  await scene('mobile-drive', 'Driving on a phone: the speedometer sits above the BOOST button', async () => {
+    await page.evaluate(() => {
+      const g = app.game;
+      g.stop();
+      g.start({ drive: 'car' });
+      const pl = g.player, town = app.planet.cities.sites.find((s) => pl.ground.roadAt(s.c)), spot = pl.ground.parking(town);
+      pl.respawn(spot.at, spot.heading);
+      pl.input.up = true;
+      for (let i = 0; i < 60; i++) g.update(1 / 30);
+    });
+    await until(() => app.rig.mode === 'game');
+    await frames(5);
+  });
   await scene('mobile-free', 'Free flight on a phone', async () => {
     await page.evaluate(() => { app.game.stop(); app.game.start({ free: true }); });
     await until(() => app.rig.mode === 'game');

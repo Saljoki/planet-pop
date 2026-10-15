@@ -16,7 +16,8 @@ file; there's no build step. After adding, renaming or removing any file under `
 - **`Hud`** (`js/ui/Hud.js`) is the planet view's screen furniture; the ☰ panel is `ControlPanel`.
   Small pieces of UI extend **`Widget`** (`js/ui/Widget.js`); full-screen menus extend **`Overlay`**,
   which handles Esc and the dimmed backdrop.
-- **`CourierGame`** (`js/game/CourierGame.js`) runs Sky Courier. The rules of each kind of run live in
+- **`CourierGame`** (`js/game/CourierGame.js`) runs Sky Courier and the road trips. What the player drives is a
+  `Vehicle` (`js/game/vehicles/`: the plane, a car, a boat). The rules of each kind of run live in
   `js/game/runs/`, the menus in `js/game/screens/`, the controls in `js/game/input/`.
 - Saved state goes through `js/core/Store.js` (localStorage, always with a fallback). Keys start with
   `planetpop.`; never change the format of an existing key, or players lose their progress.
@@ -42,25 +43,38 @@ file; there's no build step. After adding, renaming or removing any file under `
 6. Test it in `tests/world.test.mjs` (the three test planets run 80 s of simulated life) and add a screenshot
    scene to `tests/browser/scenes/world.mjs` or `events.mjs`.
 
-## Add a kind of Sky Courier run (a game mode)
+## Add a kind of run (a game mode)
 
 1. Write a class in `js/game/runs/` that extends `Run` (or `DeliveryRun` for a variation on the courier
-   run, like `DailyRun` and `MissionRun`). `Run.js` documents every hook. The usual ones:
-   - `takeoff()`: set up before the plane exists; return `{ at, heading }`.
-   - `begin()`: the plane and props exist; place things and say hello (`this.app.hud.toast(…)`).
+   run, like `DailyRun`, `MissionRun` and `VanRun`). `Run.js` documents every hook. The usual ones:
+   - `static briefing(opts)`: `{ icon, title, goal, tips }` for the screen before it starts, and
+     `static vehicleKind(opts)`: 'plane', 'car' or 'boat' (for the controls it shows).
+   - `takeoff()`: set up before the vehicle exists; return `{ at, heading }`.
+   - `vehicle(at, heading)`: what the player drives (the plane unless you say otherwise; see `TaxiRun`).
+   - `begin()`: the vehicle and props exist; place things and say hello (`this.app.hud.toast(…)`).
    - `crashed()`, `zapped()`, `refuelled()`, `inAsh(dt)`, `caughtUfo()`, `ring(ring)`, `placeRing(ring)`:
-     what happens, scored your way. The plane's own reaction (bounce, shake, boost) is already handled.
+     what happens, scored your way. The vehicle's own reaction (bounce, damage, shake) is already handled.
    - `update(dt)`: your rules; call `this.game.finish({ title, html, … })` when the run is over
      (see `ResultsScreen.show` for what the card can offer).
+   - `wrecked()`: out of health (by default a fresh vehicle turns up; scored runs end instead).
    - `hud(hud)`: fill in `hud.dom.*` and point the arrow with `hud.pointAt(c)`.
-   - `layout`: which HUD pieces show; `end()`: undo anything that outlives the run.
-2. Add it to `runFor()` at the top of `CourierGame.js`, keyed on an option (`{ free: true }`, say).
-3. Give it a way in: a button in the hangar (`js/game/screens/Hangar.js`) that calls `game.launch({ … })`,
-   and text in `briefingFor()` (`js/game/screens/Briefing.js`).
-4. Test it like `tests/touch.test.mjs` does free flight: `game.start({ … })`, `run(app, seconds, { game: true })`,
-   then look at `game.run`.
+   - `layout`, `rings`: which HUD pieces show and how many blue rings; `end()`: undo anything that outlives the run.
+2. Add it to `runClass()` in `js/game/runs/modes.js`, keyed on an option (`{ road: 'taxi' }`, say).
+3. Give it a way in: a line in `ROAD_TRIPS` (`js/game/screens/RoadBoard.js`) for something on the ground, or a
+   hangar button (`js/game/screens/Hangar.js`); either calls `game.launch({ … })`.
+4. Test it like `tests/road.test.mjs`: `game.start({ … })`, move `game.player` about, `game.update(dt)` (or
+   `run(app, seconds, { game: true })`), then look at `game.run`.
 
-The beacon and rings are `CourierProps`; storms, runways and ash are `FlightHazards`; both are shared by every run.
+Shared by every run: `CourierProps` (the beacon, rings, the pull-in pad with a waiting passenger, race arches),
+`FlightHazards` (storms, runways, ash) and, for anything on the ground, `Ground` (`js/game/vehicles/Ground.js`:
+road or not, water, buildings, mountains, and `parking(town)` / `stops(town)` for where to start and pull in).
+
+## Add a vehicle
+
+Extend `Vehicle` (`js/game/vehicles/Vehicle.js`), or `GroundVehicle` for anything that keeps to the surface: say
+how it handles (`limits()`), what stops it (`blocked(d)`) and how high it sits (`surfaceR(d)`), build its model into
+`this.group`, and move it in `update(dt)` from `this.input`. Set `chase` for how the camera follows it. Health,
+damage, wrecks, boost and smoke come with `Vehicle`; `Car` and `Boat` are the examples.
 
 ## Add a mission
 
