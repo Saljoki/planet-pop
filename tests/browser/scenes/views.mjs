@@ -1,4 +1,4 @@
-// Ways of looking: the turned orbit view, Find, the info card, the tour and photo mode.
+// Ways of looking: the turned orbit view, About, Find, the info card, the tour and photo mode.
 // One of the screenshot run's scene files (see ../screenshots.mjs); the helpers are described in ../harness.mjs.
 
 export default async function views({ page, frames, until, scene }) {
@@ -6,6 +6,16 @@ export default async function views({ page, frames, until, scene }) {
     await page.evaluate(() => { const rig = app.rig; rig.release(true); Object.assign(rig.orbit, { alt: 13, heading: 0.7, tilt: 0.4 }); });
     await frames(3);
   });
+  await scene('about', 'About (ℹ️ in the controls panel): the version, who made it, credits, and the player typing their name', async () => {
+    await page.evaluate(() => app.hud.panel.show());
+    await page.click('#aboutBtn');
+    await until(() => app.hud.about.open);
+    await page.type('#abName', 'Ata');
+    await page.keyboard.press('Enter');
+    await until(() => app.settings.playerName === 'Ata');
+    await frames(2);
+  });
+  await page.evaluate(() => app.hud.about.hide());
   await scene('find', 'The Find menu: what is happening now, every kind of thing, and the towns', async () => {
     await page.evaluate(() => {
       const u = app.planet.ufo;

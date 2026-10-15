@@ -19,6 +19,32 @@
 #options #oDone { width: 100%; margin-top: 14px; }
 #options .close, #briefing .close { position: absolute; top: 12px; right: 12px; background: #fff; font-size: 15px; padding: 3px 8px 0; }
 #hangar .opts { position: absolute; top: 12px; left: 12px; background: #fff; font-size: 16px; padding: 3px 8px 0; }
+#options .opt.name { flex-wrap: wrap; justify-content: space-between; }
+#options .opt.name input, #about .name input, #hangar .who input { font: inherit; font-size: 17px; letter-spacing: 1px; color: var(--ink);
+  background: #fff; border: 3px solid var(--ink); border-radius: 10px; padding: 4px 10px 1px; min-width: 0; width: 190px; }
+#hangar .who { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 20px; margin: -4px 0 6px; }
+#hangar .who input { width: 170px; text-align: center; }
+#hangar .who input:placeholder-shown { border-style: dashed; }
+.about { display: block; margin: 2px auto 0; background: none; border: none; box-shadow: none; font-size: 14px; padding: 2px 6px;
+  opacity: 0.75; text-decoration: underline dotted; }
+.about:hover { opacity: 1; }
+#options .about { margin-top: 10px; }
+
+/* ---------- About ---------- */
+#about { z-index: 32; } /* over Options, which can open it */
+#about .panel { width: 460px; text-align: left; position: relative; }
+#about h2, #about .ver { text-align: center; }
+#about .ver { margin: -6px 0 10px; color: var(--pink); font-size: 18px; }
+#about h3 { margin: 14px 0 4px; font-weight: normal; font-size: 20px; }
+#about p { margin: 4px 0; font-family: system-ui, sans-serif; letter-spacing: 0; font-size: 14px; line-height: 1.45; }
+#about p.who { font-size: 15px; }
+#about .credits { font-size: 13px; opacity: 0.8; }
+#about .credits a { color: inherit; }
+#about .name { display: flex; flex-direction: column; gap: 4px; }
+#about .name input { width: 100%; box-sizing: border-box; }
+#about .name small { font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.7; }
+#about #abDone { width: 100%; margin-top: 14px; }
+#about .close { position: absolute; top: 12px; right: 12px; background: #fff; font-size: 15px; padding: 3px 8px 0; }
 @media (max-width: 640px) {
   #briefing .panel, #options .panel { padding: 14px 16px; }
   #briefing .goal { font-size: 18px; }

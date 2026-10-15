@@ -8,7 +8,7 @@ import { Overlay } from '../../ui/Overlay.js';
 export class ResultsScreen extends Overlay {
   constructor(game) {
     super({ id: 'gOver', parent: game.el, escapes: false, html: `
-        <h2 id="gTitle">⏰ Time's up!</h2><p id="gResult"></p>
+        <div id="gWho" class="who hidden"></div><h2 id="gTitle">⏰ Time's up!</h2><p id="gResult"></p>
         <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
           <button id="gNext" class="big hidden">▶ Next mission</button><button id="gAgain" class="big">✈️ Fly again</button>
           <button id="gShare" class="hidden">🔗 Share result</button><button id="gBoard" class="hidden">🎯 Missions</button>
@@ -19,7 +19,7 @@ export class ResultsScreen extends Overlay {
     this.nextMission = null;
     this.dom = {
       title: this.$('gTitle'), result: this.$('gResult'), next: this.$('gNext'), again: this.$('gAgain'),
-      share: this.$('gShare'), board: this.$('gBoard'),
+      share: this.$('gShare'), board: this.$('gBoard'), who: this.$('gWho'),
     };
     this.on('gAgain', 'click', () => game.again());
     this.on('gNext', 'click', () => { const next = this.nextMission; game.stop(); game.startMission(next); });
@@ -35,6 +35,9 @@ export class ResultsScreen extends Overlay {
    */
   show({ title, html, again = '✈️ Fly again', bigAgain = true, next = null, board = false, share = false }) {
     const d = this.dom;
+    const name = this.game.app.settings.playerName;
+    d.who.textContent = name ? `${this.game.player?.kind === 'plane' ? '🧑‍✈️' : '🧑'} ${name}` : '';
+    d.who.classList.toggle('hidden', !name);
     d.title.textContent = title;
     d.result.innerHTML = html;
     d.again.textContent = again;

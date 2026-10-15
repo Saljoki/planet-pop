@@ -1,6 +1,6 @@
 {
   "name": "planet-pop",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "description": "A cartoony comic-book 3D planet with the Sky Courier mini-game, built with Three.js",
   "type": "module",

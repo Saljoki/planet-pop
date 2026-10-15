@@ -12,6 +12,7 @@ export class Hangar extends Overlay {
       <button id="hClose" class="close" title="Close">✕</button>
       <button id="hOptions" class="opts" title="Options">⚙️</button>
       <h2>🛠️ Hangar</h2>
+      <label class="who" title="Your name, for your results and the daily share">🧑‍✈️<input id="hName" type="text" maxlength="16" placeholder="Your name?" autocomplete="nickname" enterkeyhint="done"></label>
       <div class="coins" id="hCoins"></div>
       <div id="hUpgrades"></div>
       <h3>Paint jobs</h3>
@@ -34,6 +35,9 @@ export class Hangar extends Overlay {
     this.on('hRoads', 'click', go(onRoads));
     this.on('hOptions', 'click', go(onOptions));
     this.on('hClose', 'click', () => this.hide());
+    const name = (this.nameInput = $('hName')), s = app.settings;
+    name.addEventListener('change', () => { s.setPlayerName(name.value); name.value = s.playerName; this.greet(); });
+    name.addEventListener('keydown', (e) => { if (e.key === 'Enter') name.blur(); });
     this.el.addEventListener('click', (e) => {
       const b = e.target.closest?.('button[data-buy], button[data-skin]');
       if (!b || b.disabled) return;
@@ -42,7 +46,23 @@ export class Hangar extends Overlay {
     });
   }
 
-  show() { this.render(); super.show(); }
+  show() {
+    this.nameInput.value = this.app.settings.playerName;
+    this.render();
+    super.show();
+  }
+
+  hide() {
+    if (this.open) this.app.settings.setPlayerName(this.nameInput.value); // (in case it's closed while typing)
+    super.hide();
+  }
+
+  /** A hello when the player has just given their name. */
+  greet() {
+    const n = this.app.settings.playerName;
+    if (n && n !== this.greeted) this.app.hud.toast(`👋 Hi, ${n}! Ready to fly?`);
+    this.greeted = n;
+  }
 
   buy(id) {
     const ok = this.progress.buy(id);

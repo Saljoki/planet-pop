@@ -133,6 +133,7 @@ export class App {
     this.hud.setLoading(false);
     this.quality.pauseFor(3);
     this.building = false;
+    if (initial && this.settings.playerName) this.hud.toast(`👋 Welcome back, ${this.settings.playerName}!`);
     if (initial && this.dailyLink) {
       this.dailyLink = false;
       this.hud.toast("📅 Today's daily challenge is ready. Press Daily challenge to fly it!");

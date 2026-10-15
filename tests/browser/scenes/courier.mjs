@@ -2,7 +2,7 @@
 // One of the screenshot run's scene files (see ../screenshots.mjs); the helpers are described in ../harness.mjs.
 
 export default async function courier({ page, frames, until, scene }) {
-  await scene('hangar', 'Sky Courier hangar', async () => {
+  await scene('hangar', 'Sky Courier hangar, with the player\'s name at the top', async () => {
     await page.evaluate(() => { app.rig.release(true); app.game.progress.addCoins(400); app.game.openHangar(); });
     await frames(3);
   });

@@ -1,5 +1,6 @@
 import { InfoCard } from './InfoCard.js';
 import { ControlPanel } from './ControlPanel.js';
+import { AboutCard } from './AboutCard.js';
 
 /**
  * The planet view's screen furniture: the title, hint and world tag, the buttons along the top, the ☰ Controls
@@ -30,6 +31,7 @@ export class Hud {
 
     const $ = (this.$ = (id) => document.getElementById(id));
     this.info = new InfoCard(app);
+    this.about = new AboutCard(app);
     $('panelToggle').onclick = () => {
       if (!this.panel.toggle()) return;
       app.find?.hide();

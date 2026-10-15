@@ -38,7 +38,8 @@ export class DailyRun extends DeliveryRun {
   /** Copy a short brag plus a link that opens today's challenge. */
   async share() {
     const url = `${location.origin}${location.pathname}?daily`;
-    const text = `📅 Planet Pop daily ${this.date}: ⭐ ${this.score} with ${this.deliveries} deliveries. Can you beat it? ${url}`;
+    const name = this.app.settings.playerName;
+    const text = `📅 Planet Pop daily ${this.date}: ${name ? `${name} scored ` : ''}⭐ ${this.score} with ${this.deliveries} deliveries. Can you beat it? ${url}`;
     try {
       await navigator.clipboard.writeText(text);
       this.app.hud.toast('🔗 Result copied! Paste it to challenge a friend.');

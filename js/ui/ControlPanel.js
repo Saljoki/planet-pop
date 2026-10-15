@@ -1,12 +1,13 @@
 import { THEMES, THEME_IDS } from '../world/Themes.js';
+import { VERSION } from '../core/Version.js';
 import { Widget } from './Widget.js';
 
 const SPEEDS = [0.5, 1, 2, 4, 8];
 
 /**
  * The ☰ Controls panel (a bottom sheet on phones): pause, new planet, share, the world sliders, quality and
- * looks, sound, and the Sky Courier and trophies buttons. To add a setting: put its input in the HTML below and
- * wire it up in the constructor (slider() for ranges).
+ * looks, sound, the Sky Courier and trophies buttons, and About (with the version). To add a setting: put its input
+ * in the HTML below and wire it up in the constructor (slider() for ranges).
  */
 export class ControlPanel extends Widget {
   constructor(app) {
@@ -38,6 +39,7 @@ export class ControlPanel extends Widget {
         <label>Ambience <b id="ambienceVal"></b><input id="ambience" type="range" min="0" max="100" step="5" value="${Math.round((app.ambience?.volume ?? 0.5) * 100)}"></label>
         <button id="playBtn" class="big">✈️ Play Sky Courier</button>
         <div id="trophies">🏆 0 trophies</div>
+        <button id="aboutBtn" class="about" title="About Planet Pop, and your name">ℹ️ About · v${VERSION}</button>
       ` });
     this.app = app;
     const $ = (id) => this.$(id);
@@ -65,6 +67,7 @@ export class ControlPanel extends Widget {
     this.slider('ambience', (v) => (v ? `${v}%` : 'off'), (v) => app.ambience?.setVolume(v / 100), true);
     this.on('playBtn', 'click', () => app.game.openHangar());
     this.on('trophies', 'click', () => app.hud.showTrophies(app.achievements.list()));
+    this.on('aboutBtn', 'click', () => app.hud.about.show());
   }
 
   /** A range input with its value shown next to its name. live = apply on every move; otherwise only when the

@@ -2,7 +2,10 @@ import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { makeWorld, run } from './helpers/world.mjs';
-import { Settings, DEFAULTS } from '../js/game/Settings.js';
+import { readFileSync } from 'node:fs';
+import { Settings, DEFAULTS, cleanName } from '../js/game/Settings.js';
+import { VERSION } from '../js/core/Version.js';
+import { DailyRun } from '../js/game/runs/DailyRun.js';
 import { briefingFor, controlsFor } from '../js/game/screens/Briefing.js';
 import { MISSIONS } from '../js/game/Missions.js';
 
@@ -25,6 +28,25 @@ describe('settings', () => {
     assert.equal(c.get('invertY'), false, 'a string is not a switch');
     assert.equal(c.get('sensitivity'), 2);
     localStorage.clear();
+  });
+
+  it('the player name is tidied, kept short and remembered', () => {
+    localStorage.clear();
+    assert.equal(cleanName('  Ata \n  Ur   Rehman '), 'Ata Ur Rehman');
+    assert.equal(cleanName('<b>Rex</b>'), 'bRex/b', 'no tags');
+    assert.equal(cleanName('Supercalifragilistic'), 'Supercalifragili');
+    assert.equal([...cleanName('🚀'.repeat(20))].length, 16, 'emoji count as one letter each');
+    const a = new Settings();
+    assert.equal(a.playerName, '');
+    a.setPlayerName('  Zippy ');
+    assert.equal(new Settings().playerName, 'Zippy');
+    localStorage.setItem('planetpop.settings', JSON.stringify({ playerName: '<script>x' }));
+    assert.equal(new Settings().playerName, 'scriptx', 'a hand-edited name is tidied on loading');
+    localStorage.clear();
+  });
+
+  it('the version matches package.json', () => {
+    assert.equal(VERSION, JSON.parse(readFileSync(new URL('../package.json', import.meta.url))).version);
   });
 });
 
@@ -180,6 +202,25 @@ describe('briefing, options and invert Y in Sky Courier', () => {
     const reloaded = new (p.constructor)();
     assert.equal(reloaded.coins, 0, 'the reset was not saved');
     game.options.hide();
+  });
+
+  it('your name: on the results card and in the daily share', async () => {
+    app.settings.setPlayerName('Ata');
+    game.start({ free: true });
+    game.finish({ title: 'Done', html: '' });
+    assert.equal(game.results.dom.who.textContent, '🧑‍✈️ Ata');
+    assert.ok(!game.results.dom.who.classList.contains('hidden'));
+    game.stop();
+    let copied = '';
+    Object.defineProperty(globalThis.navigator, 'clipboard', { value: { writeText: async (t) => { copied = t; } }, configurable: true });
+    globalThis.location ??= { origin: 'https://example.test', pathname: '/' };
+    await DailyRun.prototype.share.call({ app, date: '2026-10-16', score: 42, deliveries: 3 });
+    assert.match(copied, /Ata scored ⭐ 42 with 3 deliveries/);
+    app.settings.setPlayerName('');
+    game.start({ free: true });
+    game.finish({ title: 'Done', html: '' });
+    assert.ok(game.results.dom.who.classList.contains('hidden'), 'no name, no name tag');
+    game.stop();
   });
 
   it('the plane steers the right way with invert on (only climbing flips)', () => {

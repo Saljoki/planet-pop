@@ -1,8 +1,10 @@
 import { Overlay } from '../../ui/Overlay.js';
+import { VERSION } from '../../core/Version.js';
 
 /**
- * ⚙️ Options, from the briefing, the hangar or the pause menu: Invert Y and steering sensitivity, tilt steering and
- * vibration on phones, sound and ambience volume, whether to show the briefing, and resetting Sky Courier progress.
+ * ⚙️ Options, from the briefing, the hangar or the pause menu: the player's name, Invert Y and steering sensitivity,
+ * tilt steering and vibration on phones, sound and ambience volume, whether to show the briefing and the mini-map,
+ * and resetting Sky Courier progress.
  * Every change applies straight away and is remembered.
  */
 export class OptionsMenu extends Overlay {
@@ -11,6 +13,9 @@ export class OptionsMenu extends Overlay {
     super({ id: 'options', html: `
       <button class="close" id="oClose" title="Close">✕</button>
       <h2>⚙️ Options</h2>
+      <h3>You</h3>
+      <label class="opt name"><span>Your name<small>For your results, the hangar and the daily share</small></span>
+        <input id="oName" type="text" maxlength="16" placeholder="Type your name" autocomplete="nickname" enterkeyhint="done"></label>
       <h3>Controls</h3>
       <label class="opt"><input id="oInvert" type="checkbox"><span>Invert Y axis<small id="oInvertNote"></small></span></label>
       <label class="opt slider"><span>Steering sensitivity <b id="oSensVal"></b></span><input id="oSens" type="range" min="50" max="150" step="10"></label>
@@ -22,9 +27,11 @@ export class OptionsMenu extends Overlay {
       <label class="opt slider"><span>Ambience <b id="oAmbVal"></b></span><input id="oAmb" type="range" min="0" max="100" step="5"></label>
       <h3>Game</h3>
       <label class="opt"><input id="oBrief" type="checkbox"><span>Show the briefing before each run</span></label>
+      <label class="opt"><input id="oMap" type="checkbox"><span>Mini-map<small>The little map of where you are and where to go (🗺️ or M shows and hides it)</small></span></label>
       <button id="oReset" class="danger">🗑️ Reset Sky Courier progress</button>
       <small class="note" id="oResetNote">Coins, upgrades, paint jobs, missions and best scores. Trophies stay.</small>
-      <button id="oDone" class="big">✔ Done</button>` });
+      <button id="oDone" class="big">✔ Done</button>
+      <button id="oAbout" class="about">ℹ️ About Planet Pop · v${VERSION}</button>` });
     this.app = app;
     this.game = game;
     const $ = (id) => this.$(id), pct = (v) => `${Math.round(v)}%`;
@@ -35,6 +42,10 @@ export class OptionsMenu extends Overlay {
     this.bind('oAmb', 'input', (e) => { app.ambience?.setVolume(+e.target.value / 100); $('oAmbVal').textContent = pct(+e.target.value); app.hud.panel.syncAmbience(); });
     this.bind('oSound', 'change', (e) => { s.set('sound', e.target.checked); app.hud.panel.syncSound(); });
     this.bind('oBrief', 'change', (e) => s.set('briefing', e.target.checked));
+    this.bind('oMap', 'change', (e) => s.set('minimap', e.target.checked));
+    const name = (this.nameInput = $('oName'));
+    name.addEventListener('change', () => { s.setPlayerName(name.value); name.value = s.playerName; });
+    name.addEventListener('keydown', (e) => { if (e.key === 'Enter') name.blur(); });
     this.bind('oBuzz', 'change', (e) => haptics?.setEnabled(e.target.checked));
     this.bind('oTilt', 'change', async (e) => {
       if (!e.target.checked) tilt.disable();
@@ -44,6 +55,7 @@ export class OptionsMenu extends Overlay {
     this.bind('oReset', 'click', () => this.reset());
     this.bind('oDone', 'click', () => this.hide());
     this.bind('oClose', 'click', () => this.hide());
+    this.bind('oAbout', 'click', () => app.hud.about.show());
     s.onChange(() => this.renderInvert());
   }
 
@@ -59,6 +71,7 @@ export class OptionsMenu extends Overlay {
 
   hide() {
     if (!this.open) return;
+    this.app.settings.setPlayerName(this.nameInput.value); // (in case it's closed while typing)
     super.hide();
     const done = this.onClose;
     this.onClose = null;
@@ -76,6 +89,8 @@ export class OptionsMenu extends Overlay {
     $('oAmbVal').textContent = `${$('oAmb').value}%`;
     $('oSound').checked = app.sfx.enabled;
     $('oBrief').checked = s.get('briefing');
+    $('oMap').checked = s.get('minimap');
+    this.nameInput.value = s.playerName;
     $('oTilt').checked = this.game.controls.tilt.wanted;
     $('oBuzz').checked = !!app.haptics?.enabled;
     $('oReset').textContent = '🗑️ Reset Sky Courier progress';
