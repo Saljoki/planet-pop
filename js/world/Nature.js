@@ -5,14 +5,11 @@ import { toon } from '../render/Toon.js';
 import { addInstanced, shareMatrices } from '../render/Outline.js';
 import { ROAD_W } from './Roads.js';
 import { CITY_A } from './Cities.js';
+import { TREE_SHAPES } from './TreeShapes.js';
 
-const ROCK = ['#9d86d6', '#8a79c9', '#b39ae0'];
-const PINE = ['#2f9e5a', '#23874d', '#3bb36a'];
-const LEAFY = ['#55c95a', '#7fd65b', '#3daa4a'];
-const AUTUMN = ['#ffb347', '#ff7a6b', '#ffd23f'];
 const _m = new THREE.Matrix4(), _r = new THREE.Matrix4(), _p = new THREE.Vector3(), _c = new THREE.Color();
 
-/** Mountain ranges with snow caps, forests and wind farms. */
+/** Mountain ranges with caps, forests (or cacti, crystals, lollipops… depending on the theme) and wind farms. */
 export class Nature {
   constructor(planet) {
     this.planet = planet;
@@ -78,45 +75,42 @@ export class Nature {
   }
 
   buildMountains() {
-    const p = this.planet, rng = p.rng, n = this.mountains.length;
+    const p = this.planet, rng = p.rng, n = this.mountains.length, look = p.theme.mountains;
     const body = addInstanced(p.root, new THREE.ConeGeometry(1, 1, 7, 1).translate(0, 0.5, 0), toon('#ffffff', { flatShading: true }), n, 0.04);
-    const cap = addInstanced(p.root, new THREE.ConeGeometry(0.41, 0.39, 7, 1).translate(0, 0.815, 0), toon('#ffffff', { flatShading: true }), n, 0.03);
+    const cap = addInstanced(p.root, new THREE.ConeGeometry(0.41, 0.39, 7, 1).translate(0, 0.815, 0), toon(look.cap, { flatShading: true }), n, 0.03);
     shareMatrices(body, cap);
     this.mountains.forEach((m, i) => {
       body.setMatrixAt(i, frame(_m, _p.copy(m.d).multiplyScalar(m.base), m.d, rng.dir(), m.s, m.hgt, m.s));
-      body.setColorAt(i, _c.set(rng.pick(ROCK)));
+      body.setColorAt(i, _c.set(rng.pick(look.colors)));
     });
   }
 
   buildTrees() {
-    const p = this.planet, rng = p.rng, root = p.root, pines = [], rounds = [];
-    const cosCity = Math.cos(CITY_A * 1.15);
-    for (let tries = 0; pines.length + rounds.length < 900 && tries < 30000; tries++) {
+    const p = this.planet, rng = p.rng, root = p.root, look = p.theme.trees, groups = [[], []];
+    const cosCity = Math.cos(CITY_A * 1.15), want = Math.round(900 * look.density);
+    for (let tries = 0; groups[0].length + groups[1].length < want && tries < 30000 * look.density; tries++) {
       const d = rng.dir(), h = p.heightAt(d);
       if (h < 0.08 || h > 1.05) continue;
       if (p.hf.perlin(d.x * 4 + 9, d.y * 4 + 2, d.z * 4 + 5) < -0.05 && !rng.chance(0.12)) continue; // forest patches
       if (p.roads.near(d, (ROAD_W / 2 + 0.06) / R) || p.railway.near(d, 0.012) || p.isReserved(d)) continue;
       if (p.cities.sites.some((o) => o.c.dot(d) > cosCity)) continue;
       if (this.mountains.some((m) => m.d.angleTo(d) < (m.s * 0.95) / R)) continue;
-      (h > 0.5 || rng.chance(0.3) ? pines : rounds).push({ d, s: rng.range(0.8, 1.35) });
+      groups[look.useA(h, rng.next()) ? 0 : 1].push({ d, s: rng.range(0.8, 1.35) });
     }
-    const trunkGeo = new THREE.CylinderGeometry(0.022, 0.032, 0.2, 6).translate(0, 0.1, 0);
-    const pineGeo = mergeGeometries([
-      new THREE.ConeGeometry(0.13, 0.26, 7).translate(0, 0.27, 0),
-      new THREE.ConeGeometry(0.095, 0.2, 7).translate(0, 0.42, 0),
-    ]);
-    const roundGeo = new THREE.IcosahedronGeometry(0.135, 1).translate(0, 0.3, 0);
-    const trunks = addInstanced(root, trunkGeo, toon('#8a5a3c'), pines.length + rounds.length, 0.005);
-    const pineMesh = addInstanced(root, pineGeo, toon('#ffffff', { flatShading: true }), pines.length, 0.01);
-    const roundMesh = addInstanced(root, roundGeo, toon('#ffffff', { flatShading: true }), rounds.length, 0.01);
-    const plant = (t, mesh, i, j, cols) => {
-      frame(_m, _p.copy(t.d).multiplyScalar(p.surfR(t.d) - 0.05), t.d, rng.dir(), t.s, t.s * rng.range(0.9, 1.2), t.s);
-      trunks.setMatrixAt(j, _m);
-      mesh.setMatrixAt(i, _m);
-      mesh.setColorAt(i, _c.set(rng.pick(cols)));
-    };
-    pines.forEach((t, i) => plant(t, pineMesh, i, i, PINE));
-    rounds.forEach((t, i) => plant(t, roundMesh, i, pines.length + i, rng.chance(0.1) ? AUTUMN : LEAFY));
+    const kinds = [look.a, look.b], shapes = kinds.map((k) => TREE_SHAPES[k.shape]);
+    const trunked = groups.reduce((n, g, k) => n + (shapes[k].trunk ? g.length : 0), 0);
+    const trunks = addInstanced(root, new THREE.CylinderGeometry(0.022, 0.032, 0.2, 6).translate(0, 0.1, 0), toon(look.trunk), trunked, 0.005);
+    let t = 0;
+    groups.forEach((list, k) => {
+      const mesh = addInstanced(root, shapes[k].geo(), toon('#ffffff', { flatShading: true }), list.length, 0.01);
+      list.forEach((tree, i) => {
+        frame(_m, _p.copy(tree.d).multiplyScalar(p.surfR(tree.d) - 0.05), tree.d, rng.dir(), tree.s, tree.s * rng.range(0.9, 1.2), tree.s);
+        if (shapes[k].trunk) trunks.setMatrixAt(t++, _m);
+        mesh.setMatrixAt(i, _m);
+        const cols = kinds[k].odd && rng.chance(0.1) ? kinds[k].odd : kinds[k].colors; // the odd autumn tree
+        mesh.setColorAt(i, _c.set(rng.pick(cols)));
+      });
+    });
   }
 
   buildTurbines() {

@@ -33,7 +33,7 @@ export class Terrain {
   async build() {
     const p = this.planet, ico = new THREE.IcosahedronGeometry(1, DETAIL);
     const out = await compute({
-      seed: p.params.seed, sea: p.sea, flats: p.hf.flats, radius: R,
+      seed: p.params.seed, sea: p.sea, flats: p.hf.flats, pal: p.theme.pal, radius: R,
       unit: ico.attributes.position.array,
       cities: p.cities.sites.map((s) => [s.c.x, s.c.y, s.c.z]),
       cityCos: p.cities.cosR,
@@ -62,22 +62,25 @@ export class Terrain {
     tex.wrapS = THREE.RepeatWrapping;
     tex.minFilter = tex.magFilter = THREE.LinearFilter;
     tex.needsUpdate = true;
-    const mat = toon('#3ea2f2', {}, (sh) => {
+    const sea = this.planet.theme.sea;
+    const glow = sea.glow ? { emissive: sea.glow, emissiveIntensity: 0.55 } : {}; // a lava sea glows in the dark
+    const mat = toon(sea.color, glow, (sh) => {
       sh.uniforms.uHeight = { value: tex };
-      sh.uniforms.uShallow = { value: new THREE.Color('#7fe3ff') };
+      sh.uniforms.uShallow = { value: new THREE.Color(sea.shallow) };
+      sh.uniforms.uFoam = { value: new THREE.Color(sea.foam || '#ffffff') };
       sh.vertexShader = 'uniform float uTime;\n' + WPOS_DECL + sh.vertexShader
         .replace('#include <begin_vertex>', `#include <begin_vertex>
           float swell = sin(dot(position, vec3(1.7, 1.1, 1.3)) + uTime * 1.3) + sin(dot(position, vec3(-1.2, 1.9, 0.7)) * 1.6 - uTime);
           transformed += normal * swell * 0.017;`)
         .replace('#include <project_vertex>', WPOS_VERT);
-      sh.fragmentShader = 'uniform sampler2D uHeight;\nuniform vec3 uShallow;\nuniform float uTime;\n' + WPOS_DECL + sh.fragmentShader
+      sh.fragmentShader = 'uniform sampler2D uHeight;\nuniform vec3 uShallow;\nuniform vec3 uFoam;\nuniform float uTime;\n' + WPOS_DECL + sh.fragmentShader
         .replace('#include <color_fragment>', `#include <color_fragment>
           vec3 od = normalize(vWPos);
           vec2 huv = vec2(atan(od.z, od.x) / 6.2831853 + 0.5, asin(clamp(od.y, -1.0, 1.0)) / 3.1415927 + 0.5);
           float hgt = texture2D(uHeight, huv).r * 1.5 - 1.0;
           diffuseColor.rgb = mix(diffuseColor.rgb, uShallow, smoothstep(-0.5, -0.04, hgt) * 0.75);
           float foam = step(0.8, sin(hgt * 38.0 - uTime * 2.2)) * smoothstep(-0.32, -0.12, hgt);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), max(foam, step(-0.05, hgt)));`);
+          diffuseColor.rgb = mix(diffuseColor.rgb, uFoam, max(foam, step(-0.05, hgt)));`);
     }, 'ocean');
     mat.userData.tex = tex;
     addMesh(this.planet.root, new THREE.SphereGeometry(R, 160, 110), mat, 0.06, { cast: false });

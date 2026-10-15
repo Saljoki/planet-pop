@@ -14,6 +14,7 @@ canvas { display: block; touch-action: none; }
 .badge, .panel { background: #fff; border: 3px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
 .badge { position: fixed; z-index: 5; padding: 6px 14px 3px; }
 #title { top: 14px; left: 16px; background: var(--yellow); font-size: 30px; transform: rotate(-2deg); pointer-events: none; }
+#worldTag { top: 66px; left: 26px; font-size: 16px; background: var(--blue); transform: rotate(-2deg); pointer-events: none; padding: 3px 10px 1px; }
 #hint { bottom: 14px; left: 50%; transform: translateX(-50%); border-radius: 14px; font-size: 16px; pointer-events: none;
   width: max-content; max-width: calc(100vw - 32px); text-align: center; }
 
@@ -31,6 +32,8 @@ button.big { background: var(--pink); color: #fff; font-size: 22px; text-shadow:
 #panel label b { font-weight: normal; color: var(--pink); }
 #panel label.check { flex-direction: row; align-items: center; gap: 8px; }
 #panel .checks { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+#panel .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#panel .pair select { width: 100%; min-width: 0; }
 input[type=range] { width: 100%; accent-color: var(--pink); }
 #panel select { font: inherit; font-size: 15px; letter-spacing: 1px; color: var(--ink); background: #fff;
   border: 3px solid var(--ink); padding: 2px 6px 0; margin-top: 3px; cursor: pointer; }
@@ -51,7 +54,7 @@ input[type=checkbox] { accent-color: var(--pink); width: 18px; height: 18px; }
   border: 3px solid var(--ink); border-radius: 50% / 42%; box-shadow: 3px 3px 0 var(--ink); text-shadow: 2px 2px 0 var(--ink);
   animation: pop 1.3s ease-out forwards; }
 
-#debug { position: fixed; left: 16px; top: 72px; z-index: 7; pointer-events: none; white-space: pre; padding: 6px 8px;
+#debug { position: fixed; left: 16px; top: 104px; z-index: 7; pointer-events: none; white-space: pre; padding: 6px 8px;
   font: 12px/1.4 ui-monospace, Consolas, monospace; letter-spacing: 0; color: #fff; background: rgba(12, 8, 36, 0.75); border-radius: 6px; }
 #flash { position: fixed; inset: 0; z-index: 2; background: #fff; opacity: 0; pointer-events: none; transition: opacity 0.35s; }
 .overlay { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgba(12, 8, 36, 0.5); }

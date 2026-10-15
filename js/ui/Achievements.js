@@ -22,9 +22,10 @@ const DEFS = [
   ['volcano', '🌋', 'Eruption!', 'Watch the volcano erupt up close'],
   ['ufo', '🛸', 'Close Encounter', 'Click the UFO before it flies away'],
   ['daily', '📅', 'Daily Flyer', 'Finish a daily challenge'],
+  ['globetrotter', '🧳', 'Globetrotter', 'Visit all five kinds of world'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
-const KEY = 'planetpop.trophies';
+const KEY = 'planetpop.trophies', WORLDS_KEY = 'planetpop.worlds', WORLD_KINDS = 5;
 
 export class Achievements {
   constructor(hud) {
@@ -45,6 +46,15 @@ export class Achievements {
     this.hud.app.sfx?.play('trophy');
     this.hud.updateTrophies(this.done.size, DEFS.length);
     if (this.done.size === DEFS.length - 1) this.unlock('completionist');
+  }
+
+  /** Remembers which kinds of world (themes) have been seen, across visits. */
+  visitTheme(id) {
+    let seen = [];
+    try { seen = JSON.parse(localStorage.getItem(WORLDS_KEY) || '[]'); } catch { /* storage unavailable */ }
+    if (!seen.includes(id)) seen.push(id);
+    try { localStorage.setItem(WORLDS_KEY, JSON.stringify(seen)); } catch { /* storage unavailable */ }
+    if (seen.length >= WORLD_KINDS) this.unlock('globetrotter');
   }
 
   visitCity(name) {

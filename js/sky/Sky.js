@@ -26,8 +26,16 @@ export class Sky {
     this.sun = new THREE.Sprite(new THREE.SpriteMaterial({ map: sunTexture(), depthWrite: false }));
     this.sun.scale.setScalar(80);
     this.sun.layers.set(LAYER_FX);
-    scene.add(this.sun, makeHalo(), ...makeStars());
+    this.halo = makeHalo();
+    scene.add(this.sun, this.halo, ...makeStars());
     this.update(0);
+  }
+
+  /** The atmosphere's glow takes the planet theme's colours. */
+  setTheme(theme) {
+    const u = this.halo.material.uniforms;
+    u.uDay.value.set(theme.halo.day);
+    u.uNight.value.set(theme.halo.night);
   }
 
   update(dt) {

@@ -10,6 +10,7 @@ import { Nature } from './Nature.js';
 import { Airports } from './Airports.js';
 import { Harbours } from './Harbours.js';
 import { Volcano } from './Volcano.js';
+import { themeOf } from './Themes.js';
 import { Traffic } from '../life/Traffic.js';
 import { Boats } from '../life/Boats.js';
 import { Balloons } from '../life/Balloons.js';
@@ -29,6 +30,7 @@ export class Planet {
   constructor(app, params) {
     this.app = app;
     this.params = { ...params };
+    this.theme = themeOf(params.theme);
     this.rng = new Random(params.seed);
     this.sea = Heightfield.seaLevelFor(params.seed, params.land);
     this.hf = new Heightfield(params.seed, this.sea);
@@ -75,9 +77,10 @@ export class Planet {
     this.roads.build();
     this.railway.build();
     await yieldFrame();
-    this.volcano = new Volcano(this);
+    this.volcanoes = Array.from({ length: this.theme.volcanoes }, (_, i) => new Volcano(this, i)).filter((v) => v.cone);
+    this.volcano = this.volcanoes[0] || new Volcano(this, 0); // (an empty one if no site was found)
     this.nature = new Nature(this);
-    if (this.volcano.cone) this.nature.mountains.push(this.volcano.cone); // solid for planes, bombs and the camera
+    for (const v of this.volcanoes) this.nature.mountains.push(v.cone); // solid for planes, bombs and the camera
     this.cities.build();
     await yieldFrame();
     this.traffic = new Traffic(this);
@@ -94,7 +97,7 @@ export class Planet {
     this.boats = new Boats(this);
     this.planes = new Planes(this);
     this.people = new People(this);
-    this.modules = [this.roads, this.cities, this.nature, this.railway, this.airports, this.harbours, this.volcano, this.traffic,
+    this.modules = [this.roads, this.cities, this.nature, this.railway, this.airports, this.harbours, ...this.volcanoes, this.traffic,
       this.boats, this.balloons, this.planes, this.birds, this.people, this.space, this.weather, this.aurora, this.ufo];
     this.update(0, this.app.simTime);
     this.app.scene.add(this.root);

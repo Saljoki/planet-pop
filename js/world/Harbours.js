@@ -16,6 +16,7 @@ export class Harbours {
     this.planet = planet;
     this.list = [];
     this.entities = [];
+    if (!planet.theme.sea.boats) return; // nobody builds piers into a lava sea
     for (const city of planet.cities.sites) {
       if (this.list.length >= MAX) break;
       const h = this.find(city);

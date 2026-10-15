@@ -8,18 +8,16 @@ const linear = (hex) => {
     return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
   });
 };
-const PAL = {
-  seabed: linear('#2c6fbf'), sand: linear('#ffe08a'), g1: linear('#a6e35d'), g2: linear('#66c94e'),
-  g3: linear('#3f9f4d'), rock: linear('#a28fd0'), snow: linear('#ffffff'), city: linear('#d9d2ea'),
-};
+const CLASSIC = { seabed: '#2c6fbf', sand: '#ffe08a', g1: '#a6e35d', g2: '#66c94e', g3: '#3f9f4d', rock: '#a28fd0', snow: '#ffffff', city: '#d9d2ea' };
 
 /**
  * unit: icosphere positions (non-indexed triangle soup on the unit sphere).
  * Returns the displaced flat-shaded mesh, a vertex-merged hull with smooth normals for the ink outline,
  * and an equirectangular height map the ocean shader uses for shallows and foam.
  */
-export function computeTerrain({ seed, sea, flats = [], radius, unit, cities, cityCos, mapW = 512, mapH = 256 }) {
+export function computeTerrain({ seed, sea, flats = [], pal = CLASSIC, radius, unit, cities, cityCos, mapW = 512, mapH = 256 }) {
   const hf = new Heightfield(seed, sea, flats);
+  const PAL = Object.fromEntries(Object.entries({ ...CLASSIC, ...pal }).map(([k, hex]) => [k, linear(hex)]));
   const n = unit.length / 3;
 
   // 1. merge duplicates (shared edges of the subdivided icosahedron)

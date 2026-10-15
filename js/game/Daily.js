@@ -1,3 +1,5 @@
+import { pickTheme } from '../world/Themes.js';
+
 /** The daily challenge: the same planet and parcel route for everyone, changing at midnight UTC. */
 
 export const todayKey = () => new Date().toISOString().slice(0, 10);
@@ -9,4 +11,4 @@ export function dailySeed(key = todayKey()) {
   return (h >>> 0) % 1e9;
 }
 
-export const dailyParams = (key = todayKey()) => ({ seed: dailySeed(key), land: 0.45, cities: 6 });
+export const dailyParams = (key = todayKey()) => ({ seed: dailySeed(key), land: 0.45, cities: 6, theme: pickTheme(dailySeed(key)) });

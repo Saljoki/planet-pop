@@ -22,7 +22,8 @@ export class Boats {
     this.boats = (planet.harbours?.list || []).map((h) => ({
       ...h.loop, harbour: h, phi: rng.range(0.6, TAU - 0.6), w: rng.range(0.3, 0.4), wait: 0, wakeT: 0, smokeT: 0,
     }));
-    for (let tries = 0; this.boats.length < BOATS && tries < 5000; tries++) {
+    const fleet = planet.theme.sea.boats ? BOATS : 0;
+    for (let tries = 0; this.boats.length < fleet && tries < 5000; tries++) {
       const c = rng.dir();
       if (planet.heightAt(c) > -0.25 || this.boats.some((b) => b.c.angleTo(c) < 0.35)) continue;
       const [u, v] = tangentBasis(c), A = rng.range(0.05, 0.08);

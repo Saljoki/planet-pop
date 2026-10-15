@@ -92,6 +92,7 @@ for (const params of PLANETS) {
       const rig = app.rig, firstOfKind = {};
       for (const e of planet.entities) firstOfKind[e.kind] ??= e;
       for (const e of Object.values(firstOfKind)) {
+        if (e.kind === 'ufo') { planet.ufo.arrive(); planet.ufo.update(3.01, app.simTime); } // hovering, so it won't fly off mid-test
         rig.focus(e);
         run(app, 2.5, { dt: 1 / 60, camera: true });
         assert.equal(rig.mode, 'local', `focus on ${e.kind}`);

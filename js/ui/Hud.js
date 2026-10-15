@@ -1,3 +1,5 @@
+import { THEMES, THEME_IDS } from '../world/Themes.js';
+
 const SPEEDS = [0.5, 1, 2, 4, 8];
 
 /** All DOM UI: control panel, follow badge, hover labels, toasts, flash, loading and trophy overlays. */
@@ -11,6 +13,7 @@ export class Hud {
     document.getElementById('ui').innerHTML = `
       <div id="title" class="badge">Planet Pop!</div>
       <div id="hint" class="badge">${hint}</div>
+      <div id="worldTag" class="badge"></div>
       <button id="panelToggle">☰ Controls</button>
       <div id="panel" class="panel">
         <div class="row"><button id="pauseBtn">⏸ Pause</button><button id="newBtn">🌍 New planet</button></div>
@@ -19,10 +22,15 @@ export class Hud {
         <label>Land <b id="landVal"></b><input id="land" type="range" min="25" max="70" step="5" value="${Math.round(p.land * 100)}"></label>
         <label>Cities <b id="citiesVal"></b><input id="cities" type="range" min="2" max="8" step="1" value="${p.cities}"></label>
         <label>Traffic <b id="trafficVal"></b><input id="traffic" type="range" min="0" max="10" step="1" value="${p.traffic}"></label>
-        <label>Quality <b id="qualityVal"></b><select id="quality">
-          <option value="auto">Auto</option><option value="crisp">Crisp</option>
-          <option value="balanced">Balanced</option><option value="fast">Fast</option>
-        </select></label>
+        <div class="pair">
+          <label>World<select id="world">
+            <option value="random">🎲 Any</option>${THEME_IDS.map((t) => `<option value="${t}">${THEMES[t].icon} ${THEMES[t].name.replace(' world', '')}</option>`).join('')}
+          </select></label>
+          <label>Quality<select id="quality">
+            <option value="auto">Auto</option><option value="crisp">Crisp</option>
+            <option value="balanced">Balanced</option><option value="fast">Fast</option>
+          </select></label>
+        </div>
         <div class="checks">
           <label class="check"><input id="ink" type="checkbox" checked> Ink lines</label>
           <label class="check"><input id="shadows" type="checkbox" checked> Shadows</label>
@@ -51,6 +59,7 @@ export class Hud {
     this.slider('cities', (v) => `${v}`, (v) => app.setWorldParam('cities', v));
     this.slider('traffic', (v) => `${v} / lane`, (v) => app.setTraffic(v), true);
     $('quality').onchange = (e) => app.setQuality(e.target.value);
+    $('world').onchange = (e) => app.setWorld(e.target.value);
     $('ink').onchange = (e) => app.setInk(e.target.checked);
     $('shadows').onchange = (e) => app.setShadows(e.target.checked);
     $('sound').onchange = (e) => (app.sfx.enabled = e.target.checked);
@@ -85,6 +94,9 @@ export class Hud {
     }
   }
 
+  /** Names the current planet's theme in a tag under the title. */
+  setTheme(theme) { this.$('worldTag').textContent = `${theme.icon} ${theme.name}`; }
+
   setLoading(on) { this.$('loading').classList.toggle('hidden', !on); }
   setPaused(p) { this.$('pauseBtn').textContent = p ? '▶ Play' : '⏸ Pause'; }
   setInk(on) { this.$('ink').checked = on; }
@@ -92,7 +104,7 @@ export class Hud {
   /** Shows the chosen mode; in Auto it also names the level currently in use. */
   setQuality(mode, levelName) {
     this.$('quality').value = mode;
-    this.$('qualityVal').textContent = mode === 'auto' ? `(${levelName})` : '';
+    this.$('quality').options[0].textContent = mode === 'auto' && levelName ? `Auto (${levelName})` : 'Auto';
   }
 
   setFollow(e) {
@@ -105,6 +117,7 @@ export class Hud {
     this.panel.classList.toggle('hidden', on || !this.panelOpen);
     this.$('panelToggle').classList.toggle('hidden', on);
     this.$('hint').classList.toggle('hidden', on);
+    this.$('worldTag').classList.toggle('hidden', on);
     document.body.classList.toggle('in-game', on); // lets phones drop the title to make room for the game HUD
     this.hideLabel();
   }

@@ -9,7 +9,6 @@ export const CITY_A = 0.14; // angular radius of a city
 export const GRID = 0.3; // building plot spacing
 const NAMES = ['Pop City', 'Zapville', 'Boomtown', 'Kablam Bay', 'Whamford', 'Bonkton', 'Fizzburg', 'Splatport',
   'Zing Harbor', 'Kapow Falls', 'Biffington', 'Swooshire', 'Blammo Springs', 'Crunchfield', 'Plinkton', 'Thwackmore'];
-const BUILD_COLS = ['#ff9fb1', '#ffd57a', '#9fd8ff', '#d4b8ff', '#ffbe8f', '#a8f0cf', '#f4f1ff', '#b8c8ff'];
 const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _d = new THREE.Vector3(), _c = new THREE.Color();
 
 /** Windows sized per building, randomly lit at night. */
@@ -109,7 +108,7 @@ export class Cities {
       [wall, wall, roof, roof, wall, wall], data.length, 0.012));
     data.forEach((b, i) => {
       mesh.setMatrixAt(i, frame(_m, _p.copy(b.d).multiplyScalar(p.surfR(b.d) - 0.07), b.d, b.u, b.w, b.h + 0.07, b.dp));
-      mesh.setColorAt(i, _c.set(rng.pick(BUILD_COLS)));
+      mesh.setColorAt(i, _c.set(rng.pick(p.theme.buildings)));
     });
 
     // warm light-pollution glow seen from orbit at night

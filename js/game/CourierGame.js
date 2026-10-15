@@ -45,11 +45,11 @@ export class CourierGame {
     const app = this.app, want = dailyParams(), p = app.params;
     if (this.active) return;
     if (app.building) { app.hud.toast('🌍 The planet is still being built. Try again in a moment.'); return; }
-    if (!app.planet || p.seed !== want.seed || p.land !== want.land || p.cities !== want.cities) {
+    if (!app.planet || p.seed !== want.seed || p.land !== want.land || p.cities !== want.cities || p.theme !== want.theme) {
       Object.assign(app.params, want);
       app.hud.syncParams?.(app.params);
       app.hud.toast("📅 Building today's planet…");
-      await app.newPlanet(want.seed);
+      await app.newPlanet(want.seed, false, want.theme);
     }
     this.start({ daily: true });
   }
@@ -366,7 +366,7 @@ export class CourierGame {
 
   /** An erupting volcano's ash plume chokes the engine and empties the boost tank. */
   updateAsh(dt) {
-    const pl = this.player, app = this.app, ash = this.planet.volcano?.ashAt(pl.pos) ?? 0;
+    const pl = this.player, app = this.app, ash = Math.max(0, ...(this.planet.volcanoes || []).map((v) => v.ashAt(pl.pos)));
     pl.engine = ash > 0 ? ASH_ENGINE : 1;
     if (!ash) return;
     pl.boost = Math.max(0, pl.boost - dt);

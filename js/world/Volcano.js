@@ -13,11 +13,11 @@ const _p = new THREE.Vector3(), _v = new THREE.Vector3(), _w = new THREE.Vector3
 
 /** A volcano that smokes all day and erupts every minute or so, throwing glowing lava bombs. */
 export class Volcano {
-  constructor(planet) {
+  constructor(planet, index = 0) {
     this.planet = planet;
     this.entities = [];
     this.state = 'calm';
-    this.timer = 30 + Math.random() * 20;
+    this.timer = 30 + index * 17 + Math.random() * 20; // several volcanoes take turns
     const d = this.find();
     if (!d) return;
     this.d = d;
@@ -25,7 +25,7 @@ export class Volcano {
     this.base = planet.surfR(d) - 0.3;
     this.hgt = Math.min(H, R + 2.3 - this.base);
     this.top = d.clone().multiplyScalar(this.base + this.hgt - 0.12);
-    this.name = planet.rng.pick(NAMES);
+    this.name = NAMES[(index + planet.rng.int(0, NAMES.length - 1)) % NAMES.length];
     planet.reserve(d, (S + 0.2) / R);
     this.cone = { d, s: S, base: this.base, hgt: this.hgt, volcano: true }; // for collision (Planet.groundR)
     this.build();

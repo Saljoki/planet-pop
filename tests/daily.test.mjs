@@ -5,6 +5,7 @@ import { todayKey, dailySeed, dailyParams } from '../js/game/Daily.js';
 import { Progress, BASE_STATS } from '../js/game/Progress.js';
 import { rollCargo } from '../js/game/Cargo.js';
 import { mulberry32 } from '../js/core/Noise.js';
+import { pickTheme } from '../js/world/Themes.js';
 
 beforeEach(() => localStorage.clear());
 
@@ -14,7 +15,7 @@ test('the daily seed depends only on the date', () => {
   const seeds = new Set(Array.from({ length: 60 }, (_, i) => dailySeed(new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10))));
   assert.equal(seeds.size, 60, 'two days share a planet');
   for (const s of seeds) assert.ok(Number.isInteger(s) && s >= 0 && s < 1e9);
-  assert.deepEqual(dailyParams('2026-10-15'), { seed: dailySeed('2026-10-15'), land: 0.45, cities: 6 });
+  assert.deepEqual(dailyParams('2026-10-15'), { seed: dailySeed('2026-10-15'), land: 0.45, cities: 6, theme: pickTheme(dailySeed('2026-10-15')) });
 });
 
 test('a seeded cargo roll gives everyone the same parcels', () => {

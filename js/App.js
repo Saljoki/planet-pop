@@ -13,8 +13,9 @@ import { CourierGame } from './game/CourierGame.js';
 import { DebugStats } from './ui/DebugStats.js';
 import { Ambience } from './ui/Ambience.js';
 import { dailyParams } from './game/Daily.js';
+import { THEME_IDS, pickTheme } from './world/Themes.js';
 
-/** Planet settings from the address bar (?seed=…&land=…&cities=…), with defaults for anything missing. ?daily means today's planet. */
+/** Planet settings from the address bar (?seed=…&land=…&cities=…&theme=…), with defaults for anything missing. ?daily means today's planet. */
 function paramsFromUrl() {
   const q = new URLSearchParams(location.search);
   if (q.has('daily')) return dailyParams();
@@ -26,6 +27,7 @@ function paramsFromUrl() {
     seed: Math.floor(num('seed', 20261014, 0, 1e9)),
     land: num('land', 45, 25, 70) / 100,
     cities: Math.round(num('cities', 5, 2, 8)),
+    theme: THEME_IDS.includes(q.get('theme')) ? q.get('theme') : 'classic', // links from before themes existed stay classic
   };
 }
 
@@ -39,7 +41,8 @@ export class App {
     this.simTime = 0;
     this.planet = null;
     this.building = false;
-    this.pendingSeed = null;
+    this.pending = null;      // a planet requested while another one was still building
+    this.worldMode = 'random'; // 'random' gives each new planet a theme picked from its seed, or a fixed theme id
     this.userInk = true;     // panel checkboxes; the quality level can still turn the ink pass off
     this.userShadows = true;
 
@@ -82,10 +85,12 @@ export class App {
     this.postfx.setSize(Math.floor(w * pr), Math.floor(h * pr));
   }
 
-  async newPlanet(seed = Math.floor(Math.random() * 1e9), initial = false) {
-    if (this.building) { this.pendingSeed = seed; return; }
+  /** theme: a theme id, or leave it out to follow the World setting (the first planet keeps the address bar's). */
+  async newPlanet(seed = Math.floor(Math.random() * 1e9), initial = false, theme = null) {
+    if (this.building) { this.pending = { seed, theme }; return; }
     this.building = true;
     this.params.seed = seed;
+    if (!initial) this.params.theme = theme ?? (this.worldMode === 'random' ? pickTheme(seed) : this.worldMode);
     this.hud.setLoading(true);
     await new Promise((res) => setTimeout(res, 30)); // let the overlay paint first
     try {
@@ -96,7 +101,10 @@ export class App {
       this.rig.release(true);
       this.planet?.dispose();
       this.planet = planet;
+      this.sky.setTheme(planet.theme);
+      this.hud.setTheme(planet.theme);
       if (!initial) this.achievements.unlock('newworld');
+      this.achievements.visitTheme(planet.theme.id);
       this.updateUrl();
     } catch (err) {
       console.error(err);
@@ -110,10 +118,10 @@ export class App {
       this.hud.toast("📅 Today's daily challenge is ready. Press Daily challenge to fly it!");
       this.game.openHangar();
     }
-    if (this.pendingSeed !== null) {
-      const s = this.pendingSeed;
-      this.pendingSeed = null;
-      this.newPlanet(s);
+    if (this.pending) {
+      const { seed: s, theme: t } = this.pending;
+      this.pending = null;
+      this.newPlanet(s, false, t);
     }
   }
 
@@ -130,7 +138,7 @@ export class App {
   /** Keep the address bar pointing at the current planet, so the link can be shared. */
   updateUrl() {
     const p = this.params;
-    const q = new URLSearchParams({ seed: p.seed, land: Math.round(p.land * 100), cities: p.cities });
+    const q = new URLSearchParams({ seed: p.seed, land: Math.round(p.land * 100), cities: p.cities, theme: p.theme });
     try { history.replaceState(null, '', `${location.pathname}?${q}`); } catch { /* e.g. sandboxed iframe */ }
   }
 
@@ -175,7 +183,14 @@ export class App {
   setShadows(on) { this.userShadows = on; this.quality.apply(); }
   setQuality(mode) { this.quality.setMode(mode); }
   setTraffic(n) { this.params.traffic = n; this.planet?.traffic.rebuild(n); }
-  setWorldParam(key, value) { this.params[key] = value; this.newPlanet(this.params.seed); }
+  setWorldParam(key, value) { this.params[key] = value; this.newPlanet(this.params.seed, false, this.params.theme); }
+
+  /** 'random', or a theme id: rebuilds this planet in that theme straight away. */
+  setWorld(mode) {
+    this.worldMode = mode;
+    if (mode === 'random') this.hud.toast('🎲 Every new planet will be a surprise world.');
+    else if (mode !== this.params.theme) this.newPlanet(this.params.seed, false, mode);
+  }
 
   onFocus(e) {
     const a = this.achievements;
