@@ -7,6 +7,7 @@ import { Widget } from '../ui/Widget.js';
 import { FlightControls } from './input/FlightControls.js';
 import { runClass } from './runs/modes.js';
 import { CourierHud } from './screens/CourierHud.js';
+import { MiniMap } from './screens/MiniMap.js';
 import { ResultsScreen } from './screens/ResultsScreen.js';
 import { PauseMenu } from './screens/PauseMenu.js';
 import { Briefing } from './screens/Briefing.js';
@@ -20,8 +21,8 @@ const RESPAWN = 1.8; // seconds of smoke after a wreck before a fresh vehicle tu
 /**
  * Sky Courier: fly a little plane (or drive a car, or sail a boat) around the planet. This runs the show: it starts
  * and stops runs, moves the vehicle (vehicles/) each frame and hands what happens to the current run (runs/), which
- * decides the rules. Around it are the menus (screens/), the controls (input/), the beacon and rings (CourierProps)
- * and the weather and volcanoes (FlightHazards).
+ * decides the rules. Around it are the menus and HUD (screens/, the mini-map too), the controls (input/), the beacon
+ * and rings (CourierProps) and the weather and volcanoes (FlightHazards).
  */
 export class CourierGame {
   constructor(app) {
@@ -38,6 +39,7 @@ export class CourierGame {
     this.layer = new Widget({ id: 'game' });
     this.el = this.layer.el;
     this.hud = new CourierHud(this);
+    this.minimap = new MiniMap(this);
     this.results = new ResultsScreen(this);
     this.controls = new FlightControls(this);
     this.controls.bindBoost(this.hud.dom.boostBtn);
@@ -116,6 +118,7 @@ export class CourierGame {
     this.layer.show();
     this.results.hide();
     this.hud.setLayout(run.layout, this.player);
+    this.minimap.begin();
     this.controls.attach();
     app.wakeLock?.want('game', true);
     app.sfx.play('start');
@@ -137,6 +140,7 @@ export class CourierGame {
     this.run = null;
     this.props.dispose();
     this.props = null;
+    this.minimap.end();
     this.app.wakeLock?.want('game', false);
     this.layer.hide();
     this.results.hide();

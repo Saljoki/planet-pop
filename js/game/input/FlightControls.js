@@ -50,6 +50,7 @@ export class FlightControls {
   key(e, down) {
     const g = this.game;
     if (e.code === 'Escape' && down) { g.stop(); return; }
+    if (e.code === 'KeyM' && down && !e.repeat && e.target?.tagName !== 'INPUT') { g.minimap.toggleShown(); return; }
     const k = KEYMAP[e.code];
     if (!k || !g.player || g.over) return;
     e.preventDefault();

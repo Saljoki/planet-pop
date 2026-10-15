@@ -145,3 +145,39 @@ describe('driving', () => {
     game.stop();
   });
 });
+
+describe('mini-map', () => {
+  let app, planet, game;
+  before(async () => {
+    localStorage.clear();
+    ({ app, planet } = await makeWorld({ seed: 20261014, land: 0.45, cities: 5 }));
+    game = app.game;
+  });
+  after(() => { game.stop(); planet.dispose(); });
+
+  it('shows in every run, heading up, with the goal marked; 🗺️ hides it and that is remembered', () => {
+    game.start({ road: 'van' });
+    const map = game.minimap, pl = game.player, half = 80, scale = half / map.span, at = {};
+    assert.ok(map.open && map.globe, 'the map should show when a run starts');
+    map.orient();
+    const ahead = pl.up.clone().addScaledVector(pl.fwd, 0.05).normalize(), right = new THREE.Vector3().crossVectors(pl.fwd, pl.up);
+    map.place(ahead, half, scale, at);
+    assert.ok(at.y < half - 10 && Math.abs(at.x - half) < 1 && !at.far, 'straight ahead should be straight up the map');
+    map.place(pl.up.clone().addScaledVector(right, 0.05).normalize(), half, scale, at);
+    assert.ok(at.x > half + 10 && Math.abs(at.y - half) < 1, 'to the right should be on the right');
+    map.place(pl.up.clone().negate().addScaledVector(pl.fwd, 0.2), half, scale, at);
+    assert.ok(at.far && Math.abs(Math.hypot(at.x - half, at.y - half) - (half - 8)) < 1e-6, 'far away things sit on the rim');
+    assert.ok(game.hud.hasGoal && game.hud.goal.distanceTo(game.run.stop.at) < 1e-6, 'the van’s drop-off is the goal');
+    map.drawMarks(160, map.span); // (all the marks, on a stand-in canvas)
+    map.toggleShown();
+    assert.ok(!map.open && app.settings.get('minimap') === false);
+    game.stop();
+    game.start({ free: true });
+    assert.ok(!game.minimap.open, 'hidden stays hidden in the next run');
+    game.minimap.toggleShown();
+    assert.ok(game.minimap.open && app.settings.get('minimap'));
+    assert.equal(game.minimap.span, 4.2, 'a plane sees further');
+    game.stop();
+    assert.ok(!game.minimap.open, 'gone with the run');
+  });
+});

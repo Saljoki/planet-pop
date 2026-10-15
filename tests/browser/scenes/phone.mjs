@@ -49,7 +49,7 @@ export default async function phone({ page, frames, until, scene, open, ufoHere,
     await frames(2);
   });
   await page.evaluate(() => app.game.briefing.hide());
-  await scene('mobile-drive', 'Driving on a phone: the speedometer sits above the BOOST button', async () => {
+  await scene('mobile-drive', 'Driving on a phone: the speedometer above the BOOST button, the mini-map above that', async () => {
     await page.evaluate(() => {
       const g = app.game;
       g.stop();

@@ -35,6 +35,8 @@
   #info { bottom: calc(16px + var(--sb)); }
   #hint { bottom: calc(10px + var(--sb)); }
   #gPauseBtn { top: calc(66px + var(--st)); }
+  #gMapBtn { top: calc(66px + var(--st)); right: calc(72px + var(--sr)); }
+  #gMap { left: auto; top: auto; right: calc(12px + var(--sr)); bottom: calc(186px + var(--sb)); width: 116px; height: 116px; border-width: 3px; }
 }
 /* phones on their side: little vertical room, so slimmer badges and the sheets come in from the right */
 @media (max-height: 500px) and (orientation: landscape) {
@@ -51,6 +53,7 @@
   #gStick { width: 50vw; height: 80vh; }
   #gBoostBtn { width: 84px; height: 84px; }
   #info { bottom: calc(10px + var(--sb)); }
+  #gMap { left: calc(12px + var(--sl)); right: auto; top: calc(10px + var(--st)); bottom: auto; width: 100px; height: 100px; border-width: 3px; }
 }
 @keyframes sheetup { from { transform: translateY(40%); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes sheetin { from { transform: translateX(40%); opacity: 0; } to { transform: none; opacity: 1; } }

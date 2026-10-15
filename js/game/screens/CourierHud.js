@@ -12,6 +12,8 @@ const KMH = 80; // world units per second → a cartoon km/h for the speedometer
 export class CourierHud {
   constructor(game) {
     this.game = game;
+    this.goal = new THREE.Vector3(); // where the arrow points this frame (if hasGoal), for the mini-map too
+    this.hasGoal = false;
     game.el.insertAdjacentHTML('beforeend', `
       <div id="gStats"><div class="badge hidden" id="gDaily">📅<span class="wide"> Daily</span></div><div class="badge hidden" id="gMission"></div><div class="badge hidden" id="gFree"></div><div class="badge" id="gScore"></div><div class="badge" id="gTime"></div><div class="badge" id="gCombo"></div><div class="badge" id="gCoins"></div></div>
       <button id="gPauseBtn" title="Pause (P)">⏸</button>
@@ -57,12 +59,15 @@ export class CourierHud {
     d.healthBox.classList.toggle('mid', pl.health < 0.6 && pl.health >= 0.3);
     d.healthBox.classList.toggle('low', pl.health < 0.3);
     if (this.showSpeed) d.speed.textContent = `${Math.round(Math.abs(pl.speed) * KMH)} km/h`;
+    this.hasGoal = false;
     g.run.hud(this);
   }
 
   /** Turn the arrow toward a point on the planet (a unit vector), as seen from the plane. */
   pointAt(c) {
     const pl = this.game.player;
+    this.goal.copy(c);
+    this.hasGoal = true;
     _t.copy(c).addScaledVector(pl.up, -c.dot(pl.up)); // direction to the target along the ground
     _s.crossVectors(pl.up, pl.fwd);                    // the plane's left
     this.dom.arrow.style.transform = `rotate(${-Math.atan2(_t.dot(_s), _t.dot(pl.fwd))}rad)`;

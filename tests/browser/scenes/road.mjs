@@ -1,5 +1,5 @@
 // On the road and at sea: the road trips menu, driving a car (on the highway, off-road, one taken from the traffic),
-// sailing a boat, the taxi, the van courier, the race round the world, damage and wrecks.
+// sailing a boat, the taxi, the van courier (and the mini-map zoomed out), the race round the world, damage and wrecks.
 // One of the screenshot run's scene files (see ../screenshots.mjs); the helpers are described in ../harness.mjs.
 
 export default async function road({ page, frames, until, scene }) {
@@ -104,6 +104,12 @@ export default async function road({ page, frames, until, scene }) {
     await until(() => app.rig.mode === 'game');
     await frames(8);
   });
+  await scene('road-map', 'The mini-map tapped to zoom out: towns, roads, the van and the pink drop-off pin', async () => {
+    await page.click('#gMap');
+    await until(() => app.game.minimap.far);
+    await frames(3);
+  });
+  await page.evaluate(() => { app.game.minimap.far = false; });
   await scene('road-race', 'Round the world: Rex alongside at the start, the first checkpoint arch ahead', async () => {
     await page.evaluate(() => {
       const g = app.game;

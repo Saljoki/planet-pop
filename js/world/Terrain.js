@@ -68,6 +68,7 @@ export class Terrain {
     tex.wrapS = THREE.RepeatWrapping;
     tex.minFilter = tex.magFilter = THREE.LinearFilter;
     tex.needsUpdate = true;
+    this.heightTex = tex; // (the mini-map draws the land and sea from it too)
     const sea = this.planet.theme.sea;
     const glow = sea.glow ? { emissive: sea.glow, emissiveIntensity: 0.55 } : {}; // a lava sea glows in the dark
     const mat = toon(sea.color, glow, (sh) => {

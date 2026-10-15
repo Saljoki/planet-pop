@@ -20,12 +20,20 @@ export class ForestFloor {
     this.view = { value: new THREE.Vector3() }; // where the camera is
     if (!land || !look.floor) return;
     const trees = planet.nature.treeGroups.flatMap((g) => g.list.map((t) => t.d));
-    this.weights = weigh(land.geometry.getAttribute('position'), densityMap(trees));
+    this.density = densityMap(trees);
+    this.weights = weigh(land.geometry.getAttribute('position'), this.density);
     land.geometry.setAttribute('forest', new THREE.BufferAttribute(this.weights, 1));
     tint(land.material, new THREE.Color(look.floor), this.view);
   }
 
   update() { this.view.value.copy(this.planet.app.camera.position); }
+
+  /** The forest as a longitude × latitude map (0..255 per half-degree cell), for the mini-map. */
+  map() {
+    const data = new Uint8Array(W * H);
+    if (this.density) for (let i = 0; i < data.length; i++) data[i] = Math.round(smoothstep(THIN, THICK, this.density[i]) * 255);
+    return { data, w: W, h: H };
+  }
 }
 
 /** Splat each tree into a longitude × latitude grid, with a soft round footprint. */
