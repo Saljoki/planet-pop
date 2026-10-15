@@ -86,6 +86,36 @@ export function addInstanced(parent, geo, mat, count, maxW = 0, opts = {}) {
   return mesh;
 }
 
+/** How close to the camera scenery that steps aside gets cut away (0 = never), and the same for its ink. */
+const CUT = { value: 0 }, CUT_INK = { value: 0.12 };
+
+/**
+ * Scenery that steps out of the camera's way (trees, buildings, bridge piers…): while driving low behind a car or a
+ * boat, anything of it closer to the camera than setCutaway() says simply isn't drawn, so the view is never stuck
+ * inside a tree. Works on toon materials (and the mesh's ink hull).
+ */
+export function cutaway(mesh) {
+  for (const mat of new Set([].concat(mesh.material))) {
+    const before = mat.onBeforeCompile, key = mat.customProgramCacheKey();
+    mat.onBeforeCompile = (sh, renderer) => {
+      before.call(mat, sh, renderer);
+      sh.uniforms.uCut = CUT;
+      sh.fragmentShader = 'uniform float uCut;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>',
+        '#include <clipping_planes_fragment>\n  if (length(vViewPosition) < uCut) discard;');
+    };
+    mat.customProgramCacheKey = () => `${key}:cut`;
+  }
+  const ink = mesh.userData.outline || mesh.children.find((o) => o.material?.uniforms?.near);
+  if (ink) ink.material.uniforms.near = CUT_INK;
+  return mesh;
+}
+
+/** Cut away scenery closer than `dist` to the camera (0 to stop). */
+export function setCutaway(dist) {
+  CUT.value = dist;
+  CUT_INK.value = Math.max(0.12, dist);
+}
+
 /** Make `others` (and their ink hulls) reuse src's instance matrices: one setMatrixAt drives them all. */
 export function shareMatrices(src, ...others) {
   for (const m of others) {

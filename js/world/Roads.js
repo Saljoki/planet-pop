@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, TAU, mod, frame, tangentBasis, canvasTexture, ribbonGeometry } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
-import { addMesh, addInstanced, shareMatrices } from '../render/Outline.js';
+import { addMesh, addInstanced, shareMatrices, cutaway } from '../render/Outline.js';
 import { nightGlowMaterial } from './Glow.js';
 
 export const ROAD_W = 0.22, ROAD_N = 900, LANE = 0.055;
@@ -128,7 +128,7 @@ export class Roads {
   buildPillars() {
     const list = [];
     for (const road of this.list) for (let i = 0; i < ROAD_N; i += 10) if (road.water[i]) list.push({ road, i });
-    const mesh = addInstanced(this.planet.root, new THREE.CylinderGeometry(0.04, 0.05, 1, 8).translate(0, 0.5, 0), toon('#f2eefc'), list.length, 0.008);
+    const mesh = cutaway(addInstanced(this.planet.root, new THREE.CylinderGeometry(0.04, 0.05, 1, 8).translate(0, 0.5, 0), toon('#f2eefc'), list.length, 0.008));
     list.forEach(({ road, i }, k) => {
       const base = R - 0.3;
       this.dir(road, (i / ROAD_N) * TAU, _d);

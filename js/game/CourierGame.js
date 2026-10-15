@@ -13,6 +13,7 @@ import { Briefing } from './screens/Briefing.js';
 import { OptionsMenu } from './screens/OptionsMenu.js';
 import { Hangar } from './screens/Hangar.js';
 import { MissionBoard } from './screens/MissionBoard.js';
+import { RoadBoard } from './screens/RoadBoard.js';
 
 const RESPAWN = 1.8; // seconds of smoke after a wreck before a fresh vehicle turns up (free modes)
 
@@ -45,9 +46,10 @@ export class CourierGame {
     this.briefing = new Briefing(app, this);
     this.pauseMenu = new PauseMenu(this);
     this.board = new MissionBoard(app, this.progress, (m) => this.startMission(m));
+    this.roads = new RoadBoard(app, (opts) => this.launch(opts));
     this.hangar = new Hangar(app, this.progress, {
       onFly: () => this.launch(), onFree: () => this.launch({ free: true }), onDaily: () => this.startDaily(),
-      onMissions: () => this.board.show(), onOptions: () => this.options.show(() => this.hangar.show()),
+      onMissions: () => this.board.show(), onRoads: () => this.roads.show(), onOptions: () => this.options.show(() => this.hangar.show()),
     });
   }
 
@@ -80,6 +82,12 @@ export class CourierGame {
   openHangar() {
     if (this.active) return;
     this.hangar.show();
+  }
+
+  /** Take over a car or boat from the planet (its info card's Drive button) and drive it about. */
+  driveThis(e) {
+    if (this.active || this.app.building) return;
+    this.launch({ drive: e.kind === 'boat' ? 'boat' : 'car', take: { kind: e.kind, id: e.id, name: e.name } });
   }
 
   /** Same kind of run again: a courier run, free flight, today's daily, or the same mission. */

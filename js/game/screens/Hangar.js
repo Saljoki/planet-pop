@@ -2,9 +2,12 @@ import { UPGRADES, SKINS } from '../Progress.js';
 import { todayKey } from '../Daily.js';
 import { Overlay } from '../../ui/Overlay.js';
 
-/** Between-run screen: spend coins on upgrades and paint jobs, then take off: a courier run, a mission, the daily or free flight. */
+/**
+ * Between-run screen: spend coins on upgrades and paint jobs, then take off: a courier run, a mission, the daily or
+ * free flight, or hit the road (the road trips).
+ */
 export class Hangar extends Overlay {
-  constructor(app, progress, { onFly, onFree, onDaily, onMissions, onOptions }) {
+  constructor(app, progress, { onFly, onFree, onDaily, onMissions, onRoads, onOptions }) {
     super({ id: 'hangar', html: `
       <button id="hClose" class="close" title="Close">✕</button>
       <button id="hOptions" class="opts" title="Options">⚙️</button>
@@ -15,7 +18,8 @@ export class Hangar extends Overlay {
       <div id="hSkins" class="skins"></div>
       <div class="hfoot">
         <div class="hrow"><button id="hGo" class="big">📦 Courier run</button><button id="hMissions" class="big missions">🎯 Missions</button>
-          <button id="hDaily" class="big daily">📅 Daily</button><button id="hFree" class="big free">🕊️ Free flight</button></div>
+          <button id="hDaily" class="big daily">📅 Daily</button><button id="hFree" class="big free">🕊️ Free flight</button>
+          <button id="hRoads" class="big roads">🚗 Road trips</button></div>
         <p class="note" id="hDailyNote"></p>
       </div>` });
     this.app = app;
@@ -27,6 +31,7 @@ export class Hangar extends Overlay {
     this.on('hDaily', 'click', go(onDaily));
     this.on('hFree', 'click', go(onFree));
     this.on('hMissions', 'click', go(onMissions));
+    this.on('hRoads', 'click', go(onRoads));
     this.on('hOptions', 'click', go(onOptions));
     this.on('hClose', 'click', () => this.hide());
     this.el.addEventListener('click', (e) => {

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { R, TAU, LAYER_FX, frame, tangentBasis, canvasTexture } from '../core/Geo.js';
 import { toon, WPOS_DECL, WPOS_VERT } from '../render/Toon.js';
-import { addInstanced } from '../render/Outline.js';
+import { addInstanced, cutaway } from '../render/Outline.js';
 import { PointEntity } from '../core/PointEntity.js';
 import { ROAD_W, ROAD_N } from './Roads.js';
 
@@ -136,6 +136,7 @@ export class Cities {
     const wall = wallMaterial(), roof = toon('#efeaff');
     const mesh = (this.buildings = addInstanced(p.root, new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0),
       [wall, wall, roof, roof, wall, wall], data.length, 0.012));
+    cutaway(mesh);
     data.forEach((b, i) => {
       mesh.setMatrixAt(i, frame(_m, _p.copy(b.d).multiplyScalar(p.surfR(b.d) - 0.07), b.d, b.u, b.w, b.h + 0.07, b.dp));
       mesh.setColorAt(i, _c.set(rng.pick(p.theme.buildings)));

@@ -42,7 +42,7 @@ export class Car extends GroundVehicle {
     this.spin = 0; // wheel rotation
     this.honkT = 0;
     this.build(kind, { ...KINDS[kind], ...(body && { body }), ...(trim && { trim }) });
-    this.dust = new Trails(planet.root, { max: 80, color: planet.theme.pal.sand, life: 0.9, grow: 2.5, drag: 1.5, near: 0.25 });
+    this.dust = new Trails(planet.root, { max: 50, color: planet.theme.pal.sand, life: 0.55, grow: 2.2, drag: 1.5, near: 0.45 });
     this.dustT = 0;
     this.sync();
   }
@@ -195,9 +195,9 @@ export class Car extends GroundVehicle {
   /** Off the road, the wheels throw up dust. */
   kickDust(dt) {
     if (!this.airborne && Math.abs(this.v) > 0.3 && this.ground.surface(this.up) !== 'road' && (this.dustT -= dt) <= 0) {
-      this.dustT = 0.06;
-      this.dust.emit(_q.set((Math.random() - 0.5) * 0.08, 0.01, -0.09 * Math.sign(this.v)).applyMatrix4(_m), 0.02,
-        _p.copy(this.up).multiplyScalar(0.12));
+      this.dustT = 0.11;
+      this.dust.emit(_q.set((Math.random() - 0.5) * 0.08, 0.01, -0.09 * Math.sign(this.v)).applyMatrix4(_m), 0.012,
+        _p.copy(this.up).multiplyScalar(0.18));
     }
     this.dust.update(dt);
   }

@@ -19,8 +19,8 @@ export class Boat extends GroundVehicle {
     addMesh(g, new THREE.BoxGeometry(0.07, 0.05, 0.075).translate(0, 0.062, -0.03), toon(trim), 0.006);
     addMesh(g, new THREE.BoxGeometry(0.074, 0.012, 0.08).translate(0, 0.092, -0.03), toon('#ff4d4d'), 0.004);
     addMesh(g, new THREE.CylinderGeometry(0.015, 0.015, 0.05, 10).translate(0, 0.11, -0.05), toon('#ff8c42'), 0.004);
-    this.wake = new Trails(planet.root, { max: 160, color: '#ffffff', life: 1.6, grow: 2.6, drag: 2, near: 0.25 });
-    this.puffs = new Trails(planet.root, { max: 60, color: '#c9c2dd', life: 1.6, grow: 2.2, near: 0.25 });
+    this.wake = new Trails(planet.root, { max: 160, color: '#ffffff', life: 1.3, grow: 2.2, drag: 2, near: 0.55 });
+    this.puffs = new Trails(planet.root, { max: 60, color: '#e4def0', life: 1.4, grow: 2, near: 0.55 });
     this.wakeT = 0;
     this.puffT = 0;
     this.sync();
@@ -49,11 +49,11 @@ export class Boat extends GroundVehicle {
     const fast = Math.abs(this.v) > 0.08;
     if (fast && (this.wakeT -= dt) <= 0) {
       this.wakeT = 0.07;
-      this.wake.emit(_p.set((Math.random() - 0.5) * 0.06, 0, -0.11 * Math.sign(this.v)).applyMatrix4(_m), 0.025);
+      this.wake.emit(_p.set((Math.random() - 0.5) * 0.06, 0, -0.11 * Math.sign(this.v)).applyMatrix4(_m), 0.016);
     }
     if ((this.puffT -= dt) <= 0) {
       this.puffT = fast ? 0.2 : 0.45;
-      this.puffs.emit(_p.set(0, 0.14, -0.05).applyMatrix4(_m), 0.018, _v.copy(this.up).multiplyScalar(0.15));
+      this.puffs.emit(_p.set(0, 0.14, -0.05).applyMatrix4(_m), 0.012, _v.copy(this.up).multiplyScalar(0.25));
     }
     this.wake.update(dt);
     this.puffs.update(dt);

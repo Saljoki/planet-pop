@@ -34,7 +34,7 @@ export class Vehicle {
     this.input = { left: false, right: false, up: false, down: false, boost: false, steer: 0, climb: 0 };
     this.controls = { invertY: false, sensitivity: 1 }; // the player's options (Rex drives with the defaults)
     planet.root.add(this.group);
-    this.smoke = new Trails(planet.root, { max: 70, color: '#5d5670', life: 1.5, grow: 2.4, drag: 0.5, near: 0.25 });
+    this.smoke = new Trails(planet.root, { max: 70, color: '#8a8399', life: 1.4, grow: 2.2, drag: 0.5, near: 0.5 });
     this.smokeT = 0;
   }
 
@@ -97,8 +97,8 @@ export class Vehicle {
   /** The more damaged it is, the more it smokes, from `at` (a point in the world). */
   smokeStep(dt, at) {
     if (this.health < 0.6 && (this.smokeT -= dt) <= 0) {
-      this.smokeT = 0.04 + this.health * 0.25;
-      this.smoke.emit(at, 0.025 + (0.6 - this.health) * 0.05, _v.copy(this.up).multiplyScalar(0.25).addScaledVector(this.fwd, -0.1));
+      this.smokeT = 0.05 + this.health * 0.25;
+      this.smoke.emit(at, 0.016 + (0.6 - this.health) * 0.03, _v.copy(this.up).multiplyScalar(0.4).addScaledVector(this.fwd, 0.05));
     }
     this.smoke.update(dt);
   }

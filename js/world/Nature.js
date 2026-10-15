@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, TAU, frame, tangentBasis } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
-import { addInstanced, shareMatrices } from '../render/Outline.js';
+import { addInstanced, shareMatrices, cutaway } from '../render/Outline.js';
 import { ROAD_W } from './Roads.js';
 import { CITY_A } from './Cities.js';
 import { TREE_SHAPES } from './TreeShapes.js';
@@ -100,10 +100,10 @@ export class Nature {
     const kinds = [look.a, look.b], shapes = kinds.map((k) => TREE_SHAPES[k.shape]);
     this.treeGroups = []; // for Seasons: each tree's own colour, so leaves can turn and come back
     const trunked = groups.reduce((n, g, k) => n + (shapes[k].trunk ? g.length : 0), 0);
-    const trunks = addInstanced(root, new THREE.CylinderGeometry(0.022, 0.032, 0.2, 6).translate(0, 0.1, 0), toon(look.trunk), trunked, 0.005);
+    const trunks = cutaway(addInstanced(root, new THREE.CylinderGeometry(0.022, 0.032, 0.2, 6).translate(0, 0.1, 0), toon(look.trunk), trunked, 0.005));
     let t = 0;
     groups.forEach((list, k) => {
-      const mesh = addInstanced(root, shapes[k].geo(), toon('#ffffff', { flatShading: true }), list.length, 0.01);
+      const mesh = cutaway(addInstanced(root, shapes[k].geo(), toon('#ffffff', { flatShading: true }), list.length, 0.01));
       list.forEach((tree, i) => {
         frame(_m, _p.copy(tree.d).multiplyScalar(p.surfR(tree.d) - 0.05), tree.d, rng.dir(), tree.s, tree.s * rng.range(0.9, 1.2), tree.s);
         if (shapes[k].trunk) trunks.setMatrixAt(t++, _m);
@@ -128,8 +128,8 @@ export class Nature {
       ...[0, 1, 2].map((k) => new THREE.BoxGeometry(0.024, 0.25, 0.006).translate(0, 0.13, 0).rotateZ((k * TAU) / 3)),
       new THREE.SphereGeometry(0.018, 10, 8),
     ]).translate(0, 0, 0.035);
-    const towers = addInstanced(p.root, tower, toon('#f4f1ff'), n, 0.008);
-    this.blades = addInstanced(p.root, blades, toon('#ffffff'), n, 0.006);
+    const towers = cutaway(addInstanced(p.root, tower, toon('#f4f1ff'), n, 0.008));
+    this.blades = cutaway(addInstanced(p.root, blades, toon('#ffffff'), n, 0.006));
     this.turbines.forEach((t, i) => {
       frame(_m, _p.copy(t.d).multiplyScalar(p.surfR(t.d) - 0.04), t.d, t.wind, 1.35);
       towers.setMatrixAt(i, _m);

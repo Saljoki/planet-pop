@@ -48,16 +48,19 @@ export function describe(e, p) {
   }
 }
 
-/** A card about one thing (press and hold on phones): what it is, what it's up to, and a Follow button. */
+/** A card about one thing (press and hold on phones): what it is, what it's up to, a Follow button, and Drive for cars and boats. */
 export class InfoCard extends Widget {
   constructor(app) {
     super({ id: 'info', className: 'panel', html: `<div class="iHead"><span id="iIcon"></span><div><b id="iName"></b><small id="iKind"></small></div></div>
-      <p id="iStatus"></p><div class="row"><button id="iFollow" class="big">👀 Follow</button><button id="iClose">✕</button></div>` });
+      <p id="iStatus"></p><div class="row"><button id="iFollow" class="big">👀 Follow</button><button id="iDrive" class="big drive hidden"></button>
+      <button id="iClose">✕</button></div>` });
     this.app = app;
     this.entity = null;
     this.dom = { icon: this.$('iIcon'), name: this.$('iName'), kind: this.$('iKind'), status: this.$('iStatus') };
     this.on('iFollow', 'click', () => { const e = this.entity; this.hide(); if (e) app.rig.focus(e); });
     this.on('iClose', 'click', () => this.hide());
+    this.drive = this.$('iDrive');
+    this.on('iDrive', 'click', () => { const e = this.entity; this.hide(); if (e) app.game.driveThis(e); });
   }
 
   get open() { return !!this.entity; }
@@ -68,6 +71,9 @@ export class InfoCard extends Widget {
     this.dom.icon.textContent = icon;
     this.dom.name.textContent = e.name;
     this.dom.kind.textContent = kind;
+    const drivable = { car: '🚗 Drive', boat: '⛵ Steer' }[e.kind];
+    this.drive.classList.toggle('hidden', !drivable);
+    if (drivable) this.drive.textContent = drivable;
     this.refresh();
     super.show();
     this.app.haptics?.buzz('tap');

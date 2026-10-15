@@ -5,9 +5,11 @@ import { Picker } from './Picker.js';
 import { OrbitView } from './OrbitView.js';
 import { FollowView } from './FollowView.js';
 import { ChaseView } from './ChaseView.js';
+import { setCutaway } from '../render/Outline.js';
 
 const _w = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3();
 const _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion();
+const CUTAWAY = 0.45; // how near the camera scenery is cut away while driving
 
 /**
  * Moves the camera, in one of four modes: 'orbit' (around the planet, OrbitView), 'local' (following one thing,
@@ -236,5 +238,7 @@ export class CameraRig {
         break;
       default: this.orbit.update(dt, this.idle > 6 && still); // gentle auto-rotate when left alone
     }
+    // low behind a car or a boat, trees and buildings next to the camera step aside
+    setCutaway(this.mode === 'game' && this.chase.player && this.chase.player.kind !== 'plane' ? CUTAWAY : 0);
   }
 }

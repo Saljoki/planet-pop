@@ -8,6 +8,7 @@
 #iStatus { margin: 8px 0 10px; font-family: system-ui, sans-serif; letter-spacing: 0; font-size: 15px; }
 #info .row { display: flex; gap: 8px; }
 #info .row .big { flex: 1; font-size: 19px; }
+#info .row .drive { background: #ff8c42; }
 #find { position: fixed; top: calc(104px + var(--st)); left: calc(16px + var(--sl)); width: 330px; max-height: calc(100vh - 130px); overflow-y: auto;
   z-index: 7; padding: 12px 14px; }
 #find .fHead { display: flex; justify-content: space-between; align-items: center; }
