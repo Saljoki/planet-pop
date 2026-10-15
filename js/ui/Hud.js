@@ -23,9 +23,12 @@ export class Hud {
           <option value="auto">Auto</option><option value="crisp">Crisp</option>
           <option value="balanced">Balanced</option><option value="fast">Fast</option>
         </select></label>
-        <label class="check"><input id="ink" type="checkbox" checked> Ink edges</label>
-        <label class="check"><input id="shadows" type="checkbox" checked> Shadows</label>
-        <label class="check"><input id="sound" type="checkbox" checked> Sound</label>
+        <div class="checks">
+          <label class="check"><input id="ink" type="checkbox" checked> Ink lines</label>
+          <label class="check"><input id="shadows" type="checkbox" checked> Shadows</label>
+          <label class="check"><input id="sound" type="checkbox" checked> Sound</label>
+        </div>
+        <label>Ambience <b id="ambienceVal"></b><input id="ambience" type="range" min="0" max="100" step="5" value="${Math.round((app.ambience?.volume ?? 0.5) * 100)}"></label>
         <button id="playBtn" class="big">✈️ Play Sky Courier</button>
         <div id="trophies">🏆 0 trophies</div>
       </div>
@@ -51,6 +54,7 @@ export class Hud {
     $('ink').onchange = (e) => app.setInk(e.target.checked);
     $('shadows').onchange = (e) => app.setShadows(e.target.checked);
     $('sound').onchange = (e) => (app.sfx.enabled = e.target.checked);
+    this.slider('ambience', (v) => (v ? `${v}%` : 'off'), (v) => app.ambience?.setVolume(v / 100), true);
     $('playBtn').onclick = () => app.game.openHangar();
     $('trophies').onclick = () => this.showTrophies(app.achievements.list());
     $('trophyClose').onclick = () => $('trophyBox').classList.add('hidden');

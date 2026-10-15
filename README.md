@@ -1,8 +1,10 @@
 # Planet Pop!
 
-A cartoony, comic-book 3D planet built with Three.js: day/night cycle, cities, traffic with signals,
-a train with a tunnel, boats, balloons, planes, bird flocks, weather, a rocket pad, satellites, a space
-station, a moon — plus the **Sky Courier** mini-game, a daily challenge and 19 trophies.
+A cartoony, comic-book 3D planet built with Three.js: day/night cycle, cities with people strolling the
+streets, traffic with signals, airports where planes land and take off, harbours with ferries, a train
+with a tunnel, balloons, bird flocks, weather, an erupting volcano, auroras over the poles, the odd UFO,
+a rocket pad, satellites, a space station, a moon and an ambient soundscape — plus the **Sky Courier**
+mini-game, a daily challenge and 24 trophies.
 
 Every planet is generated from a seed. The address bar always holds the current planet
 (`?seed=…&land=…&cities=…`), and **🔗 Share this planet** copies the link.
@@ -22,8 +24,13 @@ Bangers font load from CDNs, so an internet connection is needed.
 ## Controls
 
 - **Drag** to orbit, **scroll / pinch** to zoom — you can skim right down to the ground.
-- **Click / tap** anything (cars, train, planes, boats, balloons, birds, storms, rocket, satellites,
-  station, moon, or any spot on the ground) to fly there and follow it. **Esc** returns to orbit.
+- **Click / tap** anything (cars, people, train, planes, boats, balloons, birds, storms, airports,
+  harbours, the volcano, the UFO, rocket, satellites, station, moon, or any spot on the ground) to fly
+  there and follow it. People can be picked once you've zoomed in on a town. **Esc** returns to orbit.
+- **Events:** the volcano rumbles and erupts every minute or so, the rocket launches, and every couple
+  of minutes a UFO drops in for a few seconds. Visit a pole at night for the aurora.
+- **Sound** (panel) mutes everything; **Ambience** sets the volume of the soundscape (wind, surf, a
+  town's murmur, birds by day, crickets by night, a hum out in space), which follows the camera.
 - **P** pause · **N** new planet · **H** show/hide the control panel.
 - **Quality** (panel): *Auto* picks the best level your machine runs smoothly and remembers it;
   *Crisp* forces full resolution; *Balanced* and *Fast* trade shadow detail and the edge-ink pass for speed.
@@ -40,6 +47,8 @@ Keyboard: arrows / WASD steer and climb, Space / Shift boost, Esc quit. Touch sc
   🏋️ heavy (slower plane, 1.5× pay).
 - **Thunderstorms:** flying through a dark cloud shakes the plane, and lightning can hit you
   (−5 s, empty boost tank).
+- **The world joins in:** skim low along an airport runway to refuel your boost; an erupting volcano's
+  ash plume chokes the engine and drains the boost; fly through a hovering UFO for +300 points.
 - **Rival Rex:** after your first delivery a purple rival courier races you for every parcel. He has to
   collect it from the pickup city first, never boosts, and gets a little faster each delivery. If he
   swoops over the destination before you, he steals it (no pay, combo lost). Beat him 5 times in a row for a trophy.
@@ -60,14 +69,16 @@ planet-pop/
 │  ├─ App.js                  renderer, frame loop, planet swapping
 │  ├─ core/                   Noise, Random, Geo (math helpers), Entity (focus targets)
 │  ├─ render/                 Toon (halftone shading), Outline (ink hulls), PostFX (edge ink), Quality (adaptive resolution)
-│  ├─ sky/                    Sky (sun, shadows, atmosphere, stars), Weather (clouds, rain, lightning, snow)
-│  ├─ world/                  Planet, Terrain + TerrainCompute + terrain.worker, Roads, Cities, Nature, Railway, Glow
-│  ├─ life/                   Trails, Traffic, Boats, Balloons, Planes, Birds, Space
+│  ├─ sky/                    Sky (sun, shadows, atmosphere, stars), Weather (clouds, rain, lightning, snow), Aurora
+│  ├─ world/                  Planet, Terrain + TerrainCompute + terrain.worker, SurfaceIndex (exact ground height),
+│  │                          Roads, Cities, Nature, Railway, Airports, Harbours, Volcano, Glow
+│  ├─ life/                   Trails, Traffic, People, Boats, Balloons, Planes, Birds, Ufo, Space
 │  ├─ camera/                 CameraRig (orbit, fly-to, follow, chase, terrain collision)
-│  ├─ ui/                     Hud, Sfx (bubbles + synthesized sound), Achievements, DebugStats (?debug overlay)
+│  ├─ ui/                     Hud, Sfx (bubbles + synthesized sound), Ambience (soundscape), Achievements,
+│  │                          DebugStats (?debug overlay)
 │  └─ game/                   CourierGame, PlayerPlane, Rival, Cargo, Progress (coins/upgrades), Hangar, Daily
 ├─ tests/
-│  ├─ *.test.mjs              node:test suites: quality control, progress, daily challenge, 3 full planets simulated
+│  ├─ *.test.mjs              node:test suites: quality control, progress, daily challenge, ambience, 3 full planets simulated
 │  ├─ helpers/                a fake DOM and a headless App so the game runs under Node
 │  └─ browser/screenshots.mjs headless Chrome (software WebGL) plays key scenes and saves screenshots
 └─ .github/workflows/ci.yml   tests + screenshots on every push and pull request

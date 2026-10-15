@@ -11,6 +11,7 @@ import { Achievements } from './ui/Achievements.js';
 import { CameraRig } from './camera/CameraRig.js';
 import { CourierGame } from './game/CourierGame.js';
 import { DebugStats } from './ui/DebugStats.js';
+import { Ambience } from './ui/Ambience.js';
 import { dailyParams } from './game/Daily.js';
 
 /** Planet settings from the address bar (?seed=…&land=…&cities=…), with defaults for anything missing. ?daily means today's planet. */
@@ -56,6 +57,7 @@ export class App {
     this.camera.position.set(0, 0.3, 1).normalize().multiplyScalar(start);
     this.scene.add(this.camera);
 
+    this.ambience = new Ambience(this); // before the HUD, which shows its saved volume
     this.hud = new Hud(this);
     this.postfx = new PostFX(r);
     this.sky = new Sky(this.scene);
@@ -158,6 +160,7 @@ export class App {
     if (this.game.active) this.game.update(dt, real);
     this.rig.update(real);
     this.sfx.update(real);
+    this.ambience.update(real);
     this.quality.tick(real);
     this.sky.fitShadow(this.camera);
     if (this.quality.shadowFrame()) this.renderer.shadowMap.needsUpdate = true;

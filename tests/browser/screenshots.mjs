@@ -36,7 +36,7 @@ await mkdir(OUT, { recursive: true });
 const browser = await puppeteer.launch({
   executablePath: await chromium.executablePath(),
   headless: true,
-  args: [...chromium.args, '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  args: [...chromium.args, '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'],
   defaultViewport: { width: 1280, height: 720, deviceScaleFactor: 1 },
 });
 
@@ -93,6 +93,7 @@ await page.goto(`${base}index.html?${PLANET}`, { waitUntil: 'domcontentloaded' }
 await until(() => window.app?.planet && !window.app.building, 240000);
 const loadSeconds = (Date.now() - t0) / 1000;
 console.log(`Planet built and shaders warmed up in ${loadSeconds.toFixed(1)} s`);
+await page.keyboard.press('Shift'); // a key press unlocks audio, so the ambience graph gets built too
 await frames(4);
 
 const stats = await page.evaluate(async () => {
@@ -107,6 +108,7 @@ const stats = await page.evaluate(async () => {
     trianglesPerFrame: Math.round(info.render.triangles / 5),
     programs: info.programs.length,
     quality: quality.name, pixelRatio: quality.pr,
+    audio: window.app.sfx.ctx?.state ?? 'none', ambience: !!window.app.ambience.layers,
   };
   info.autoReset = true;
   return out;
