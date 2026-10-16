@@ -377,6 +377,7 @@ describe('the space courier', () => {
     assert.equal(courier.streak, 1);
     assert.match(game.results.dom.title.textContent, /Delivered/);
     assert.equal(game.results.dom.again.textContent, '📦 Next parcel');
+    for (const id of ['rocketman', 'spacecourier']) assert.ok(app.unlocked.includes(id), `no ${id} trophy`);
     game.stop();
   });
 
@@ -401,5 +402,42 @@ describe('the space courier', () => {
     game.update(1 / 60);
     assert.ok(game.over, 'swooped over the town');
     game.stop();
+  });
+});
+
+describe('space trophies', () => {
+  it('Earthrise, All Aboard, Check In, Giant Leap and the Grand Tour', async () => {
+    localStorage.clear();
+    const moon = await makeWorld({ world: 'moon' }), app = moon.app;
+    app.rig.focus(moon.planet.entities.find((e) => e.kind === 'moon' && e.name === 'Earth'));
+    run(app, 4, { camera: true, each: () => app.trophies.update() });
+    assert.ok(app.unlocked.includes('earthrise'));
+    app.rig.release(true);
+    const game = app.game;
+    game.start({ drive: 'car' });
+    const pl = game.player;
+    pl.airborne = true;
+    pl.alt += 3;
+    pl.vy = 0.5;
+    for (let i = 0; i < 60 * 6 && pl.airborne; i++) { pl.vy = Math.max(pl.vy, 0.05); game.update(1 / 60); }
+    assert.ok(app.unlocked.includes('longjump'), 'six seconds in the air, but no trophy');
+    game.stop();
+    moon.planet.dispose();
+
+    for (const id of ['mercury', 'pluto']) {
+      const w = await makeWorld({ world: id }), want = id === 'mercury' ? ['rolling', null, 'terminus'] : ['landmark', 'The Ice Hotel', 'icehotel'];
+      w.app.rig.focus(w.planet.entities.find((e) => e.kind === want[0] && (!want[1] || e.name === want[1])));
+      run(w.app, 4, { camera: true, each: () => w.app.trophies.update() });
+      assert.ok(w.app.unlocked.includes(want[2]), `no ${want[2]}`);
+      w.planet.dispose();
+    }
+
+    const a = app.achievements;
+    for (const id of ['earth', 'moon', 'mars', 'venus', 'mercury']) a.visitWorld(id);
+    assert.ok(!app.unlocked.includes('grandtour'));
+    a.visitWorld('mars');
+    a.visitWorld('pluto');
+    assert.ok(app.unlocked.includes('grandtour'));
+    assert.deepEqual(JSON.parse(localStorage.getItem('planetpop.visited')).length, 6);
   });
 });

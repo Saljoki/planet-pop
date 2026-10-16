@@ -139,8 +139,11 @@ export class Progress {
 
   missionDone(id) { return this.missions.has(id); }
 
-  /** Missions open up one at a time: the first, then each one after a completed one. */
-  missionUnlocked(i) { return i === 0 || this.missions.has(MISSIONS[i - 1].id); }
+  /** Missions open up one at a time in two lists, the made-up planets' and the real worlds': each list's first, then each one after a completed one. */
+  missionUnlocked(i) {
+    const prev = MISSIONS[i - 1];
+    return !prev || !prev.planet.world !== !MISSIONS[i].planet.world || this.missions.has(prev.id);
+  }
 
   /** Marks a mission complete. Returns the coin reward: paid the first time only. */
   completeMission(def) {

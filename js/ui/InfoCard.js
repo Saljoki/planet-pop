@@ -36,7 +36,7 @@ export function describe(e, p) {
     case 'ufo': return p.ufo.hovering ? 'Hovering. Catch it before it goes!' : 'Zipping about';
     case 'rocket': return { countdown: 'Counting down', flight: 'Lift-off!', boarding: 'Boarding for space', landing: 'Coming in to land' }[p.space.state] ?? 'On the launch pad';
     case 'city': return p.nightAt(e.pos) > 0.5 ? 'Lights on for the night' : 'Busy with the day';
-    case 'storm': return 'Raining, with the odd lightning bolt';
+    case 'storm': return e.dust ? 'Whipping up red dust (no lightning on Mars)' : 'Raining, with the odd lightning bolt';
     case 'balloon': return 'Drifting on the wind';
     case 'bird': return 'Flying with the flock';
     case 'airport': return 'Planes land and take off here';
@@ -69,7 +69,7 @@ export class InfoCard extends Widget {
 
   show(e) {
     this.entity = e;
-    const [icon, kind] = KINDS[e.kind] ?? ['❓', e.kind];
+    const [icon, kind] = e.dust ? ['🌪️', 'Dust storm'] : KINDS[e.kind] ?? ['❓', e.kind];
     this.dom.icon.textContent = icon;
     this.dom.name.textContent = e.name;
     this.dom.kind.textContent = kind;

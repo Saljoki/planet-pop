@@ -178,6 +178,34 @@ export default async function space({ page, frames, until, scene, open }) {
     await frames(10);
   });
 
+  await scene('mission-flag', 'One Small Step: a flag for Tranquility Base, by hopper', async () => {
+    await page.evaluate(async () => {
+      const { MISSIONS } = await import('./js/game/Missions.js');
+      app.game.stop();
+      app.game.start({ mission: MISSIONS.find((m) => m.id === 'flag') });
+    });
+    await until(() => app.rig.mode === 'game');
+    await frames(20);
+  });
+
+  await scene('space-missions', 'The missions board: the real worlds’ missions, a list of their own', async () => {
+    await page.evaluate(() => {
+      app.game.stop();
+      app.game.board.show();
+      app.game.board.el.querySelector('h3').scrollIntoView();
+    });
+    await frames(4);
+  });
+
+  await scene('mars-dust', 'A dust storm on Mars (no lightning), with its card', async () => {
+    await page.evaluate(() => app.game.board.hide());
+    await open('world=mars');
+    await visit('storm');
+    await until(() => app.rig.mode === 'local');
+    await page.evaluate(() => app.hud.info.show(app.planet.entities.find((e) => e.kind === 'storm')));
+    await frames(8);
+  });
+
   await scene('phone-map', 'The system map on a phone, with a world’s card', async () => {
     await page.evaluate(() => app.hud.info.hide());
     await page.evaluate(() => app.game.stop());

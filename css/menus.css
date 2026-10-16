@@ -105,6 +105,7 @@ button.free { background: var(--blue); }
 
 /* ---------- Mission board ---------- */
 #missions .panel, #roads .panel, #parcels .panel { width: 520px; text-align: left; position: relative; }
+#missions h3 { margin: 16px 0 6px; font-weight: normal; font-size: 20px; text-align: center; }
 #missions h2, #missions .coins, #roads h2, #roads .note, #parcels h2, #parcels .note { text-align: center; }
 #roads .note, #parcels .note { margin: 0 0 6px; font-family: system-ui, sans-serif; font-size: 13px; letter-spacing: 0; opacity: 0.75; }
 #missions .close, #roads .close, #hangar .close, #parcels .close { position: absolute; top: 12px; right: 12px; background: #fff; font-size: 15px; padding: 3px 8px 0; }

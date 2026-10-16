@@ -1,8 +1,7 @@
-import { MISSIONS } from '../Missions.js';
-import { themeOf } from '../../world/Themes.js';
+import { MISSIONS, placeOf } from '../Missions.js';
 import { Overlay } from '../../ui/Overlay.js';
 
-/** The list of missions: done, next up, or locked until the one before it is done. */
+/** The list of missions (the made-up planets', then the real worlds'): done, next up, or locked until the one before it is done. */
 export class MissionBoard extends Overlay {
   constructor(app, progress, onPlay) {
     super({ id: 'missions', html: `
@@ -29,10 +28,11 @@ export class MissionBoard extends Overlay {
     const p = this.progress, done = MISSIONS.filter((m) => p.missionDone(m.id)).length;
     this.count.textContent = `${done} of ${MISSIONS.length} complete`;
     this.list.innerHTML = MISSIONS.map((m, i) => {
-      const state = p.missionDone(m.id) ? 'done' : p.missionUnlocked(i) ? 'open' : 'locked', world = themeOf(m.planet.theme);
+      const state = p.missionDone(m.id) ? 'done' : p.missionUnlocked(i) ? 'open' : 'locked', world = placeOf(m);
       const btn = state === 'locked' ? '<button disabled>🔒</button>'
         : `<button data-play="${m.id}" class="${state === 'open' ? 'big' : ''}">${state === 'done' ? '↻ Again' : '▶ Fly'}</button>`;
-      return `<div class="mission ${state}"><span class="icon">${state === 'done' ? '✅' : m.icon}</span>
+      const head = m.planet.world && !MISSIONS[i - 1]?.planet.world ? '<h3>🪐 On the real worlds</h3>' : '';
+      return `${head}<div class="mission ${state}"><span class="icon">${state === 'done' ? '✅' : m.icon}</span>
         <div class="info">${i + 1}. ${m.name}<small>${m.brief} · ${world.icon} ${world.name} · 🪙 ${m.reward}${
           state === 'done' ? ' (earned)' : ''}</small></div>${btn}</div>`;
     }).join('');

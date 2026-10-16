@@ -3,6 +3,7 @@ import { LandedCard } from '../ui/LandedCard.js';
 
 const COUNT = 3.6;  // seconds of countdown on the pad
 const CLIMB = 4.2;  // seconds of climbing before the view hands over to the cruise
+const FUEL_UP = 15; // fuel stars on one trip for the trophy
 
 /**
  * A rocket trip to another world (app.trip): board the rocket on this world's pad, 3-2-1, lift off, cruise across
@@ -106,6 +107,8 @@ export class Trip {
     this.state = 'idle';
     this.setMode(false);
     (this.card ??= new LandedCard(app)).show(world);
+    app.achievements.unlock('rocketman');
+    if (stars >= FUEL_UP) app.achievements.unlock('fuelup');
     if (stars) {
       app.game.progress.addCoins(stars);
       app.hud.toast(`⭐ ${stars} fuel star${stars > 1 ? 's' : ''} caught: +${stars} coins`);

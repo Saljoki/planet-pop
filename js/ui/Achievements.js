@@ -26,7 +26,7 @@ const DEFS = [
   ['daily', '📅', 'Daily Flyer', 'Finish a daily challenge'],
   ['globetrotter', '🧳', 'Globetrotter', 'Visit all five kinds of world'],
   ['photographer', '📸', 'Say Cheese', 'Take a picture in photo mode'],
-  ['missions', '🎯', 'Mission Accomplished', 'Complete every Sky Courier mission'],
+  ['missions', '🎯', 'Mission Accomplished', 'Complete every Sky Courier mission on the made-up planets'],
   ['fireworks', '🎆', 'Happy New Night', 'Watch a midnight firework show up close'],
   ['shootingstar', '🌠', 'Make a Wish', 'Be on the night side during a meteor shower'],
   ['rainbow', '🌈', 'Over the Rainbow', 'Fly close to a rainbow'],
@@ -42,9 +42,19 @@ const DEFS = [
   ['cabbie', '🚕', 'Cabbie', 'Drop off 5 passengers in one taxi shift'],
   ['vanman', '🚐', 'Last Mile', 'Deliver 3 parcels by van in one run'],
   ['racer', '🏁', 'Round the World', 'Beat Rex in the round-the-world race'],
+  ['rocketman', '🚀', 'Rocket Man', 'Fly to another world by rocket'],
+  ['fuelup', '⭐', 'Fuelled Up', 'Catch 15 fuel stars on one trip'],
+  ['grandtour', '🪐', 'Grand Tour', 'Land on all six worlds'],
+  ['earthrise', '🌍', 'Earthrise', 'Watch Earth from the Moon'],
+  ['longjump', '🦘', 'Giant Leap', 'Keep a rover in the air for 5 seconds'],
+  ['terminus', '🚉', 'All Aboard', 'Visit Terminus, the town on rails'],
+  ['icehotel', '🛎️', 'Check In', 'Visit the Ice Hotel on Pluto'],
+  ['spacecourier', '📦', 'Interplanetary', 'Deliver a parcel to another world'],
+  ['spacemissions', '🛰️', 'Mission Control', 'Complete every mission on the real worlds'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
 const KEY = 'planetpop.trophies', WORLDS_KEY = 'planetpop.worlds', WORLD_KINDS = 5;
+const VISITED_KEY = 'planetpop.visited', REAL_WORLDS = 6; // (the real worlds landed on: ids)
 
 export class Achievements {
   constructor(hud) {
@@ -71,6 +81,14 @@ export class Achievements {
     if (!seen.includes(id)) seen.push(id);
     saveJson(WORLDS_KEY, seen);
     if (seen.length >= WORLD_KINDS) this.unlock('globetrotter');
+  }
+
+  /** Remembers which real worlds have been visited, across visits. */
+  visitWorld(id) {
+    const seen = loadJson(VISITED_KEY, []);
+    if (!seen.includes(id)) seen.push(id);
+    saveJson(VISITED_KEY, seen);
+    if (seen.length >= REAL_WORLDS) this.unlock('grandtour');
   }
 
   visitCity(name) {

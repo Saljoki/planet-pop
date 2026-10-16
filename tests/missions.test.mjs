@@ -2,6 +2,7 @@ import { describe, it, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeWorld } from './helpers/world.mjs';
 import { MISSIONS } from '../js/game/Missions.js';
+import { worldOf } from '../js/space/Worlds.js';
 import { Progress } from '../js/game/Progress.js';
 import { readPad } from '../js/game/input/Gamepad.js';
 
@@ -17,6 +18,8 @@ describe('missions', () => {
     assert.equal(p.completeMission(MISSIONS[0]), 0, 'paid twice');
     assert.ok(p.missionUnlocked(1) && !p.missionUnlocked(2));
     assert.equal(new Progress().coins, MISSIONS[0].reward, 'reward not saved');
+    const first = MISSIONS.findIndex((m) => m.planet.world);
+    assert.ok(first > 1 && p.missionUnlocked(first) && !p.missionUnlocked(first + 1), 'the real worlds’ missions are a list of their own');
   });
 
   it('each mission planet has what its mission needs', async () => {
@@ -27,13 +30,16 @@ describe('missions', () => {
         const { planet } = await makeWorld(m.planet);
         seen.set(key, {
           cities: planet.cities.sites.length, airports: planet.airports.list.length,
-          volcanoes: planet.volcanoes.length, theme: planet.theme.id,
+          volcanoes: planet.volcanoes.length, theme: planet.theme.id, storms: planet.weather.storms.length,
+          landmarks: planet.landmarks.list.map((l) => l.name),
         });
         planet.dispose();
       }
       const w = seen.get(key);
       assert.ok(w.cities >= 2, `${m.id}: not enough cities`);
-      assert.equal(w.theme, m.planet.theme);
+      assert.equal(w.theme, m.planet.world ? worldOf(m.planet.world).theme : m.planet.theme);
+      if (m.landmark) assert.ok(w.landmarks.includes(m.landmark), `${m.id}: no ${m.landmark}`);
+      if (m.failIf === 'zaps' || m.id === 'dust') assert.ok(w.storms >= 2, `${m.id}: only ${w.storms} storms`);
       if (m.goal.stat === 'refuels') assert.ok(w.airports > 0, `${m.id}: no airport to refuel at`);
       if (m.eruptions) assert.ok(w.volcanoes >= 2, `${m.id}: only ${w.volcanoes} volcano`);
     }
@@ -112,6 +118,83 @@ describe('mission runs', () => {
     const a = route();
     assert.deepEqual(route(), a);
     assert.ok(a.filter((l) => l.endsWith(':urgent')).length >= 1, 'Rush Hour should favour urgent parcels');
+  });
+});
+
+describe('missions on the real worlds', () => {
+  beforeEach(() => localStorage.clear());
+
+  it('One Small Step: the flag goes to Tranquility Base, by hopper', async () => {
+    const { app, planet } = await makeWorld({ world: 'moon' }), game = app.game;
+    game.start({ mission: def('flag') });
+    const run = game.run, pl = game.player;
+    assert.equal(pl.style, 'hopper');
+    assert.equal(run.dest.name, 'Tranquility Base');
+    assert.ok(!run.rival, 'Rex on the Moon');
+    game.update(1 / 60);
+    assert.match(game.hud.dom.goal.textContent, /Tranquility Base/);
+    pl.up.copy(run.dest.c);
+    pl.alt = planet.surfR(run.dest.c) + 1;
+    game.update(1 / 60);
+    assert.ok(game.over);
+    assert.match(game.results.dom.title.textContent, /complete/);
+    assert.ok(game.progress.missionDone('flag'));
+    game.stop();
+    planet.dispose();
+  });
+
+  it('Room Service carries a fragile cake to the Ice Hotel, and a crash ends it', async () => {
+    const { app, planet } = await makeWorld({ world: 'pluto' }), game = app.game;
+    game.start({ mission: def('hotel') });
+    const run = game.run, pl = game.player;
+    assert.equal(run.cargo.id, 'fragile');
+    assert.equal(run.dest.name, 'The Ice Hotel');
+    pl.up.copy(run.from.c);
+    pl.alt = planet.groundR(pl.up) - 0.05;
+    pl.invuln = 0;
+    game.update(1 / 60);
+    assert.ok(game.over);
+    assert.match(game.results.dom.result.innerHTML, /broke/);
+    game.stop();
+    planet.dispose();
+  });
+
+  it('Acid Rain ends at the first lightning strike; Mars has dust storms without lightning', async () => {
+    const { app, planet } = await makeWorld({ world: 'venus' }), game = app.game;
+    game.start({ mission: def('acid') });
+    game.run.zapped();
+    game.update(1 / 60);
+    assert.ok(game.over);
+    assert.match(game.results.dom.result.innerHTML, /lightning/);
+    game.stop();
+    planet.dispose();
+
+    const mars = await makeWorld({ world: 'mars' }), w = mars.planet.weather;
+    assert.ok(w.dusty && w.storms.length === 2);
+    assert.equal(w.entities[0].name, 'Dust Storm 1');
+    let strikes = 0;
+    w.strike = () => strikes++;
+    for (let i = 0; i < 400; i++) w.update(0.05, i * 0.05);
+    assert.equal(strikes, 0, 'lightning in a dust storm');
+    const g = mars.app.game;
+    g.start({ mission: def('dust') });
+    const pl = g.player, health = pl.health;
+    w.stormCenter(w.storms[0], pl.pos);
+    g.hazards.update(1);
+    assert.ok(pl.health < health, 'the grit wears the glider down');
+    assert.equal(g.run.tally.zaps, 0);
+    g.stop();
+    mars.planet.dispose();
+  });
+
+  it('Keep to the Shade only sends parcels to towns in the dark, without stopping the Sun', async () => {
+    const { app, planet } = await makeWorld({ world: 'mercury' }), game = app.game, day = app.sky.dayLength;
+    game.start({ mission: def('shade') });
+    const run = game.run, dark = planet.cities.sites.filter((s) => s !== run.from && planet.nightAt(s.c) > 0.5);
+    if (dark.length) assert.ok(planet.nightAt(run.dest.c) > 0.5, 'a parcel to a town in the sunshine');
+    assert.equal(app.sky.dayLength, day);
+    game.stop();
+    planet.dispose();
   });
 });
 

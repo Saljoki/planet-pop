@@ -196,6 +196,7 @@ export class App {
     this.hud.setTheme(planet.world ?? planet.theme);
     if (!initial) this.achievements.unlock('newworld');
     if (!planet.world || planet.world.id === 'earth') this.achievements.visitTheme(planet.theme.id); // (the kinds of made-up world)
+    if (planet.world) this.achievements.visitWorld(planet.world.id);
     this.updateUrl();
   }
 

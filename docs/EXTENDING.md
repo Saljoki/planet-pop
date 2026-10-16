@@ -109,10 +109,11 @@ a new kind of progress kept under a new key should be added there, or it won't m
 ## Add a mission
 
 Add an entry to `MISSIONS` in `js/game/Missions.js`. `goal.stat` names one of the counters in
-`DeliveryRun.tally` (deliveries, urgent, fragile, heavy, broken, rings, refuels, rexStreak, ufo, ash, night);
-`failIf` names one that ends the mission when it goes above zero. Setup flags (`rival`, `night`, `ufoIn`,
-`eruptions`, `cargo`) are applied in `MissionRun.setup()`; a new one goes there. Pick a planet that has what
-the mission needs; `tests/missions.test.mjs` checks that.
+`DeliveryRun.tally` (deliveries, urgent, fragile, heavy, broken, rings, refuels, rexStreak, ufo, ash, night, zaps,
+landmark); `failIf` names one that ends the mission when it goes above zero. Setup flags (`rival`, `night`, `dark`,
+`ufoIn`, `eruptions`, `cargo`, `landmark`, `carry`) are applied in `MissionRun.setup()`; a new one goes there. Pick a
+planet that has what the mission needs; `tests/missions.test.mjs` checks that. `planet: { world: 'mars' }` flies it on
+a real world: those missions are a list of their own on the board, opening up in order after the first.
 
 ## Add an option
 
@@ -166,6 +167,12 @@ planets pick it up from there. Add its id to the list of worlds `tests/themes.te
 - **A trip** is `Trip` (board, countdown, climb, cruise, land; it builds the next world with `app.buildWorld()` and
   swaps it in with `app.swapIn()`), with `Cruise` flying the ship across the map. Vehicles change with the air:
   `Car` builds a rover and `Plane` a hopper or glider from `planet.theme.air`, and cars fall with the world's gravity.
+- **The space courier** is `SpaceCourier` (`app.spaceCourier`: the parcel, its clock and pay; `GOODS` and `KINDS` are
+  what parcels can be) with its board, `ParcelBoard`. Taking a parcel starts a trip; on landing, `LandedCard` offers
+  the last stretch, `SpaceDropRun` (`game.start({ space: true })`, plus `drive: 'car'` by road), which hands it over.
+- **Weather on a world:** a theme's `storms` and `precip.kind` ('rain', 'snow', 'ash', 'sprinkles', or 'dust': no
+  lightning, and `FlightHazards.dust` wears the plane down instead of zapping it).
+- **The daily challenge** is on a real world about every other day: `dailyParams()` in `js/game/Daily.js` decides.
 
 ## Styles
 

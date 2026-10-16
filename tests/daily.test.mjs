@@ -1,7 +1,8 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import './helpers/dom.mjs';
-import { todayKey, dailySeed, dailyParams } from '../js/game/Daily.js';
+import { todayKey, dailySeed, dailyParams, dailyPlace } from '../js/game/Daily.js';
+import { WORLD_IDS, worldOf } from '../js/space/Worlds.js';
 import { Progress, BASE_STATS } from '../js/game/Progress.js';
 import { rollCargo } from '../js/game/Cargo.js';
 import { mulberry32 } from '../js/core/Noise.js';
@@ -16,6 +17,17 @@ test('the daily seed depends only on the date', () => {
   assert.equal(seeds.size, 60, 'two days share a planet');
   for (const s of seeds) assert.ok(Number.isInteger(s) && s >= 0 && s < 1e9);
   assert.deepEqual(dailyParams('2026-10-15'), { seed: dailySeed('2026-10-15'), land: 0.45, cities: 6, theme: pickTheme(dailySeed('2026-10-15')) });
+});
+
+test('about every other day is a world of the day, and every world gets its turn', () => {
+  const days = Array.from({ length: 365 }, (_, i) => dailyParams(new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10)));
+  const worlds = days.filter((p) => p.world);
+  assert.ok(worlds.length > 140 && worlds.length < 220, `${worlds.length} world days in a year`);
+  for (const id of WORLD_IDS) assert.ok(worlds.some((p) => p.world === id), `no ${id} day`);
+  const pluto = dailyParams('2026-10-14');
+  assert.deepEqual(pluto, { seed: worldOf('pluto').seed, land: 0.45, cities: worldOf('pluto').cities, theme: 'pluto', world: 'pluto' });
+  assert.equal(dailyPlace('2026-10-14'), '🤍 Pluto');
+  assert.equal(dailyPlace('2026-10-15'), '❄️ an ice world');
 });
 
 test('a seeded cargo roll gives everyone the same parcels', () => {

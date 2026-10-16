@@ -1,8 +1,10 @@
 import * as THREE from 'three';
+import { tangentBasis } from '../../core/Geo.js';
 import { mulberry32 } from '../../core/Noise.js';
 import { dailySeed } from '../Daily.js';
-import { MISSIONS, STAT_LABEL, missionIndex } from '../Missions.js';
-import { themeOf } from '../../world/Themes.js';
+import { CARGO } from '../Cargo.js';
+import { MISSIONS, STAT_LABEL, missionIndex, placeOf } from '../Missions.js';
+import { aKindOf } from '../../world/Themes.js';
 import { DeliveryRun } from './DeliveryRun.js';
 
 const _v = new THREE.Vector3();
@@ -12,6 +14,7 @@ export const FAIL_REASON = {
   time: '⏰ Out of time.',
   broken: '🥚 The fragile parcel broke.',
   ash: '🌋 You flew into the ash.',
+  zaps: '⚡ Struck by lightning.',
   wrecked: '💥 Wrecked.',
 };
 
@@ -21,9 +24,9 @@ export const FAIL_REASON = {
  */
 export class MissionRun extends DeliveryRun {
   static briefing({ mission }) {
-    const world = themeOf(mission.planet.theme);
+    const world = placeOf(mission), where = mission.planet.world ? world.name : aKindOf(world);
     return { icon: mission.icon, title: mission.name, goal: mission.brief,
-      tips: [`🪙 ${mission.reward} coins the first time you complete it.`, `Flown on a ${world.name.toLowerCase()} (${world.icon}), the same every time.`,
+      tips: [`🪙 ${mission.reward} coins the first time you complete it.`, `Flown on ${where} (${world.icon}), the same every time.`,
         mission.failIf ? 'One slip ends the mission, so take it steady.' : 'Run out of time and you can try again straight away.'] };
   }
 
@@ -35,6 +38,9 @@ export class MissionRun extends DeliveryRun {
   }
 
   get layout() { return { ...super.layout, badge: 'mission' }; }
+
+  /** Rex only races on the made-up planets (or when the mission asks for him). */
+  get hasRival() { return !this.def.planet.world; }
 
   get intro() { return `${this.def.icon} ${this.def.name}: ${this.def.brief}`; }
 
@@ -59,6 +65,16 @@ export class MissionRun extends DeliveryRun {
       Object.assign(p.ufo, { timer: d.ufoIn, hoverTime: 18, returnTime: 15 });
     }
     if (d.eruptions) p.volcanoes.forEach((v, i) => Object.assign(v, { state: 'calm', timer: 6 + i * 9 }));
+    if (d.landmark) { // the one parcel goes to the landmark: it stands in for a town
+      const l = p.landmarks.list.find((x) => x.name === d.landmark);
+      this.spot = { c: l.d, u: tangentBasis(l.d)[0], name: l.name };
+      this.dest = this.spot;
+      this.par = this.parFor(this.player.up);
+    }
+    if (d.carry) {
+      this.cargo = CARGO[d.carry];
+      this.player.setCargo(this.cargo);
+    }
     if (d.goal.stat === 'rings') this.game.props.rings.forEach((r) => this.placeRing(r)); // along the route, not all over the planet
   }
 
@@ -69,9 +85,9 @@ export class MissionRun extends DeliveryRun {
     super.end();
   }
 
-  /** Night Shift only sends parcels to cities in darkness (while there are any). */
+  /** Night Shift (and Keep to the Shade) only send parcels to cities in darkness (while there are any). */
   destinations(sites) {
-    if (!this.def.night) return sites;
+    if (!this.def.night && !this.def.dark) return sites;
     const dark = sites.filter((s) => this.planet.nightAt(s.c) > 0.5);
     return dark.length ? dark : sites;
   }
@@ -94,6 +110,23 @@ export class MissionRun extends DeliveryRun {
       return { c: _v.copy(ring.position).normalize(), text: '💍 Next ring' };
     }
     return null;
+  }
+
+  /** Handed over at the landmark (a landmark mission's one parcel), or an ordinary delivery. */
+  deliver() {
+    if (!this.spot || this.dest !== this.spot) { super.deliver(); return; }
+    const pts = Math.round(100 * this.cargo.pay);
+    this.score += pts;
+    this.earn(Math.round(pts / 10));
+    this.tally.deliveries++;
+    this.tally.landmark++;
+    this.app.sfx.pop(this.player.pos.clone(), `${this.def.icon} ${this.spot.name}!`, '#2ee59d', 'deliver');
+    this.app.haptics?.buzz('deliver');
+  }
+
+  zapped() {
+    super.zapped();
+    this.tally.zaps++;
   }
 
   /** e.g. { have: 1, need: 2, text: '1 / 2 urgent' } */
@@ -126,7 +159,8 @@ export class MissionRun extends DeliveryRun {
   endMission(result) {
     const p = this.game.progress, def = this.def, won = result === 'done';
     const reward = won ? p.completeMission(def) : 0, next = MISSIONS[missionIndex(def.id) + 1];
-    if (won && MISSIONS.every((m) => p.missionDone(m.id))) this.app.achievements.unlock('missions');
+    const list = MISSIONS.filter((m) => !m.planet.world === !def.planet.world); // (the made-up planets' or the real worlds')
+    if (won && list.every((m) => p.missionDone(m.id))) this.app.achievements.unlock(def.planet.world ? 'spacemissions' : 'missions');
     this.game.finish({
       title: won ? '🎯 Mission complete!' : '❌ Mission failed',
       html: `${def.icon} <b>${def.name}</b><br>${won

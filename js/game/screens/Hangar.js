@@ -1,5 +1,5 @@
 import { UPGRADES, SKINS } from '../Progress.js';
-import { todayKey } from '../Daily.js';
+import { todayKey, dailyPlace } from '../Daily.js';
 import { Overlay } from '../../ui/Overlay.js';
 
 /**
@@ -81,7 +81,7 @@ export class Hangar extends Overlay {
   render() {
     const p = this.progress, trophies = this.app.achievements.done, today = p.dailyBest(todayKey());
     this.dom.coins.innerHTML = `🪙 <b>${p.coins}</b> coins · best run ⭐ ${p.best}`;
-    this.dom.dailyNote.textContent = `Daily: today's planet and route, same for everyone, flown in the stock plane. ${
+    this.dom.dailyNote.textContent = `Daily: today's planet (${dailyPlace()}) and route, same for everyone, flown in the stock plane. ${
       today === null ? 'Not flown yet today.' : `Your best today: ⭐ ${today}`} Free flight: no clock, no parcels, no coins.`;
     this.dom.ups.innerHTML = UPGRADES.map((u) => {
       const lvl = p.level(u.id), cost = p.nextCost(u.id);
