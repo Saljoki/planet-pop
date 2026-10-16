@@ -1,4 +1,5 @@
 import { makeHello, makeState, readHello, readState, planetOf, planetKey } from './Wire.js';
+import { worldOf } from '../space/Worlds.js';
 import { Ghost } from './Ghost.js';
 import { TabLink } from './TabLink.js';
 import { TrysteroLink } from './TrysteroLink.js';
@@ -154,6 +155,11 @@ export class Friends {
   async goTo(peer) {
     const g = this.ghosts.get(peer), app = this.app;
     if (!g?.planet || g.key === this.myKey || app.building) return;
+    if (g.planet.world) { // a real world: by rocket if we can, else straight there
+      app.hud.toast(`🚀 Off to ${g.name} on ${worldOf(g.planet.world).name}…`);
+      if (!app.trip?.go(g.planet.world)) await app.visitWorld?.(g.planet.world);
+      return;
+    }
     const { seed, land, cities, theme } = g.planet;
     Object.assign(app.params, { seed, land: land / 100, cities, theme });
     app.hud.panel.syncParams(app.params);

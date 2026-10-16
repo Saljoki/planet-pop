@@ -1,5 +1,6 @@
 import { Friends } from '../net/Friends.js';
 import { Overlay } from './Overlay.js';
+import { worldOf } from '../space/Worlds.js';
 
 /**
  * 👥 Play with friends (the 👥 button): start a room or join one by its code, then share the invite link. In a room
@@ -127,7 +128,8 @@ export class FriendsMenu extends Overlay {
       this.list.append(el);
     };
     row(`${this.app.settings.playerName || 'You'} (you)`, this.app.game.active ? 'playing' : 'here', null);
-    for (const g of people) row(g.name, g.key === mine ? g.doing : '🪐 on another planet', g.key === mine ? null : g.id);
+    const where = (g) => (g.planet?.world ? `${worldOf(g.planet.world).icon} on ${worldOf(g.planet.world).name}` : '🪐 on another planet');
+    for (const g of people) row(g.name, g.key === mine ? g.doing : where(g), g.key === mine ? null : g.id);
     this.note.textContent = people.length ? `${people.length + 1} in the room.` : '⏳ Waiting for friends… send them the invite link.';
   }
 }

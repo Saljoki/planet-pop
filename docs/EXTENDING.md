@@ -142,11 +142,33 @@ then `app.sfx.play(name)`, or `app.sfx.pop(pos, 'TEXT!', colour, name)` for a co
 Add an object to `THEMES` in `js/world/Themes.js` (copy one and change it); the World menu and surprise
 planets pick it up from there. Add its id to the list of worlds `tests/themes.test.mjs` builds and runs.
 
+## Real worlds and the solar system (js/space/)
+
+- **A real world** (one you can land on) is an entry in `WORLDS` (`js/space/Worlds.js`): a fixed seed, a theme, how
+  many towns, its gravity and day, and a `shape`: either a land map (Earth's, made by `scripts/earthmap.mjs`) or a
+  base height and noise, plus named features at their real latitude and longitude (domes, bowls, flat lava seas,
+  craters, ridges and valleys along a line, ice caps, painted patches). `js/core/WorldShape.js` turns that into
+  heights and colours; it's plain JS so the terrain worker uses it too. `peaks` puts mountain cones on famous
+  summits (highways and towns keep off them) and `landmarks` are places Find and the info card know. Its look goes in
+  `WORLD_THEMES` (`js/space/WorldThemes.js`): `air` ('none' or 'thin') switches off clouds, birds, planes, balloons and
+  wind farms, `sea.none` the sea, and `moons` says what hangs in its sky. Give its body in `BODIES` a `world` so the
+  map's card offers a trip there, and add it to the tests in `tests/space.test.mjs`.
+- **A body on the map** (`js/space/Bodies.js`): NASA's numbers for the card, how it's drawn (`look`: picked up by
+  `BodyArt`), and `orbit`, its name in `ORBITS` (`js/space/Orbits.js`, JPL's elements). The map squeezes sizes and
+  distances with a square root (`mapSize`, `mapPosition`).
+- **The map** is `SystemMap` (opening, closing, taps, the clock) drawing `SystemScene` (the bodies, orbits and belts)
+  through `MapView` (its camera). While it's open, `App` renders it instead of the planet and `CameraRig` hands it the
+  gestures (`map.input`: the map's camera, or the ship while cruising).
+- **A trip** is `Trip` (board, countdown, climb, cruise, land; it builds the next world with `app.buildWorld()` and
+  swaps it in with `app.swapIn()`), with `Cruise` flying the ship across the map. Vehicles change with the air:
+  `Car` builds a rover and `Plane` a hopper or glider from `planet.theme.air`, and cars fall with the world's gravity.
+
 ## Styles
 
 `css/` is split by area and loaded in this order (later files win ties): `base.css` (fonts, colours, buttons,
 overlays), `hud.css` (the planet view), `game.css` (Sky Courier's HUD and touch controls), `cards.css` (info
-card, Find, tour), `menus.css` (briefing, Options, hangar, missions), `photo.css`, and `phone.css` (all the
+card, Find, tour), `menus.css` (briefing, Options, hangar, missions), `photo.css`, `space.css` (the system map,
+trips, the landing card), and `phone.css` (all the
 small-screen and touch rules, last so they win).
 
 ## Tests and screenshots

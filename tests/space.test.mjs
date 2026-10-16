@@ -212,7 +212,7 @@ describe('trips', () => {
     assert.equal(app.game.progress.coins, coins + c.stars, 'a coin a star');
     assert.ok(app.trip.card.open, 'welcome, and what to do next');
     app.game.start({ drive: 'car', from: 'pad' });
-    assert.ok(app.game.player.up.angleTo(app.planet.space.site.d) < 0.06, 'the rover waits by the pad');
+    assert.ok(app.game.player.up.angleTo(app.planet.space.site.d) < 0.12, 'the rover waits by the pad');
     assert.equal(app.game.player.carKind, 'car');
     app.game.stop();
   });

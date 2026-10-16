@@ -18,6 +18,8 @@ export class AboutCard extends Overlay {
         <small>For your results, the hangar and the daily share. Only kept in this browser.</small></label>
       <h3>Thanks to</h3>
       <p class="credits">three.js (MIT licence) for the 3D · the Bangers font by Vernon Adams (SIL Open Font Licence)</p>
+      <p class="credits">Earth's continents: Natural Earth (public domain) · where the planets are: NASA JPL's orbit elements ·
+        the numbers on each world's card: NASA's planetary fact sheet</p>
       <p class="credits"><a href="${REPO}" target="_blank" rel="noopener">📂 The source on GitHub</a></p>
       <button id="abDone" class="big">✔ Done</button>` });
     this.app = app;

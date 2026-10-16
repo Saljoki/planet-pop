@@ -48,7 +48,7 @@ export class FreeDrive extends Run {
     }
     const pad = this.opts.from === 'pad' && p.space?.site;
     if (pad && !this.boat) {
-      const at = pad.d.clone().addScaledVector(pad.fwd, 0.035).normalize();
+      const at = pad.d.clone().addScaledVector(pad.fwd, 0.1).normalize(); // (far enough that the camera behind clears the pad)
       if (!ground.carBlock(at)) return { at, heading: pad.fwd };
     }
     const sites = p.cities.sites, town = sites[Math.floor(this.rand() * sites.length)];
