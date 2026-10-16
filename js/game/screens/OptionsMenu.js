@@ -1,10 +1,11 @@
 import { Overlay } from '../../ui/Overlay.js';
+import { SaveBox } from './SaveBox.js';
 import { VERSION } from '../../core/Version.js';
 
 /**
  * ⚙️ Options, from the briefing, the hangar or the pause menu: the player's name, Invert Y and steering sensitivity,
  * tilt steering and vibration on phones, sound and ambience volume, whether to show the briefing and the mini-map,
- * and resetting Sky Courier progress.
+ * saving and loading progress (SaveBox), and resetting Sky Courier progress.
  * Every change applies straight away and is remembered.
  */
 export class OptionsMenu extends Overlay {
@@ -28,12 +29,15 @@ export class OptionsMenu extends Overlay {
       <h3>Game</h3>
       <label class="opt"><input id="oBrief" type="checkbox"><span>Show the briefing before each run</span></label>
       <label class="opt"><input id="oMap" type="checkbox"><span>Mini-map<small>The little map of where you are and where to go (🗺️ or M shows and hides it)</small></span></label>
+      <h3>💾 Your progress</h3>
+      <div id="oSaves"></div>
       <button id="oReset" class="danger">🗑️ Reset Sky Courier progress</button>
       <small class="note" id="oResetNote">Coins, upgrades, paint jobs, missions and best scores. Trophies stay.</small>
       <button id="oDone" class="big">✔ Done</button>
       <button id="oAbout" class="about">ℹ️ About Planet Pop · v${VERSION}</button>` });
     this.app = app;
     this.game = game;
+    this.saves = new SaveBox(app, this.$('oSaves'));
     const $ = (id) => this.$(id), pct = (v) => `${Math.round(v)}%`;
     this.bind('oInvert', 'change', (e) => s.set('invertY', e.target.checked));
     this.bind('oSens', 'input', (e) => { s.set('sensitivity', +e.target.value / 100); $('oSensVal').textContent = pct(+e.target.value); });
@@ -79,6 +83,7 @@ export class OptionsMenu extends Overlay {
   }
 
   render() {
+    this.saves.disarm();
     const s = this.app.settings, $ = (id) => this.$(id), app = this.app;
     $('oInvert').checked = s.get('invertY');
     $('oSens').value = Math.round(s.get('sensitivity') * 100);

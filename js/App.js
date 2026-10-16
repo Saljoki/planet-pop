@@ -21,6 +21,7 @@ import { TourMode } from './ui/TourMode.js';
 import { FindMenu } from './ui/FindMenu.js';
 import { TrophyWatch } from './ui/TrophyWatch.js';
 import { Settings } from './game/Settings.js';
+import { SaveBox } from './game/screens/SaveBox.js';
 import { dailyParams } from './game/Daily.js';
 import { THEME_IDS, pickTheme } from './world/Themes.js';
 
@@ -134,6 +135,7 @@ export class App {
     this.quality.pauseFor(3);
     this.building = false;
     if (initial && this.settings.playerName) this.hud.toast(`👋 Welcome back, ${this.settings.playerName}!`);
+    if (initial) SaveBox.welcome(this.hud);
     if (initial && this.dailyLink) {
       this.dailyLink = false;
       this.hud.toast("📅 Today's daily challenge is ready. Press Daily challenge to fly it!");

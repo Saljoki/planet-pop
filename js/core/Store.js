@@ -40,3 +40,21 @@ export function saveNumber(key, n) { write(key, String(n)); }
 export function forget(key) {
   try { localStorage.removeItem(key); } catch { /* storage unavailable */ }
 }
+
+/** Exactly what's saved under `key` (null if nothing), and putting it back: for save codes (SaveCode.js). */
+export function loadText(key) { return read(key); }
+
+export function saveText(key, text) { write(key, text); }
+
+let keeping = null;
+/**
+ * Ask the browser to keep what's saved here even when it's short of space or the site hasn't been visited for a
+ * while (Safari clears sites after a week otherwise). Browsers decide for themselves (some ask the player), so it's
+ * asked once a visit, and only once there's progress worth keeping.
+ */
+export function keepSaves() {
+  keeping ??= (async () => {
+    try { return (await navigator.storage?.persisted?.()) || !!(await navigator.storage?.persist?.()); } catch { return false; }
+  })();
+  return keeping;
+}

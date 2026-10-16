@@ -4,6 +4,7 @@ import { dailyParams } from './Daily.js';
 import { CourierProps } from './CourierProps.js';
 import { FlightHazards } from './FlightHazards.js';
 import { Widget } from '../ui/Widget.js';
+import { keepSaves } from '../core/Store.js';
 import { FlightControls } from './input/FlightControls.js';
 import { runClass } from './runs/modes.js';
 import { CourierHud } from './screens/CourierHud.js';
@@ -218,6 +219,7 @@ export class CourierGame {
     this.controls.release();
     this.results.show(card);
     this.app.sfx.play(sound);
+    keepSaves(); // there's progress worth keeping now
     this.hud.update();
   }
 }
