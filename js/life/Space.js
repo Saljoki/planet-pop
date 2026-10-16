@@ -11,7 +11,7 @@ const NO_SHADOW = { cast: false, receive: false };
 const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _p2 = new THREE.Vector3();
 const _up = new THREE.Vector3(), _f = new THREE.Vector3(), _v = new THREE.Vector3();
 
-/** Moon, satellites, a space station and a rocket that launches from its coastal pad. */
+/** Moon (or moons), satellites, a space station and a rocket that launches from its pad. */
 export class Space {
   constructor(planet) {
     this.planet = planet;
@@ -31,17 +31,25 @@ export class Space {
     return spin;
   }
 
+  /**
+   * What hangs in the sky: our Moon over a made-up planet or Earth, or whatever the world's theme says (`moons`):
+   * Earth in the Moon's sky, Phobos and Deimos over Mars. Each is a body of its own on a tilted orbit.
+   */
   buildMoon() {
-    const rng = this.planet.rng;
-    this.moonOrbit = this.orbitGroup(0.4, 0.25);
-    const moon = addMesh(this.moonOrbit, new THREE.SphereGeometry(1.6, 32, 24), toon('#efeaff'), 0.05, NO_SHADOW);
-    moon.position.set(28, 0, 0);
-    const craters = Array.from({ length: 8 }, () => { // merged: one draw call instead of eight
-      const d = rng.dir(), cr = rng.range(0.18, 0.42);
-      return new THREE.SphereGeometry(1, 16, 8).applyMatrix4(frame(_m, _p.copy(d).multiplyScalar(1.6 - cr * 0.15), d, rng.dir(), cr, cr * 0.22, cr));
+    const rng = this.planet.rng, list = this.planet.theme.moons ?? [{ name: 'The Moon', kind: 'moon', size: 1.6, dist: 28, color: '#efeaff' }];
+    this.moons = list.map((def, i) => {
+      const orbit = this.orbitGroup(0.4 - i * 0.3, 0.25 + i * 0.4), s = def.size;
+      orbit.rotation.y = i * 2.1;
+      const body = addMesh(orbit, new THREE.SphereGeometry(s, 32, 24), toon(def.color), 0.05, NO_SHADOW);
+      body.position.set(def.dist, 0, 0);
+      const spots = Array.from({ length: def.kind === 'earth' ? 7 : 8 }, () => { // craters, or Earth's continents (merged: one draw call)
+        const d = rng.dir(), cr = rng.range(0.18, 0.42) * s * (def.kind === 'earth' ? 1.9 : 1);
+        return new THREE.SphereGeometry(1, 16, 8).applyMatrix4(frame(_m, _p.copy(d).multiplyScalar(s - cr * 0.15), d, rng.dir(), cr, cr * 0.22, cr));
+      });
+      body.add(new THREE.Mesh(mergeGeometries(spots), toon(def.land ?? (def.kind === 'rock' ? '#6f6158' : '#c6badf'))));
+      this.entities.push(new ObjectEntity(body, 'moon', def.name));
+      return { orbit, speed: def.speed ?? 0.035 };
     });
-    moon.add(new THREE.Mesh(mergeGeometries(craters), toon('#c6badf')));
-    this.entities.push(new ObjectEntity(moon, 'moon', 'The Moon'));
   }
 
   buildSatellites() {
@@ -180,7 +188,7 @@ export class Space {
   }
 
   update(dt) {
-    this.moonOrbit.rotation.y += dt * 0.035;
+    for (const m of this.moons) m.orbit.rotation.y += dt * m.speed;
     this.stationOrbit.rotation.y += dt * 0.08;
     this.station.rotation.x += dt * 0.1;
     this.sats.forEach((s, i) => {

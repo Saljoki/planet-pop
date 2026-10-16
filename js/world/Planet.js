@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { R, smoothstep, tangentBasis } from '../core/Geo.js';
 import { Heightfield } from '../core/Noise.js';
+import { WorldShape } from '../core/WorldShape.js';
+import { worldOf } from '../space/Worlds.js';
 import { Random } from '../core/Random.js';
 import { Terrain } from './Terrain.js';
 import { Roads } from './Roads.js';
@@ -37,11 +39,13 @@ const yieldFrame = () => new Promise((r) => setTimeout(r, 0));
 export class Planet {
   constructor(app, params) {
     this.app = app;
-    this.params = { ...params };
-    this.theme = themeOf(params.theme);
-    this.rng = new Random(params.seed);
-    this.sea = Heightfield.seaLevelFor(params.seed, params.land);
-    this.hf = new Heightfield(params.seed, this.sea);
+    this.world = worldOf(params.world); // a real world (Earth, the Moon, Mars), always the same; else a made-up one
+    this.params = { ...params, ...(this.world && { seed: this.world.seed, theme: this.world.theme, cities: this.world.cities }) };
+    const p = this.params;
+    this.theme = themeOf(p.theme);
+    this.rng = new Random(p.seed);
+    this.sea = this.world ? 0 : Heightfield.seaLevelFor(p.seed, p.land);
+    this.hf = new Heightfield(p.seed, this.sea, [], this.world && new WorldShape(this.world.shape, p.seed));
     this.root = new THREE.Group();
     this.reserved = [];
     this.keepClear = []; // spots mountains must avoid (airport approaches)

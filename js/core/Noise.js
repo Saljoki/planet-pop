@@ -42,11 +42,15 @@ export function makePerlin(seed) {
 }
 
 export class Heightfield {
-  /** flats: levelled zones [{ x, y, z, cosIn, cosOut, level }]: full level inside cosIn, blending out to cosOut. */
-  constructor(seed, sea = 0, flats = []) {
+  /**
+   * flats: levelled zones [{ x, y, z, cosIn, cosOut, level }]: full level inside cosIn, blending out to cosOut.
+   * shape: a WorldShape for a real world (Earth's continents, the Moon's seas…), or null for a made-up one.
+   */
+  constructor(seed, sea = 0, flats = [], shape = null) {
     this.perlin = makePerlin(seed);
     this.sea = sea;
     this.flats = flats;
+    this.shape = shape;
   }
 
   fbm(x, y, z) {
@@ -60,7 +64,7 @@ export class Heightfield {
 
   /** Height above sea level for a unit direction (negative = underwater). */
   height(x, y, z) {
-    let h = Math.min((this.fbm(x, y, z) - this.sea) * 3.4, 1.5);
+    let h = this.shape ? Math.min(this.shape.height(x, y, z, this), 1.8) : Math.min((this.fbm(x, y, z) - this.sea) * 3.4, 1.5);
     for (const f of this.flats) {
       const c = f.x * x + f.y * y + f.z * z;
       if (c <= f.cosOut) continue;

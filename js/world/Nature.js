@@ -43,7 +43,7 @@ export class Nature {
 
   placeMountains() {
     const p = this.planet, rng = p.rng;
-    for (let tries = 0, peaks = 0; peaks < 14 && tries < 8000; tries++) {
+    for (let tries = 0, peaks = 0; peaks < (p.theme.mountains.peaks ?? 14) && tries < 8000; tries++) {
       const d = rng.dir();
       if (p.heightAt(d) < 0.42) continue;
       const s = rng.range(0.6, 0.9);

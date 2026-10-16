@@ -14,7 +14,7 @@ export class Aurora {
     this.planet = planet;
     this.poles = [1, -1].map((s) => planet.app.sky.axis.clone().multiplyScalar(s));
     const rng = planet.rng, pos = [], uv = [], out = [], idx = [];
-    for (const pole of this.poles) {
+    for (const pole of planet.theme.air ? [] : this.poles) { // (an aurora needs an atmosphere to glow in)
       const [u, v] = tangentBasis(pole);
       for (let c = 0; c < CURTAINS; c++) {
         const ph = rng.range(0, TAU), base = pos.length / 3;

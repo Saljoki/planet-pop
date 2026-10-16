@@ -36,6 +36,7 @@ export class Sky {
     const u = this.halo.material.uniforms;
     u.uDay.value.set(theme.halo.day);
     u.uNight.value.set(theme.halo.night);
+    u.uStrength.value = theme.halo.strength ?? 1; // (0: no air, a black sky)
   }
 
   update(dt) {
@@ -101,7 +102,7 @@ function sunTexture() {
 
 function makeHalo() {
   const mat = new THREE.ShaderMaterial({
-    uniforms: { uSun: shared.uSun, uDay: { value: new THREE.Color('#9fdcff') }, uNight: { value: new THREE.Color('#5a4fc9') } },
+    uniforms: { uSun: shared.uSun, uDay: { value: new THREE.Color('#9fdcff') }, uNight: { value: new THREE.Color('#5a4fc9') }, uStrength: { value: 1 } },
     vertexShader: /* glsl */ `
       varying vec3 vN; varying vec3 vP; varying vec3 vW;
       void main() {
@@ -111,14 +112,14 @@ function makeHalo() {
         gl_Position = projectionMatrix * mv;
       }`,
     fragmentShader: /* glsl */ `
-      uniform vec3 uSun; uniform vec3 uDay; uniform vec3 uNight;
+      uniform vec3 uSun; uniform vec3 uDay; uniform vec3 uNight; uniform float uStrength;
       varying vec3 vN; varying vec3 vP; varying vec3 vW;
       void main() {
         float d = -dot(normalize(vN), normalize(-vP));
         float a = clamp(d / 0.66, 0.0, 1.0);
         a = (step(0.2, a) + step(0.5, a) + step(0.8, a)) / 3.0;       // banded comic glow
         float day = smoothstep(-0.35, 0.35, dot(normalize(vW), uSun));
-        gl_FragColor = vec4(mix(uNight, uDay, day), a * mix(0.14, 0.42, day));
+        gl_FragColor = vec4(mix(uNight, uDay, day), a * mix(0.14, 0.42, day) * uStrength);
         #include <colorspace_fragment>
       }`,
     side: THREE.BackSide,

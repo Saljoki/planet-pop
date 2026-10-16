@@ -1,3 +1,5 @@
+import { WORLD_THEMES } from '../space/WorldThemes.js';
+
 /**
  * World themes. Everything that makes an ice world look different from a candy world lives here as data:
  * terrain and sea colours, trees, mountains, buildings, clouds, what falls from storm clouds, and the sky glow.
@@ -103,4 +105,5 @@ export function pickTheme(seed) {
   return others[Math.floor(((roll - 0.36) / 0.64) * others.length)];
 }
 
-export const themeOf = (id) => THEMES[id] || THEMES.classic;
+/** A theme by id: a surprise world's, or a real world's (space/WorldThemes.js). */
+export const themeOf = (id) => THEMES[id] || WORLD_THEMES[id] || THEMES.classic;

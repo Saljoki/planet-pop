@@ -27,7 +27,7 @@ export class Helicopters {
   constructor(planet) {
     this.planet = planet;
     const sites = planet.cities.sites, rng = planet.rng, root = planet.root;
-    this.list = sites.length ? Array.from({ length: COUNT }, (_, i) => {
+    this.list = sites.length && !planet.theme.air ? Array.from({ length: COUNT }, (_, i) => { // (helicopters need air)
       const at = sites[(i * 2) % sites.length];
       return { at, from: at.c.clone(), to: at.c.clone(), th: 0, t: 0, dur: 0, state: 'hover', wait: rng.range(1, HOVER[1]),
         r: this.hoverR(at), fwd: at.u.clone(), spin: rng.range(0, TAU), bob: rng.range(0, TAU) };

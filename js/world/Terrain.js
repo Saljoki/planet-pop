@@ -33,7 +33,7 @@ export class Terrain {
   async build() {
     const p = this.planet, ico = new THREE.IcosahedronGeometry(1, DETAIL);
     const out = await compute({
-      seed: p.params.seed, sea: p.sea, flats: p.hf.flats, pal: p.theme.pal, radius: R,
+      seed: p.params.seed, sea: p.sea, flats: p.hf.flats, shape: p.world?.shape ?? null, pal: p.theme.pal, radius: R,
       unit: ico.attributes.position.array,
       cities: p.cities.sites.map((s) => [s.c.x, s.c.y, s.c.z]),
       cityCos: p.cities.cosR,
@@ -91,6 +91,6 @@ export class Terrain {
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.88, 0.95, 1.0), winterCover(od, 0.0, 0.27, 0.012)); // winter sea ice`);
     }, 'ocean');
     mat.userData.tex = tex;
-    addMesh(this.planet.root, new THREE.SphereGeometry(R, 160, 110), mat, 0.06, { cast: false });
+    if (!sea.none) addMesh(this.planet.root, new THREE.SphereGeometry(R, 160, 110), mat, 0.06, { cast: false }); // (dry worlds have no sea)
   }
 }

@@ -26,9 +26,10 @@ export class Meteors {
     this.timer = 40 + Math.random() * 40;
     this.shower = 0;
     this.spawnT = 0;
-    this.list = Array.from({ length: MAX }, () => ({ live: false, p: new THREE.Vector3(), v: new THREE.Vector3(), t: 0, len: 1 }));
+    const n = planet.theme.air === 'none' ? 0 : MAX; // (no air: nothing for a meteor to burn up in)
+    this.list = Array.from({ length: n }, () => ({ live: false, p: new THREE.Vector3(), v: new THREE.Vector3(), t: 0, len: 1 }));
     this.mesh = addInstanced(planet.root, streakGeometry(),
-      new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), MAX, 0, { cast: false, receive: false });
+      new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }), n, 0, { cast: false, receive: false });
     this.mesh.layers.set(LAYER_FX);
     this.mesh.setColorAt(0, _c.set('#ffffff'));
     this.update(0);
