@@ -21,6 +21,9 @@ import { TourMode } from './ui/TourMode.js';
 import { FindMenu } from './ui/FindMenu.js';
 import { TrophyWatch } from './ui/TrophyWatch.js';
 import { Settings } from './game/Settings.js';
+import { SaveBox } from './game/screens/SaveBox.js';
+import { Friends } from './net/Friends.js';
+import { FriendsMenu } from './ui/FriendsMenu.js';
 import { dailyParams } from './game/Daily.js';
 import { THEME_IDS, pickTheme } from './world/Themes.js';
 
@@ -45,6 +48,7 @@ export class App {
   constructor() {
     this.params = { ...paramsFromUrl(), traffic: 5 };
     this.dailyLink = new URLSearchParams(location.search).has('daily'); // opened from a shared daily result
+    this.roomLink = new URLSearchParams(location.search).get('room'); // opened from a friend's invite
     this.timeScale = 1;
     this.paused = false;
     this.simTime = 0;
@@ -87,6 +91,8 @@ export class App {
     this.gamepad = new Gamepad(this);
     this.tour = new TourMode(this);
     this.find = new FindMenu(this);
+    this.friends = new Friends(this);
+    this.friendsMenu = new FriendsMenu(this);
     this.detail = new Detail();
     this.onRendered = null; // one-shot callback with the canvas right after a frame is drawn (photo mode)
 
@@ -134,6 +140,11 @@ export class App {
     this.quality.pauseFor(3);
     this.building = false;
     if (initial && this.settings.playerName) this.hud.toast(`👋 Welcome back, ${this.settings.playerName}!`);
+    if (initial) SaveBox.welcome(this.hud);
+    if (initial && this.roomLink) { // opened from an invite: into the room (and a name first, if there isn't one)
+      this.friends.join(this.roomLink);
+      if (!this.settings.playerName) this.friendsMenu.show();
+    }
     if (initial && this.dailyLink) {
       this.dailyLink = false;
       this.hud.toast("📅 Today's daily challenge is ready. Press Daily challenge to fly it!");
@@ -160,6 +171,8 @@ export class App {
   updateUrl() {
     const p = this.params;
     const q = new URLSearchParams({ seed: p.seed, land: Math.round(p.land * 100), cities: p.cities, theme: p.theme });
+    if (this.friends?.code) q.set('room', this.friends.code);
+    if (this.friends?.tabs) q.set('net', 'tabs');
     try { history.replaceState(null, '', `${location.pathname}?${q}`); } catch { /* e.g. sandboxed iframe */ }
   }
 
@@ -188,6 +201,7 @@ export class App {
     this.trophies.update();
     this.gamepad.update();
     if (this.game.active) this.game.update(dt, real);
+    this.friends.update(real);
     this.tour.update(real);
     this.rig.update(real);
     this.hud.update(real);
@@ -200,6 +214,7 @@ export class App {
     this.debug.begin();
     this.postfx.render(this.scene, this.camera);
     if (this.game.active) this.game.draw(this.renderer);
+    this.friends.draw();
     if (this.onRendered) { const done = this.onRendered; this.onRendered = null; done(this.renderer.domElement); }
     this.debug.end(real);
   }

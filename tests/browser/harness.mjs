@@ -30,8 +30,9 @@ function serve() {
 
 /**
  * Start the server and the browser and load the planet. Returns the helpers scenes use:
- * page · base (the server's URL) · frames(n) · until(fn) · scene(label, note, steps) · open(query) and a few
- * staging helpers (restoreSky, midnightOver, ufoHere) · finish() to write the report and exit.
+ * page · base (the server's URL) · frames(n) · until(fn) · scene(label, note, steps) · open(query) · second(query)
+ * (another player's page) and a few staging helpers (restoreSky, midnightOver, ufoHere) · finish() to write the
+ * report and exit.
  */
 export async function start() {
   const server = await serve();
@@ -90,6 +91,15 @@ export async function start() {
     await until(() => window.app?.planet && !window.app.building, 240000);
   };
 
+  /** A second page in the same browser (a friend in a ?net=tabs room), loaded with this query; close it when done. */
+  const second = async (query) => {
+    const other = await browser.newPage();
+    other.on('pageerror', (e) => problems.push(`Uncaught (second page): ${e.message}`));
+    await other.goto(`${base}index.html?${query}`, { waitUntil: 'domcontentloaded' });
+    await other.waitForFunction(() => window.app?.planet && !window.app.building, { timeout: 240000, polling: 200 });
+    return other;
+  };
+
   const t0 = Date.now();
   await open(PLANET);
   const loadSeconds = (Date.now() - t0) / 1000;
@@ -143,7 +153,7 @@ export async function start() {
     process.exit(problems.length ? 1 : 0);
   };
 
-  return { page, base, problems, frames, until, scene, open, restoreSky, midnightOver, ufoHere, finish };
+  return { page, base, problems, frames, until, scene, open, second, restoreSky, midnightOver, ufoHere, finish };
 }
 
 /** Frame time, draw calls and so on, for the report. */

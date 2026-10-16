@@ -44,5 +44,6 @@
   border: 3px solid var(--ink); border-radius: 10px; box-shadow: 2px 2px 0 var(--ink); padding: 2px 8px 0; text-shadow: 1px 1px 0 var(--ink);
   transform: translate(-50%, calc(-100% - 10px)); }
 .tag.you { background: var(--yellow); color: var(--ink); text-shadow: none; }
+.tag.friend { background: #2ee59d; color: var(--ink); text-shadow: none; }
 #gWho { display: inline-block; margin-bottom: 6px; background: #8f5cff; color: #fff; font-size: 17px; border: 3px solid var(--ink);
   border-radius: 10px; box-shadow: 2px 2px 0 var(--ink); padding: 2px 10px 0; text-shadow: 1px 1px 0 var(--ink); }

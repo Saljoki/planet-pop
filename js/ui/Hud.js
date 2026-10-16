@@ -19,7 +19,7 @@ export class Hud {
       <div id="title" class="badge">Planet Pop!</div>
       <div id="hint" class="badge">${hint}</div>
       <div id="worldTag" class="badge"></div>
-      <div id="topBtns"><button id="compassBtn" class="hidden" title="Back to north-up">🧭</button><button id="installBtn" class="hidden" title="Install Planet Pop as an app">📲</button><button id="findBtn" title="Find things and events (F)">📍</button><button id="photoBtn" title="Photo mode (C)">📷</button><button id="panelToggle">☰<span class="wide"> Controls</span></button></div>`;
+      <div id="topBtns"><button id="compassBtn" class="hidden" title="Back to north-up">🧭</button><button id="installBtn" class="hidden" title="Install Planet Pop as an app">📲</button><button id="friendsBtn" title="Play with friends">👥</button><button id="findBtn" title="Find things and events (F)">📍</button><button id="photoBtn" title="Photo mode (C)">📷</button><button id="panelToggle">☰<span class="wide"> Controls</span></button></div>`;
     this.panel = new ControlPanel(app);
     ui.insertAdjacentHTML('beforeend', `
       <div id="follow" class="badge hidden"><span id="followName"></span><button id="releaseBtn">✕ Release</button></div>
@@ -38,6 +38,7 @@ export class Hud {
       this.info.hide();
     };
     $('findBtn').onclick = () => app.find?.toggle();
+    $('friendsBtn').onclick = () => app.friendsMenu?.show();
     $('compassBtn').onclick = () => app.rig.resetView();
     $('photoBtn').onclick = () => app.photo?.enter();
     addEventListener('beforeinstallprompt', (e) => { // browsers that can install web apps offer it here
@@ -111,6 +112,13 @@ export class Hud {
   setFollow(e) {
     this.$('follow').classList.toggle('hidden', !e);
     if (e) this.$('followName').textContent = `👀 ${e.name}`;
+  }
+
+  /** The 👥 button shows how many are in the room (0: not in one). */
+  setFriends(n) {
+    const b = this.$('friendsBtn');
+    b.textContent = n ? `👥 ${n}` : '👥';
+    b.classList.toggle('on', n > 0);
   }
 
   toast(text) {

@@ -9,10 +9,11 @@ import events from './scenes/events.mjs';
 import views from './scenes/views.mjs';
 import courier from './scenes/courier.mjs';
 import road from './scenes/road.mjs';
+import friends from './scenes/friends.mjs';
 import themes from './scenes/themes.mjs';
 import phone from './scenes/phone.mjs';
 import offline from './scenes/offline.mjs';
 
 const h = await start();
-for (const area of [world, events, views, courier, road, themes, phone, offline]) await area(h);
+for (const area of [world, events, views, courier, road, friends, themes, phone, offline]) await area(h);
 await h.finish();

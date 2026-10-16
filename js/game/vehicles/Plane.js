@@ -26,6 +26,7 @@ export class Plane extends Vehicle {
     this.stall = 0;  // 0..1 after a crash: the engine splutters
     this.cargoSpeed = 1;
     this.cargoClimb = 1;
+    this.paint = { body: skin.body, trim: skin.trim }; // (what friends see it painted)
 
     const g = this.group;
     addMesh(g, new THREE.CapsuleGeometry(0.08, 0.4, 4, 12).rotateX(Math.PI / 2), toon(skin.body), 0.012);
