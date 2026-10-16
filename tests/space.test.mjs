@@ -7,6 +7,7 @@ import { position, moonAngle, mapPosition } from '../js/space/Orbits.js';
 import { fromLatLon } from '../js/core/WorldShape.js';
 import { SystemMap } from '../js/space/SystemMap.js';
 import { Trip } from '../js/space/Trip.js';
+import { SpaceCourier } from '../js/space/SpaceCourier.js';
 import { App } from '../js/App.js';
 import { ROAD_TRIPS } from '../js/game/screens/RoadBoard.js';
 
@@ -162,6 +163,7 @@ async function travelApp(world) {
   Object.assign(app, { warmUp: async () => {}, detail: { collect() {} }, updateUrl() {}, haptics: null });
   app.map = new SystemMap(app);
   app.trip = new Trip(app);
+  app.spaceCourier = new SpaceCourier(app);
   return app;
 }
 
@@ -175,6 +177,8 @@ async function fly(app, seconds, until = () => false) {
       app.planet.update(dt, app.simTime);
     }
     if (app.trip.active) app.trip.update(dt);
+    app.spaceCourier?.update(dt);
+    if (app.game.active) app.game.update(dt);
     if (app.map.open) app.map.update(dt);
     else app.rig.update(dt);
     if (Math.round(t / dt) % 10 === 0) await new Promise((r) => setTimeout(r, 0));
@@ -333,5 +337,69 @@ describe('Venus, Mercury and Pluto', () => {
     assert.ok(Math.min(...Object.values(WORLDS).map((w) => w.gravity)) === WORLDS.pluto.gravity);
     run(app, 10);
     assertFiniteInstances(planet.root, 'pluto');
+  });
+});
+
+describe('the space courier', () => {
+  it('a parcel from Earth to the Moon: the board, the trip on the clock, the last stretch by rover, paid', async () => {
+    localStorage.clear();
+    const app = await travelApp('earth'), courier = app.spaceCourier, game = app.game;
+    const offers = courier.currentOffers();
+    assert.equal(offers.length, 3);
+    assert.ok(offers.every((o) => o.to !== 'earth' && o.pay > 0 && o.limit > 60), 'three parcels to other worlds');
+    assert.deepEqual(courier.currentOffers(), offers, 'the same until one is taken');
+    const far = courier.offer('earth', 'pluto', () => 0.1), near = courier.offer('earth', 'moon', () => 0.1);
+    assert.ok(far.pay > near.pay * 3 && far.limit > near.limit, 'further pays more, and allows more time');
+    const offer = { ...courier.offer('earth', 'moon', () => 0.1), what: '🍕 Pizza' };
+    assert.equal(courier.take(offer), true);
+    assert.equal(app.trip.state, 'countdown', 'off by rocket straight away');
+    assert.equal(courier.take(offer), false, 'one parcel at a time');
+    await fly(app, 90, () => app.trip.state === 'idle' && app.planet.world.id === 'moon');
+    assert.equal(app.planet.world.id, 'moon');
+    const job = courier.job;
+    assert.ok(job.left < job.limit - 8, 'the clock ran through the trip');
+    assert.ok(courier.due && app.trip.card.parcel, 'the landing card offers the way to town');
+    const coins = game.progress.coins;
+    game.start({ space: true, drive: 'car' });
+    assert.equal(game.run.constructor.name, 'SpaceDropRun');
+    assert.equal(game.player.kind, 'car');
+    const run = game.run, left = job.left;
+    game.update(1);
+    assert.ok(job.left < left, 'the clock carries on');
+    const pl = game.player;
+    pl.place(run.stop.at, pl.fwd);
+    pl.alt = pl.ground.carR(pl.up);
+    pl.v = 0;
+    game.update(1 / 60);
+    assert.ok(game.over, 'handed over at the pad');
+    assert.equal(courier.job, null);
+    assert.ok(game.progress.coins >= coins + offer.pay, 'paid in full, on time');
+    assert.equal(courier.streak, 1);
+    assert.match(game.results.dom.title.textContent, /Delivered/);
+    assert.equal(game.results.dom.again.textContent, '📦 Next parcel');
+    game.stop();
+  });
+
+  it('late pays half, and a broken parcel nothing', async () => {
+    const app = await travelApp('mars'), courier = app.spaceCourier, game = app.game;
+    courier.job = { ...courier.offer('earth', 'mars', () => 0.1), left: -5, broken: false };
+    const pay = courier.job.pay, coins = game.progress.coins;
+    let r = courier.deliver();
+    assert.equal(r.coins, Math.round(pay / 2));
+    assert.equal(game.progress.coins, coins + Math.round(pay / 2));
+    courier.job = { ...courier.offer('earth', 'mars', () => 0.5), left: 50, broken: true };
+    r = courier.deliver();
+    assert.equal(r.coins, 0);
+    assert.equal(courier.streak, 0);
+    courier.job = { ...courier.offer('venus', 'mars', () => 0.1), left: 50, broken: false };
+    game.start({ space: true });
+    assert.equal(game.player.kind, 'plane');
+    assert.equal(game.player.style, 'glider');
+    const run = game.run, pl = game.player;
+    pl.up.copy(run.town.c);
+    pl.alt = app.planet.surfR(run.town.c) + 1;
+    game.update(1 / 60);
+    assert.ok(game.over, 'swooped over the town');
+    game.stop();
   });
 });

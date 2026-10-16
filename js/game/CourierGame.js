@@ -55,7 +55,8 @@ export class CourierGame {
     this.roads = new RoadBoard(app, (opts) => this.launch(opts));
     this.hangar = new Hangar(app, this.progress, {
       onFly: () => this.launch(), onFree: () => this.launch({ free: true }), onDaily: () => this.startDaily(),
-      onMissions: () => this.board.show(), onRoads: () => this.roads.show(), onOptions: () => this.options.show(() => this.hangar.show()),
+      onMissions: () => this.board.show(), onRoads: () => this.roads.show(), onSpace: () => app.spaceCourier?.openBoard(),
+      onOptions: () => this.options.show(() => this.hangar.show()),
     });
   }
 

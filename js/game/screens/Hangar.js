@@ -4,10 +4,10 @@ import { Overlay } from '../../ui/Overlay.js';
 
 /**
  * Between-run screen: spend coins on upgrades and paint jobs, then take off: a courier run, a mission, the daily or
- * free flight, or hit the road (the road trips).
+ * free flight, hit the road (the road trips), or take parcels to other worlds (the space courier).
  */
 export class Hangar extends Overlay {
-  constructor(app, progress, { onFly, onFree, onDaily, onMissions, onRoads, onOptions }) {
+  constructor(app, progress, { onFly, onFree, onDaily, onMissions, onRoads, onSpace, onOptions }) {
     super({ id: 'hangar', html: `
       <button id="hClose" class="close" title="Close">✕</button>
       <button id="hOptions" class="opts" title="Options">⚙️</button>
@@ -20,7 +20,7 @@ export class Hangar extends Overlay {
       <div class="hfoot">
         <div class="hrow"><button id="hGo" class="big">📦 Courier run</button><button id="hMissions" class="big missions">🎯 Missions</button>
           <button id="hDaily" class="big daily">📅 Daily</button><button id="hFree" class="big free">🕊️ Free flight</button>
-          <button id="hRoads" class="big roads">🚗 Road trips</button></div>
+          <button id="hRoads" class="big roads">🚗 Road trips</button><button id="hSpace" class="big space">🚀 Space courier</button></div>
         <p class="note" id="hDailyNote"></p>
       </div>` });
     this.app = app;
@@ -33,6 +33,7 @@ export class Hangar extends Overlay {
     this.on('hFree', 'click', go(onFree));
     this.on('hMissions', 'click', go(onMissions));
     this.on('hRoads', 'click', go(onRoads));
+    this.on('hSpace', 'click', go(onSpace));
     this.on('hOptions', 'click', go(onOptions));
     this.on('hClose', 'click', () => this.hide());
     const name = (this.nameInput = $('hName')), s = app.settings;
