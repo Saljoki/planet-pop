@@ -1,4 +1,5 @@
 import { worldOf } from './Worlds.js';
+import { LandedCard } from '../ui/LandedCard.js';
 
 const COUNT = 3.6;  // seconds of countdown on the pad
 const CLIMB = 4.2;  // seconds of climbing before the view hands over to the cruise
@@ -103,7 +104,7 @@ export class Trip {
     const app = this.app;
     this.state = 'idle';
     this.setMode(false);
-    app.hud.toast(`👋 Welcome to ${world.name}!`);
+    (this.card ??= new LandedCard(app)).show(world);
     if (stars) {
       app.game.progress.addCoins(stars);
       app.hud.toast(`⭐ ${stars} fuel star${stars > 1 ? 's' : ''} caught: +${stars} coins`);

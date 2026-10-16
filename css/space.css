@@ -65,3 +65,17 @@
   #cFuel { top: calc(112px + var(--st)); }
   #cHint { font-size: 13px; left: calc(12px + var(--sl)); transform: none; max-width: calc(100vw - 150px); }
 }
+
+/* Just landed: welcome, and carry on in this world's vehicle. */
+#landed { position: fixed; left: 50%; bottom: calc(64px + var(--sb)); transform: translateX(-50%); z-index: 9; width: min(380px, calc(100vw - 24px)); padding: 12px 14px; }
+#landed .iHead { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+#landed .iHead div { flex: 1; }
+#lIcon { font-size: 36px; }
+#lName { display: block; font-weight: normal; font-size: 24px; }
+#landed small { font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.75; }
+#lClose { background: #fff; font-size: 15px; padding: 3px 8px 0; align-self: flex-start; }
+#landed .row { display: flex; gap: 8px; }
+#landed .row .big { flex: 1; font-size: 18px; }
+#landed .drive { background: #ff8c42; }
+.in-map #landed, .on-trip #landed, .in-game #landed { display: none !important; }
+@media (max-width: 700px) { #landed { bottom: calc(16px + var(--sb)); } }

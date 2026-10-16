@@ -8,6 +8,7 @@ import { fromLatLon } from '../js/core/WorldShape.js';
 import { SystemMap } from '../js/space/SystemMap.js';
 import { Trip } from '../js/space/Trip.js';
 import { App } from '../js/App.js';
+import { ROAD_TRIPS } from '../js/game/screens/RoadBoard.js';
 
 const day = (iso) => Date.parse(`${iso}T12:00:00Z`);
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
@@ -209,6 +210,11 @@ describe('trips', () => {
     assert.equal(app.trip.state, 'idle');
     assert.equal(app.planet.space.state, 'countdown', 'landed, and back to its own launches');
     assert.equal(app.game.progress.coins, coins + c.stars, 'a coin a star');
+    assert.ok(app.trip.card.open, 'welcome, and what to do next');
+    app.game.start({ drive: 'car', from: 'pad' });
+    assert.ok(app.game.player.up.angleTo(app.planet.space.site.d) < 0.06, 'the rover waits by the pad');
+    assert.equal(app.game.player.carKind, 'car');
+    app.game.stop();
   });
 
   it('from a made-up planet, and not to where we are', async () => {
@@ -228,5 +234,43 @@ describe('trips', () => {
 
     const app = await travelApp('mars');
     assert.equal(app.trip.go('mars'), false);
+  });
+});
+
+describe('getting about on the Moon and Mars', () => {
+  for (const world of ['moon', 'mars']) {
+    it(`${world}: every run starts and runs, in the vehicles that suit it`, async () => {
+      localStorage.clear();
+      const { app, planet } = await makeWorld({ world });
+      const game = app.game;
+      for (const opts of [{}, { free: true }, ...ROAD_TRIPS.filter((t) => t.needs !== 'sea').map((t) => t.opts)]) {
+        game.start(opts);
+        const pl = game.player;
+        if (pl.kind === 'plane') assert.equal(pl.style, world === 'moon' ? 'hopper' : 'glider');
+        run(app, 6, { game: true, camera: true });
+        assert.ok(game.active || game.over, `${JSON.stringify(opts)} ended at once`);
+        assert.ok(Number.isFinite(pl.pos.x) && pl.pos.length() > 9, `${JSON.stringify(opts)}: the vehicle went astray`);
+        game.stop();
+      }
+      assert.ok(planet.traffic.rover, 'rovers on the roads');
+      assertFiniteInstances(planet.root, world);
+    });
+  }
+
+  it('low gravity: off the same crest, a rover on the Moon flies further than a car on Earth', async () => {
+    const hang = async (world) => {
+      const { app } = await makeWorld({ world });
+      app.game.start({ drive: 'car' });
+      const car = app.game.player;
+      car.alt += 0.05;
+      car.airborne = true;
+      car.vy = 0.6;
+      let t = 0;
+      while (car.airborne && t < 20) { car.fall(1 / 60); t += 1 / 60; }
+      app.game.stop();
+      return t;
+    };
+    const earth = await hang('earth'), moon = await hang('moon');
+    assert.ok(moon > earth * 4, `in the air ${moon.toFixed(2)} s on the Moon, ${earth.toFixed(2)} s on Earth`);
   });
 });
