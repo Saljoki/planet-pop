@@ -184,6 +184,12 @@ export class CourierGame {
     this.hud.update();
   }
 
+  /** Once a frame, after the camera has moved: what's drawn over the view (the player's name tag, the mini-map). */
+  draw(renderer) {
+    this.hud.placeYou();
+    this.minimap.render(renderer);
+  }
+
   /** Out of health: up in smoke. The run decides what then (game over, or a fresh one in the free modes). */
   wreck() {
     const pl = this.player, app = this.app;

@@ -204,9 +204,16 @@ describe('briefing, options and invert Y in Sky Courier', () => {
     game.options.hide();
   });
 
-  it('your name: on the results card and in the daily share', async () => {
+  it('your name: over your plane, on the results card and in the daily share', async () => {
     app.settings.setPlayerName('Ata');
     game.start({ free: true });
+    const pl = game.player, tag = game.hud.dom.you, cam = app.camera;
+    cam.position.copy(pl.pos).addScaledVector(pl.up, 0.5).addScaledVector(pl.fwd, -1.5); // the chase cam's view
+    cam.up.copy(pl.up);
+    cam.lookAt(pl.pos);
+    cam.updateMatrixWorld();
+    game.draw(app.renderer);
+    assert.ok(!tag.classList.contains('hidden') && tag.textContent === '🧑‍✈️ Ata', 'the plane should carry the player’s name, like Rex');
     game.finish({ title: 'Done', html: '' });
     assert.equal(game.results.dom.who.textContent, '🧑‍✈️ Ata');
     assert.ok(!game.results.dom.who.classList.contains('hidden'));
@@ -218,6 +225,8 @@ describe('briefing, options and invert Y in Sky Courier', () => {
     assert.match(copied, /Ata scored ⭐ 42 with 3 deliveries/);
     app.settings.setPlayerName('');
     game.start({ free: true });
+    game.draw(app.renderer);
+    assert.ok(game.hud.dom.you.classList.contains('hidden'), 'no name, no tag over the plane');
     game.finish({ title: 'Done', html: '' });
     assert.ok(game.results.dom.who.classList.contains('hidden'), 'no name, no name tag');
     game.stop();

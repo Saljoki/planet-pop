@@ -6,7 +6,7 @@ const KMH = 80; // world units per second → a cartoon km/h for the speedometer
 /**
  * Sky Courier's heads-up display, in the game layer: the badges along the top (score, time, combo, coins and a mode
  * badge), the arrow, the goal line, the health and boost bars, the speedometer (on the ground), the ⏸ button, Rex's
- * name tag and the help line. The run fills in what they say each frame (Run.hud); this shows the right pieces for
+ * name tag and the player's, and the help line. The run fills in what they say each frame (Run.hud); this shows the right pieces for
  * the run and does the common bits.
  */
 export class CourierHud {
@@ -18,6 +18,7 @@ export class CourierHud {
       <div id="gStats"><div class="badge hidden" id="gDaily">📅<span class="wide"> Daily</span></div><div class="badge hidden" id="gMission"></div><div class="badge hidden" id="gFree"></div><div class="badge" id="gScore"></div><div class="badge" id="gTime"></div><div class="badge" id="gCombo"></div><div class="badge" id="gCoins"></div></div>
       <button id="gPauseBtn" title="Pause (P)">⏸</button>
       <div id="gRival" class="tag hidden">😈 Rex</div>
+      <div id="gYou" class="tag you hidden"></div>
       <svg id="gArrow" viewBox="0 0 70 70"><polygon points="35,5 61,58 35,45 9,58" fill="#ff5fa2" stroke="#1b1530" stroke-width="5" stroke-linejoin="round"/></svg>
       <div id="gGoal" class="badge"></div>
       <div id="gHealth" class="badge" title="Health"><div></div></div>
@@ -27,7 +28,7 @@ export class CourierHud {
       <button id="gBoostBtn">BOOST</button>`);
     const $ = (id) => game.el.querySelector(`#${id}`);
     this.dom = {
-      daily: $('gDaily'), mission: $('gMission'), free: $('gFree'), rival: $('gRival'),
+      daily: $('gDaily'), mission: $('gMission'), free: $('gFree'), rival: $('gRival'), you: $('gYou'),
       score: $('gScore'), time: $('gTime'), combo: $('gCombo'), coins: $('gCoins'), arrow: $('gArrow'), goal: $('gGoal'),
       boost: $('gBoost').firstElementChild, help: $('gHelp'), boostBtn: $('gBoostBtn'),
       healthBox: $('gHealth'), speed: $('gSpeed'),
@@ -61,6 +62,18 @@ export class CourierHud {
     if (this.showSpeed) d.speed.textContent = `${Math.round(Math.abs(pl.speed) * KMH)} km/h`;
     this.hasGoal = false;
     g.run.hud(this);
+  }
+
+  /** The player's name tag over their vehicle, like Rex's (only once they've given a name). After the camera moves. */
+  placeYou() {
+    const g = this.game, pl = g.player, tag = this.dom.you, name = g.app.settings?.playerName;
+    const s = name && pl && g.respawnT <= 0 ? g.app.sfx.toScreen(_t.copy(pl.up).multiplyScalar(pl.alt + (pl.kind === 'plane' ? 0.2 : 0.13))) : null;
+    tag.classList.toggle('hidden', !s);
+    if (!s) return;
+    const text = `${pl.kind === 'plane' ? '🧑‍✈️' : '🧑'} ${name}`;
+    if (tag.textContent !== text) tag.textContent = text;
+    tag.style.left = `${s.x}px`;
+    tag.style.top = `${s.y}px`;
   }
 
   /** Turn the arrow toward a point on the planet (a unit vector), as seen from the plane. */
