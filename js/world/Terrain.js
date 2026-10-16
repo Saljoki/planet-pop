@@ -91,6 +91,6 @@ export class Terrain {
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.88, 0.95, 1.0), winterCover(od, 0.0, 0.27, 0.012)); // winter sea ice`);
     }, 'ocean');
     mat.userData.tex = tex;
-    if (!sea.none) addMesh(this.planet.root, new THREE.SphereGeometry(R, 160, 110), mat, 0.06, { cast: false }); // (dry worlds have no sea)
+    this.ocean = sea.none ? null : addMesh(this.planet.root, new THREE.SphereGeometry(R, 160, 110), mat, 0.06, { cast: false }); // (dry worlds have no sea)
   }
 }

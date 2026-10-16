@@ -33,7 +33,16 @@ export class OrbitView {
     this.pitch = clamp(this.pitch + pitch, -PITCH, PITCH);
   }
 
-  zoomBy(f) { this.alt = clamp(this.alt * f, MIN_ALT, MAX_ALT); }
+  /** Pinch or scroll; carry on zooming out at the furthest and the system map opens. */
+  zoomBy(f) {
+    if (f > 1 && this.alt >= MAX_ALT - 0.01) {
+      this.push = (this.push ?? 0) + Math.log(f);
+      if (this.push > 0.35) { this.push = 0; this.rig.app.map?.show(); }
+      return;
+    }
+    this.push = 0;
+    this.alt = clamp(this.alt * f, MIN_ALT, MAX_ALT);
+  }
 
   /** Two-finger twist: the view turns with the fingers. */
   twistBy(a) { this.heading = mod(this.heading + a + Math.PI, TAU) - Math.PI; }

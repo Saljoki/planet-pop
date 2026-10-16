@@ -18,8 +18,8 @@ export class Hud {
     ui.innerHTML = `
       <div id="title" class="badge">Planet Pop!</div>
       <div id="hint" class="badge">${hint}</div>
-      <div id="worldTag" class="badge"></div>
-      <div id="topBtns"><button id="compassBtn" class="hidden" title="Back to north-up">🧭</button><button id="installBtn" class="hidden" title="Install Planet Pop as an app">📲</button><button id="friendsBtn" title="Play with friends">👥</button><button id="findBtn" title="Find things and events (F)">📍</button><button id="photoBtn" title="Photo mode (C)">📷</button><button id="panelToggle">☰<span class="wide"> Controls</span></button></div>`;
+      <button id="worldTag" class="badge" title="Where this is: the solar system (M)"><span id="worldName"></span> <span class="mapGo">🪐</span></button>
+      <div id="topBtns"><button id="compassBtn" class="hidden" title="Back to north-up">🧭</button><button id="installBtn" class="hidden" title="Install Planet Pop as an app">📲</button><button id="friendsBtn" title="Play with friends">👥</button><button id="mapBtn" title="The solar system (M)">🪐</button><button id="findBtn" title="Find things and events (F)">📍</button><button id="photoBtn" title="Photo mode (C)">📷</button><button id="panelToggle">☰<span class="wide"> Controls</span></button></div>`;
     this.panel = new ControlPanel(app);
     ui.insertAdjacentHTML('beforeend', `
       <div id="follow" class="badge hidden"><span id="followName"></span><button id="releaseBtn">✕ Release</button></div>
@@ -38,6 +38,8 @@ export class Hud {
       this.info.hide();
     };
     $('findBtn').onclick = () => app.find?.toggle();
+    $('mapBtn').onclick = () => app.map?.show();
+    $('worldTag').onclick = () => app.map?.show();
     $('friendsBtn').onclick = () => app.friendsMenu?.show();
     $('compassBtn').onclick = () => app.rig.resetView();
     $('photoBtn').onclick = () => app.photo?.enter();
@@ -60,6 +62,7 @@ export class Hud {
       else if (e.code === 'KeyN' && !app.game.active) app.newPlanet();
       else if (e.code === 'KeyH' && !app.game.active) this.panel.toggle();
       else if (e.code === 'KeyT' && !app.game.active) app.tour?.toggle();
+      else if (e.code === 'KeyM' && !app.game.active) app.map?.toggle();
     });
   }
 
@@ -104,7 +107,7 @@ export class Hud {
 
   /** Adds the season where the camera is ("🌍 Classic · 🍂 Autumn"), on worlds that have them. */
   setSeason(season) {
-    if (this.themeText) this.$('worldTag').textContent = season ? `${this.themeText} · ${season}` : this.themeText;
+    if (this.themeText) this.$('worldName').textContent = season ? `${this.themeText} · ${season}` : this.themeText;
   }
 
   setLoading(on) { this.$('loading').classList.toggle('hidden', !on); }

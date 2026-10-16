@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { R, smoothstep, tangentBasis } from '../core/Geo.js';
 import { Heightfield } from '../core/Noise.js';
-import { WorldShape } from '../core/WorldShape.js';
+import { WorldShape, fromLatLon } from '../core/WorldShape.js';
 import { worldOf } from '../space/Worlds.js';
 import { Random } from '../core/Random.js';
 import { Terrain } from './Terrain.js';
@@ -50,6 +50,7 @@ export class Planet {
     this.root = new THREE.Group();
     this.reserved = [];
     this.keepClear = []; // spots mountains must avoid (airport approaches)
+    this.summits = (this.world?.peaks || []).map((k) => ({ d: new THREE.Vector3(...fromLatLon(k.lat, k.lon)), s: k.s })); // (roads and towns leave them be)
     this.modules = [];
     this.time = 0;
   }
@@ -62,6 +63,8 @@ export class Planet {
   /** Level the ground to `level` within `rIn` radians of d, blending back to natural terrain by `rOut`. */
   flatten(d, rIn, rOut, level) { this.hf.flats.push({ x: d.x, y: d.y, z: d.z, cosIn: Math.cos(rIn), cosOut: Math.cos(rOut), level }); }
   isReserved(d, pad = 0) { return this.reserved.some((r) => r.d.angleTo(d) < r.ang + pad); }
+  /** Whether d is within `pad` radians of the foot of a real world's famous summit. */
+  nearSummit(d, pad = 0) { return this.summits.some((m) => m.d.angleTo(d) < (m.s + 0.3) / R + pad); }
   nightAt(pos) { return smoothstep(0.15, -0.25, _v.copy(pos).normalize().dot(this.app.sky.sunDir)); }
 
   /** Radius of the highest solid thing at direction d: terrain, sea, mountain cones, city skyline. */
@@ -107,7 +110,7 @@ export class Planet {
     await yieldFrame();
     this.volcanoes = Array.from({ length: this.theme.volcanoes }, (_, i) => new Volcano(this, i)).filter((v) => v.cone);
     this.volcanoes.forEach((v) => this.add(null, v));
-    this.volcano = this.volcanoes[0] || new Volcano(this, 0); // (an empty one if no site was found)
+    this.volcano = this.volcanoes[0] || new Volcano(this, 0, true); // (an empty one if there's none)
     this.add('nature', new Nature(this));
     for (const v of this.volcanoes) this.nature.mountains.push(v.cone); // solid for planes, bombs and the camera
     this.cities.build();

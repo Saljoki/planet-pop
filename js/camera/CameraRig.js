@@ -38,7 +38,10 @@ export class CameraRig {
   }
 
   /** The view that takes drags, pinches and twists right now (none while flying or in a run). */
-  get view() { return this.mode === 'orbit' ? this.orbit : this.mode === 'local' ? this.local : null; }
+  get view() {
+    if (this.app.map?.open) return this.app.map.view; // (the system map has a camera of its own)
+    return this.mode === 'orbit' ? this.orbit : this.mode === 'local' ? this.local : null;
+  }
 
   /* ---------------- input ---------------- */
 
@@ -56,6 +59,7 @@ export class CameraRig {
       leave: () => this.app.hud.hideLabel(),
     });
     addEventListener('keydown', (e) => {
+      if (this.app.map?.open) return;
       if (e.code === 'Escape' && (this.mode === 'local' || (this.mode === 'fly' && this.entity))) this.release();
     });
   }
@@ -94,6 +98,7 @@ export class CameraRig {
 
   /** Double-tap: swoop in on that spot (or closer to whatever is being followed). */
   zoomAt(x, y) {
+    if (this.app.map?.open) { this.app.map.zoomAt(x, y); return; }
     if (this.app.game.active || !this.app.planet) return;
     if (this.mode === 'local') this.local.zoomIn();
     else if (this.mode === 'orbit') this.orbit.swoop(this.picker.groundAt(x, y));
@@ -101,6 +106,7 @@ export class CameraRig {
 
   /** Press and hold: an info card about whatever is under the finger. */
   holdAt(x, y) {
+    if (this.app.map?.open) { this.app.map.tap(x, y); return; }
     if (this.app.game.active || !this.app.planet) return;
     const e = this.picker.entityAt(x, y, 40);
     if (e) this.app.hud.info?.show(e);
@@ -108,6 +114,7 @@ export class CameraRig {
 
   /** Tap or click: follow whatever is there, or fly down to that spot. */
   click(x, y) {
+    if (this.app.map?.open) { this.app.map.tap(x, y); return; }
     if (this.app.game.active || !this.app.planet) return;
     const e = this.picker.entityAt(x, y) || this.picker.groundAt(x, y);
     if (e) this.focus(e);
@@ -118,6 +125,7 @@ export class CameraRig {
     const now = performance.now(), hud = this.app.hud;
     if (now - (this.lastHover || 0) < 90) return;
     this.lastHover = now;
+    if (this.app.map?.open) { this.app.map.hover(x, y); return; }
     const e = this.app.planet && !this.app.game.active ? this.picker.entityAt(x, y, 22) : null;
     this.el.style.cursor = e ? 'pointer' : '';
     if (!e) { hud.hideLabel(); return; }

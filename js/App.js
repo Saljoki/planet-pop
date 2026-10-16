@@ -27,6 +27,7 @@ import { FriendsMenu } from './ui/FriendsMenu.js';
 import { dailyParams } from './game/Daily.js';
 import { THEME_IDS, pickTheme } from './world/Themes.js';
 import { WORLD_IDS, worldOf } from './space/Worlds.js';
+import { SystemMap } from './space/SystemMap.js';
 
 /**
  * Planet settings from the address bar (?seed=…&land=…&cities=…&theme=…), with defaults for anything missing.
@@ -90,6 +91,7 @@ export class App {
     this.achievements = new Achievements(this.hud);
     this.trophies = new TrophyWatch(this);
     this.rig = new CameraRig(this);
+    this.map = new SystemMap(this);
     this.game = new CourierGame(this);
     this.quality = new Quality(this);
     this.debug = new DebugStats(this);
@@ -136,6 +138,7 @@ export class App {
       await this.warmUp();
       if (this.game.active) this.game.stop();
       this.rig.release(true);
+      this.map.close(true);
       this.planet?.dispose();
       this.planet = planet;
       this.detail.collect(planet.root);
@@ -206,7 +209,8 @@ export class App {
     const scale = this.paused ? 0 : this.game.active ? 1 : this.timeScale;
     const dt = Math.min(real, 0.05) * scale;
     const steps = Math.max(1, Math.ceil(dt / 0.05)), h = dt / steps; // sub-steps keep fast-forward stable
-    for (let i = 0; i < steps; i++) {
+    const map = this.map.open; // (the planet waits, unseen, while the system map is up)
+    for (let i = 0; i < steps && !map; i++) {
       this.simTime += h;
       shared.uTime.value = this.simTime;
       this.sky.update(h);
@@ -217,18 +221,22 @@ export class App {
     if (this.game.active) this.game.update(dt, real);
     this.friends.update(real);
     this.tour.update(real);
-    this.rig.update(real);
+    if (map) this.map.update(real);
+    else this.rig.update(real);
     this.hud.update(real);
     this.sfx.update(real);
     this.ambience.update(real);
     this.quality.tick(real);
-    this.sky.fitShadow(this.camera);
-    this.detail.update(this.camera);
-    if (this.quality.shadowFrame()) this.renderer.shadowMap.needsUpdate = true;
     this.debug.begin();
-    this.postfx.render(this.scene, this.camera);
-    if (this.game.active) this.game.draw(this.renderer);
-    this.friends.draw();
+    if (map) this.map.render(this.postfx);
+    else {
+      this.sky.fitShadow(this.camera);
+      this.detail.update(this.camera);
+      if (this.quality.shadowFrame()) this.renderer.shadowMap.needsUpdate = true;
+      this.postfx.render(this.scene, this.camera);
+      if (this.game.active) this.game.draw(this.renderer);
+      this.friends.draw();
+    }
     if (this.onRendered) { const done = this.onRendered; this.onRendered = null; done(this.renderer.domElement); }
     this.debug.end(real);
   }
