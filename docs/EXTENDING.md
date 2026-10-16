@@ -81,6 +81,29 @@ how it handles (`limits()`), what stops it (`blocked(d)`) and how high it sits (
 `this.group`, and move it in `update(dt)` from `this.input`. Set `chase` for how the camera follows it. Health,
 damage, wrecks, boost and smoke come with `Vehicle`; `Car` and `Boat` are the examples.
 
+## Playing with friends (js/net/)
+
+`Friends` (`app.friends`) runs the room: who's in it, which planet each is on, and sending our news. Everything goes
+over two messages, defined and checked in `js/net/Wire.js`: `hi` (name and planet, sent on joining and whenever they
+change) and `st` (the vehicle: kind, paint, where, which way, tilt; 15 times a second while playing). What arrives comes
+from other people's browsers, so `readHello()` / `readState()` check every field and anything odd is dropped; names
+are shown with `textContent`. A friend's vehicle is a `Ghost`: a real `Plane`, `Car` or `Boat` posed from their
+updates (a moment behind, glided between them), never updated as a vehicle, so it costs nothing and can't crash.
+
+- Something new to share (a wave, a horn): add a message to both links (`TrysteroLink` makes one Trystero action
+  per message type), a `make…()` / `read…()` pair in `Wire.js`, and handle it in `Friends.receive()`.
+- A change that older versions wouldn't understand: bump `PROTOCOL` in `Wire.js` (players on different versions then
+  simply don't see each other).
+- Test it like `tests/friends.test.mjs` (two apps in one room through `TabLink`), and in the browser with two tabs
+  and `?net=tabs` (the screenshot run's `friends` scenes do that with a second page).
+- Trystero is bundled into `vendor/trystero/` by `npm run vendor` (esbuild), and only loaded when someone joins a
+  room.
+
+## Saves
+
+Progress saves itself (`js/core/Store.js`). A save code (`js/core/SaveCode.js`) carries the keys in `SAVED_KEYS`;
+a new kind of progress kept under a new key should be added there, or it won't move with the player.
+
 ## Add a mission
 
 Add an entry to `MISSIONS` in `js/game/Missions.js`. `goal.stat` names one of the counters in

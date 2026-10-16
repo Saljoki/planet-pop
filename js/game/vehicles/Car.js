@@ -41,7 +41,8 @@ export class Car extends GroundVehicle {
     this.roll = 0;
     this.spin = 0; // wheel rotation
     this.honkT = 0;
-    this.build(kind, { ...KINDS[kind], ...(body && { body }), ...(trim && { trim }) });
+    this.paint = { ...KINDS[kind], ...(body && { body }), ...(trim && { trim }) }; // (what friends see it painted)
+    this.build(kind, this.paint);
     this.dust = new Trails(planet.root, { max: 50, color: planet.theme.pal.sand, life: 0.55, grow: 2.2, drag: 1.5, near: 0.45 });
     this.dustT = 0;
     this.sync();

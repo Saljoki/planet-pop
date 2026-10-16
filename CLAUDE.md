@@ -1,6 +1,7 @@
 # Planet Pop: notes for working on the code
 
-- Plain ES modules, no build step; three.js 0.160 is vendored in `vendor/` and mapped in `index.html`.
+- Plain ES modules, no build step; three.js 0.160 and Trystero (bundled by `npm run vendor`) are vendored in
+  `vendor/` and mapped in `index.html`.
 - One class per file. Small UI pieces extend `js/ui/Widget.js`; full-screen menus extend `js/ui/Overlay.js`.
 - Saved state goes through `js/core/Store.js`. Never change the format of an existing `planetpop.*` key.
 - `docs/EXTENDING.md` says where new things go (world modules, Sky Courier runs, missions, options, trophies,

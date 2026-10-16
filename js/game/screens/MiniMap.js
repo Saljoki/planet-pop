@@ -13,7 +13,7 @@ const NORTH = new THREE.Vector3(0, 1, 0);
  * 🗺️ The mini-map in a corner of the game: a round, heading-up map of the planet round the player (MapGlobe draws
  * the land, towns and roads into the game's own canvas), with the player's arrow in the middle and what matters on
  * top: where to go (the HUD arrow's goal), the delivery beacon, pickups and drop-offs, rings, race checkpoints, Rex,
- * town names and north. Tap it to zoom out and back in. 🗺️ or M shows and hides it (remembered, for small screens).
+ * friends in the room, town names and north. Tap it to zoom out and back in. 🗺️ or M shows and hides it (remembered, for small screens).
  */
 export class MiniMap extends Widget {
   constructor(game) {
@@ -168,6 +168,13 @@ export class MiniMap extends Widget {
     }
     const rex = run?.rival || run?.rex;
     if (rex && this.place(rex.pos, half, scale, at)) dot(at.x, at.y, 4, '#ff4d4d');
+    for (const friend of g.app.friends?.here ?? []) { // friends on this planet: a green dot with their initial
+      if (!this.place(friend.model.pos, half, scale, at)) continue;
+      dot(at.x, at.y, 6, '#2ee59d');
+      ctx.fillStyle = INK;
+      ctx.font = '10px Bangers, sans-serif';
+      ctx.fillText([...friend.name][0]?.toUpperCase() ?? '', at.x, at.y + 3.5);
+    }
     const hud = g.hud;
     if (hud.hasGoal && this.place(hud.goal, half, scale, at)) dot(at.x, at.y, 7 + Math.sin(t * 5) * 1.5, null, PINK, 3);
 

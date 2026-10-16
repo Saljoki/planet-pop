@@ -13,6 +13,7 @@ export class Boat extends GroundVehicle {
   constructor(planet, at, heading, stats, { body = '#3fa7ff', trim = '#ffffff' } = {}) {
     super(planet, at, heading, stats);
     this.lean = 0;
+    this.paint = { body, trim }; // (what friends see it painted)
     const g = this.group;
     addMesh(g, new THREE.BoxGeometry(0.1, 0.05, 0.2).translate(0, 0.012, -0.01), toon(body), 0.008);
     addMesh(g, new THREE.CylinderGeometry(0.05, 0.05, 0.05, 3).rotateY(Math.PI / 2).scale(1, 1, 0.9).translate(0, 0.012, 0.1), toon(body), 0.006); // the bow

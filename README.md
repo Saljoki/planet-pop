@@ -7,7 +7,8 @@ rainbows, an erupting volcano, midnight fireworks, meteor showers, auroras over 
 a rocket pad, satellites, a space station, a moon and an ambient soundscape. Planets come in five kinds:
 classic, ice, desert, candy and lava. Plus the **Sky Courier** mini-game with ten missions, a daily
 challenge and free flight, **road trips** (drive any car or steer any boat, taxi, van courier and a race round
-the world) with a 🗺️ mini-map, a 📍 Find menu, a hands-free 📺 tour, a photo mode and 42 trophies. It's built for
+the world) with a 🗺️ mini-map, 👥 playing with friends on the same planet, a 📍 Find menu, a hands-free 📺 tour, a
+photo mode and 42 trophies. It's built for
 phones as much as laptops (touch gestures, a thumbstick, tilt steering), installs as an app and works offline.
 
 Every planet is generated from a seed. The address bar always holds the current planet
@@ -64,6 +65,12 @@ service worker picks up the new version (the tests check this).
 - **ℹ️ About** (bottom of the panel, with the version number): who made Planet Pop, the credits, and **your name**,
   which the game then shows over your plane, car or boat (like Rex's), on results cards, in the hangar, in the daily
   share and to say hello.
+- **👥 Play with friends** (top right): start a room and send the invite link (or the 6-letter code), and everyone in
+  it sees the others' planes, cars and boats with their names over them, and as green dots on the mini-map, whatever
+  each of them is playing. Someone on another planet shows up in the room list with **🌍 Go there**. Players connect
+  straight to each other's browsers (WebRTC, matched up through public Nostr relays by Trystero), with no server of
+  our own, so they can see each other's IP addresses; a few strict networks (some mobile carriers) can't connect this
+  way. To try it on one computer, open the game in two tabs with `?net=tabs`.
 - **Sound** (panel) mutes everything; **Ambience** sets the volume of the soundscape (wind, surf, a
   town's murmur, birds by day, crickets by night, a hum out in space), which follows the camera.
 - **P** pause · **N** new planet · **H** show/hide the control panel · **F** Find · **T** tour.
@@ -95,7 +102,8 @@ the hangar), A / B answer the end-of-run screen.
   device (keyboard, touch or controller), with **▶ Start**, **⚙️ Options** and **Back**; tick "Don't show this"
   to skip it. **⚙️ Options** (in the briefing, the hangar and the pause menu) has **your name**, **Invert Y axis** (up dives,
   down climbs, for keys, thumbstick, tilt and controller alike), steering sensitivity, tilt steering and
-  vibration on phones, sound and ambience volume, the briefing and mini-map switches, and a two-tap **Reset Sky Courier
+  vibration on phones, sound and ambience volume, the briefing and mini-map switches, **💾 Your progress** (copy a save
+  code or save a file, and load one on another phone or browser), and a two-tap **Reset Sky Courier
   progress** (trophies stay). Options are remembered.
 - **📦 Courier run:** the classic timed game below. **🕊️ Free flight:** no clock, no parcels, no Rex, no coins:
   fly anywhere you like. Rings refill your boost and runways still refuel.
@@ -114,7 +122,8 @@ the hangar), A / B answer the end-of-run screen.
   collect it from the pickup city first, never boosts, and gets a little faster each delivery. If he
   swoops over the destination before you, he steals it (no pay, combo lost). Beat him 5 times in a row for a trophy.
 - **Hangar:** coins from deliveries and rings buy engine, wings, boost tank, ring magnet and head-start
-  upgrades, plus six paint jobs. Progress is saved in your browser.
+  upgrades, plus six paint jobs. Progress is saved in your browser (and the browser is asked to keep it); a save code
+  in Options moves it to another one.
 - **🎯 Missions** (in the hangar): ten goals played in order, each on its own planet: First Flight, Rush
   Hour, Ring Master, Handle With Care, Pit Stop, Heavy Lifter, Outrun Rex, Night Shift, Close Encounter
   and Ash Dodger. The arrow points where a mission needs you (a runway, the next ring, the UFO), and
@@ -144,8 +153,8 @@ planet-pop/
 ├─ js/
 │  ├─ main.js                 entry point, registers the service worker
 │  ├─ App.js                  renderer, frame loop, planet swapping
-│  ├─ core/                   Noise, Random, Geo (math helpers), Store (saved state), Entity + ObjectEntity,
-│  │                          InstanceEntity, PointEntity (things you can click and follow), Version
+│  ├─ core/                   Noise, Random, Geo (math helpers), Store (saved state), SaveCode (moving saves), Entity +
+│  │                          ObjectEntity, InstanceEntity, PointEntity (things you can click and follow), Version
 │  ├─ render/                 Toon (halftone shading), Outline (ink hulls), PostFX (edge ink), Quality (adaptive
 │  │                          resolution), Detail (skips sub-pixel things from high up), InstanceFade (trees that
 │  │                          shrink away with distance), MapGlobe (the mini-map's planet)
@@ -159,8 +168,11 @@ planet-pop/
 │  │                          Ufo, Space
 │  ├─ camera/                 CameraRig (modes and swoops), OrbitView, FollowView, ChaseView, Picker (what's under a
 │  │                          tap), Gestures (touch and mouse)
-│  ├─ ui/                     Widget + Overlay (UI building blocks), Hud, ControlPanel (☰), AboutCard, InfoCard, FindMenu,
-│  │                          TourMode, PhotoMode, Sfx (bubbles + synthesized sound), Ambience (soundscape),
+│  ├─ net/                    Friends (rooms, who's where), Ghost (a friend's vehicle and name tag), Wire (the messages,
+│  │                          checked), TrysteroLink (over the internet), TabLink (between tabs, ?net=tabs)
+│  ├─ ui/                     Widget + Overlay (UI building blocks), Hud, ControlPanel (☰), AboutCard, FriendsMenu,
+│  │                          InfoCard, FindMenu, TourMode, PhotoMode, Sfx (bubbles + synthesized sound), Ambience
+│  │                          (soundscape),
 │  │                          Achievements + TrophyWatch, Haptics, WakeLock, DebugStats (?debug)
 │  └─ game/                   CourierGame (runs the show), Rival + RoadRival (Rex in the air and on the road), Cargo,
 │     │                       CourierProps (beacon, rings, pads, race arches), FlightHazards (storms, runways, ash),
@@ -169,19 +181,20 @@ planet-pop/
 │     │                       car or boat: roads, water, buildings, mountains, where to start and stop)
 │     ├─ runs/                Run (the hooks), modes.js (which run for which options), DeliveryRun (courier run),
 │     │                       DailyRun, MissionRun, FreeFlight, FreeDrive, TaxiRun, VanRun, RaceRun
-│     ├─ screens/             CourierHud, MiniMap, ResultsScreen, Briefing, OptionsMenu, PauseMenu, Hangar, MissionBoard,
-│     │                       RoadBoard
+│     ├─ screens/             CourierHud, MiniMap, ResultsScreen, Briefing, OptionsMenu, SaveBox, PauseMenu, Hangar,
+│     │                       MissionBoard, RoadBoard
 │     └─ input/               FlightControls (keys, stick, tilt, boost), TouchStick, TiltSteer, Gamepad
-├─ vendor/three/, fonts/      three.js and the Bangers font (with their licences)
+├─ vendor/, fonts/            three.js, Trystero (bundled into one file) and the Bangers font, with their licences
 ├─ icons/                     app icons (drawn by scripts/icons.mjs)
-├─ scripts/                   vendor.mjs (copy three.js + font), icons.mjs, precache.mjs
+├─ scripts/                   vendor.mjs (copy three.js + font, bundle Trystero), icons.mjs, precache.mjs
 ├─ docs/EXTENDING.md          where new things go: world modules, game modes, missions, options, trophies…
 ├─ tests/
 │  ├─ *.test.mjs              node:test suites: world (3 full planets simulated, camera, trophies), courier (Sky
 │  │                          Courier and the daily on the same planets), health, drive (cars, boats, traffic), road
 │  │                          (taxi, van, race), quality, progress, daily, ambience, themes,
 │  │                          missions + controller, touch (gestures, stick, tilt, Find, tour, free flight), options
-│  │                          (briefing, Invert Y, sensitivity, reset), offline files
+│  │                          (briefing, Invert Y, sensitivity, reset, your name), saves (save codes), friends (two
+│  │                          players in a room), offline files
 │  ├─ helpers/                a fake DOM and a headless App so the game runs under Node
 │  └─ browser/                screenshots.mjs + harness.mjs: headless Chrome (software WebGL) plays the scenes in
 │                             scenes/ (one file per area) on a laptop-sized screen and a phone, upright and on its
