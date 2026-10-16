@@ -5,14 +5,16 @@ strolling the streets, trams and traffic with signals, airports where planes lan
 with ferries, sightseeing helicopters, whales, a train with a tunnel, balloons, bird flocks, weather with
 rainbows, an erupting volcano, midnight fireworks, meteor showers, auroras over the poles, the odd UFO,
 a rocket pad, satellites, a space station, a moon and an ambient soundscape. Planets come in five kinds:
-classic, ice, desert, candy and lava. Plus the **Sky Courier** mini-game with ten missions, a daily
+classic, ice, desert, candy and lava, and there are three real worlds: **Earth** with its real continents, **the Moon**
+and **Mars**, mapped from real data, on a 🪐 **map of the solar system** with every planet where it really is today, and
+**rocket trips** between them. Plus the **Sky Courier** mini-game with ten missions, a daily
 challenge and free flight, **road trips** (drive any car or steer any boat, taxi, van courier and a race round
 the world) with a 🗺️ mini-map, 👥 playing with friends on the same planet, a 📍 Find menu, a hands-free 📺 tour, a
 photo mode and 42 trophies. It's built for
 phones as much as laptops (touch gestures, a thumbstick, tilt steering), installs as an app and works offline.
 
 Every planet is generated from a seed. The address bar always holds the current planet
-(`?seed=…&land=…&cities=…&theme=…`), and **🔗 Share this planet** copies the link.
+(`?seed=…&land=…&cities=…&theme=…`, or `?world=earth`, `moon` or `mars`), and **🔗 Share this planet** copies the link.
 
 ## Run it
 
@@ -73,7 +75,31 @@ service worker picks up the new version (the tests check this).
   way. To try it on one computer, open the game in two tabs with `?net=tabs`.
 - **Sound** (panel) mutes everything; **Ambience** sets the volume of the soundscape (wind, surf, a
   town's murmur, birds by day, crickets by night, a hum out in space), which follows the camera.
-- **P** pause · **N** new planet · **H** show/hide the control panel · **F** Find · **T** tour.
+- **P** pause · **N** new planet · **H** show/hide the control panel · **F** Find · **T** tour · **M** the system map.
+
+### The solar system
+
+- **🪐 The system map:** zoom out past the furthest the planet view goes, tap **🪐** (or the world's name under the
+  title), or press **M**. The Sun, the eight planets, the Moon and Pluto are where they really are on today's date
+  (worked out from NASA JPL's orbit elements), with their orbits, the asteroid belt and the Kuiper belt, and they move
+  on at a day a second (⏸ / ⏩ / ⏭ change that, **📅 Today** goes back). Sizes and distances are squeezed with a square
+  root so it all fits a phone: bigger is still bigger and further still further. Tap a world for its card: its real
+  width, day, year, gravity and temperature (NASA's figures), and how far away it is on the date shown. A made-up
+  planet shows up out beyond Pluto. **⬇️ Back** (or pinching in on your world) returns to it.
+- **The real worlds:** Earth has its real continents (from Natural Earth's public-domain map), with the Himalaya,
+  Andes, Rockies and Alps, the ice caps and the great deserts where they are. The Moon has its dark seas, Tycho and
+  Copernicus, and the Apollo 11 lander at Tranquility Base, with Earth hanging in a black sky. Mars has Olympus Mons and
+  the Tharsis volcanoes, Valles Marineris, Hellas, its ice caps, Gale and Jezero craters, and Phobos and Deimos
+  overhead. Landmarks show up in 📍 Find with a card about each. No air means no clouds, birds, planes or wind farms,
+  and there's no sea to sail on either; a Moon day lasts seven minutes.
+- **🚀 Trips:** a world's card has **Travel to …**: board the rocket on your spaceport's pad, 3-2-1, lift off, then
+  cruise across the map: steer (drag, arrow keys or WASD) to catch ⭐ fuel stars (a coin each) and miss the rocks
+  (thickest in the asteroid belt), and boost (Space, or **🔥 Boost**) with the fuel. The next world is built while you
+  cruise, and the rocket lands on its pad, where you can drive off or start a courier run.
+- **Getting about:** with no air to speak of, cars on the Moon and Mars are six-wheeled rovers (traffic too), Sky
+  Courier flies a rocket hopper on the Moon and a long-winged glider on Mars, and everything falls with the world's real
+  gravity: a crest on the Moon sends a rover six times as far as on Earth.
+- **👥 Friends** on a real world show up as "on Mars" (say), and **Go there** flies you there by rocket.
 - **On a phone** the control panel and Find slide up from the bottom (drag the bar down to close them), or in
   from the right with the phone on its side. Buttons are finger-sized and keep clear of notches. The screen
   stays on while you fly or watch the tour, and **⛶** goes full screen where the browser allows it.
@@ -151,11 +177,11 @@ planet-pop/
 ├─ index.html                 page + import map (three.js from vendor/)
 ├─ manifest.webmanifest       app name, colours and icons for installing
 ├─ sw.js, precache.js         service worker and the generated list of files it caches
-├─ css/                       comic UI styles by area: base, hud, game, cards, menus, photo, phone (loaded in that order)
+├─ css/                       comic UI styles by area: base, hud, game, cards, menus, photo, space, phone (loaded in that order)
 ├─ js/
 │  ├─ main.js                 entry point, registers the service worker
 │  ├─ App.js                  renderer, frame loop, planet swapping
-│  ├─ core/                   Noise, Random, Geo (math helpers), Store (saved state), SaveCode (moving saves), Entity +
+│  ├─ core/                   Noise, Random, Geo (math helpers), WorldShape (real worlds' ground, also in the worker), Store (saved state), SaveCode (moving saves), Entity +
 │  │                          ObjectEntity, InstanceEntity, PointEntity (things you can click and follow), Version
 │  ├─ render/                 Toon (halftone shading), Outline (ink hulls), PostFX (edge ink), Quality (adaptive
 │  │                          resolution), Detail (skips sub-pixel things from high up), InstanceFade (trees that
@@ -170,12 +196,16 @@ planet-pop/
 │  │                          Ufo, Space
 │  ├─ camera/                 CameraRig (modes and swoops), OrbitView, FollowView, ChaseView, Picker (what's under a
 │  │                          tap), Gestures (touch and mouse)
+│  ├─ space/                  Worlds (Earth, the Moon, Mars: shapes, peaks, landmarks), WorldThemes, EarthLand (the
+│  │                          land map), Bodies (NASA's numbers), Orbits (JPL elements: where everything is on a date),
+│  │                          SystemMap + SystemScene + MapView + BodyArt (the 🪐 map), Trip + Cruise (rocket trips)
 │  ├─ net/                    Friends (rooms, who's where), Ghost (a friend's vehicle and name tag), Wire (the messages,
 │  │                          checked), TrysteroLink (over the internet), TabLink (between tabs, ?net=tabs)
 │  ├─ ui/                     Widget + Overlay (UI building blocks), Hud, ControlPanel (☰), AboutCard, FriendsMenu,
 │  │                          InfoCard, FindMenu, TourMode, PhotoMode, Sfx (bubbles + synthesized sound), Ambience
 │  │                          (soundscape), EngineSound (cars and boats), Achievements + TrophyWatch, Haptics,
-│  │                          WakeLock, DebugStats (?debug)
+│  │                          WakeLock, DebugStats (?debug), SystemBar, MapLabels, WorldCard, CruiseHud, LandedCard
+│  │                          (the system map and trips)
 │  └─ game/                   CourierGame (runs the show), Rival + RoadRival (Rex in the air and on the road), Cargo,
 │     │                       CourierProps (beacon, rings, pads, race arches), FlightHazards (storms, runways, ash),
 │     │                       Progress, Settings, Daily, Missions
@@ -188,7 +218,8 @@ planet-pop/
 │     └─ input/               FlightControls (keys, stick, tilt, boost), TouchStick, TiltSteer, Gamepad
 ├─ vendor/, fonts/            three.js, Trystero (bundled into one file) and the Bangers font, with their licences
 ├─ icons/                     app icons (drawn by scripts/icons.mjs)
-├─ scripts/                   vendor.mjs (copy three.js + font, bundle Trystero), icons.mjs, precache.mjs
+├─ scripts/                   vendor.mjs (copy three.js + font, bundle Trystero), icons.mjs, precache.mjs, earthmap.mjs
+│                             (Earth's land map from Natural Earth)
 ├─ docs/EXTENDING.md          where new things go: world modules, game modes, missions, options, trophies…
 ├─ tests/
 │  ├─ *.test.mjs              node:test suites: world (3 full planets simulated, camera, trophies), courier (Sky
@@ -196,7 +227,8 @@ planet-pop/
 │  │                          (taxi, van, race), quality, progress, daily, ambience, themes,
 │  │                          missions + controller, touch (gestures, stick, tilt, Find, tour, free flight), options
 │  │                          (briefing, Invert Y, sensitivity, reset, your name), saves (save codes), friends (two
-│  │                          players in a room), offline files
+│  │                          players in a room), space (real orbits, the real worlds, the map, trips, rovers and
+│  │                          gravity), offline files
 │  ├─ helpers/                a fake DOM and a headless App so the game runs under Node
 │  └─ browser/                screenshots.mjs + harness.mjs: headless Chrome (software WebGL) plays the scenes in
 │                             scenes/ (one file per area) on a laptop-sized screen and a phone, upright and on its

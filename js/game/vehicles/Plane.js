@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { R, clamp, frameFwd } from '../../core/Geo.js';
+import { R, LAYER_FX, clamp, frameFwd } from '../../core/Geo.js';
 import { toon } from '../../render/Toon.js';
 import { addMesh } from '../../render/Outline.js';
 import { Trails } from '../../life/Trails.js';
@@ -15,6 +15,8 @@ const BASE_SKIN = { body: '#ffd23f', trim: '#ff4d4d' };
 /**
  * The courier plane (Rex flies one too): flies great circles around the globe at a chosen altitude. Hitting the
  * ground bounces it back up, but it costs health, and the engine splutters and the plane wobbles for a moment.
+ * Its look suits the air: a plane, a long-winged glider where the air is thin (Mars), and a rocket hopper where
+ * there's none at all for wings (the Moon). They all fly the same.
  */
 export class Plane extends Vehicle {
   constructor(planet, startDir, heading, stats, skin = BASE_SKIN) {
@@ -28,24 +30,47 @@ export class Plane extends Vehicle {
     this.cargoClimb = 1;
     this.paint = { body: skin.body, trim: skin.trim }; // (what friends see it painted)
 
-    const g = this.group;
-    addMesh(g, new THREE.CapsuleGeometry(0.08, 0.4, 4, 12).rotateX(Math.PI / 2), toon(skin.body), 0.012);
-    addMesh(g, mergeGeometries([
-      new THREE.BoxGeometry(0.9, 0.03, 0.17).translate(0, -0.02, 0.04),
-      new THREE.BoxGeometry(0.03, 0.17, 0.12).translate(0, 0.11, -0.25),
-      new THREE.BoxGeometry(0.32, 0.025, 0.09).translate(0, 0.03, -0.26),
-    ]), toon(skin.trim), 0.01);
+    this.style = planet.theme.air === 'none' ? 'hopper' : planet.theme.air === 'thin' ? 'glider' : 'plane';
+    const g = this.group, body = toon(skin.body), trim = toon(skin.trim);
+    addMesh(g, new THREE.CapsuleGeometry(0.08, 0.4, 4, 12).rotateX(Math.PI / 2), body, 0.012);
     addMesh(g, new THREE.SphereGeometry(0.06, 12, 8).scale(1, 0.8, 1.4).translate(0, 0.065, 0.06), toon('#2d2a5a'), 0.006);
     this.crateMat = toon('#c98a4b');
     addMesh(g, new THREE.BoxGeometry(0.09, 0.07, 0.09).translate(0, 0.11, -0.08), this.crateMat, 0.006); // the parcel
-    this.prop = addMesh(g, new THREE.BoxGeometry(0.34, 0.03, 0.012), toon('#2a2540'), 0.004);
-    this.prop.position.z = 0.29;
-    this.trail = new Trails(planet.root, { max: 200, color: '#fff4c2', life: 1.6, grow: 2, drag: 0.4 });
+    if (this.style === 'hopper') this.buildHopper(trim);
+    else this.buildWings(trim, this.style === 'glider' ? 1.5 : 1);
+    this.trail = new Trails(planet.root, { max: 200, color: this.style === 'hopper' ? '#ffd8a8' : '#fff4c2', life: 1.6, grow: 2, drag: 0.4 });
     this.trailT = 0;
     this.sync();
   }
 
   get kind() { return 'plane'; }
+
+  /** Wings, tail and propeller (span: how much longer the wings are than usual). */
+  buildWings(trim, span) {
+    const g = this.group;
+    addMesh(g, mergeGeometries([
+      new THREE.BoxGeometry(0.9 * span, 0.03, 0.17 / Math.sqrt(span)).translate(0, -0.02, 0.04),
+      new THREE.BoxGeometry(0.03, 0.17, 0.12).translate(0, 0.11, -0.25),
+      new THREE.BoxGeometry(0.32, 0.025, 0.09).translate(0, 0.03, -0.26),
+    ]), trim, 0.01);
+    this.prop = addMesh(g, new THREE.BoxGeometry(0.34, 0.03, 0.012), toon('#2a2540'), 0.004);
+    this.prop.position.z = 0.29;
+  }
+
+  /** No air for wings: stubby thruster pods, landing legs, and a rocket nozzle with its flame. */
+  buildHopper(trim) {
+    const g = this.group;
+    addMesh(g, mergeGeometries([
+      ...[-1, 1].map((s) => new THREE.CylinderGeometry(0.045, 0.05, 0.26, 10).rotateX(Math.PI / 2).translate(s * 0.2, -0.01, -0.02)),
+      new THREE.BoxGeometry(0.36, 0.025, 0.1).translate(0, -0.01, -0.02),
+      ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => new THREE.BoxGeometry(0.014, 0.12, 0.014).rotateZ(sx * 0.4).translate(sx * 0.1, -0.1, sz * 0.12)),
+      ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => new THREE.CylinderGeometry(0.03, 0.03, 0.01, 10).translate(sx * 0.125, -0.16, sz * 0.12)),
+    ]), trim, 0.008);
+    addMesh(g, new THREE.ConeGeometry(0.07, 0.1, 12, 1, true).rotateX(-Math.PI / 2).translate(0, 0, -0.32), toon('#2a2540'), 0.005);
+    this.flame = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.22, 10).rotateX(-Math.PI / 2).translate(0, 0, -0.47), new THREE.MeshBasicMaterial({ color: '#ffb21f' }));
+    this.flame.layers.set(LAYER_FX);
+    g.add(this.flame);
+  }
 
   get speed() { return SPEED * this.stats.speed * this.cargoSpeed * this.engine * (1 - 0.6 * this.stall); }
 
@@ -111,7 +136,8 @@ export class Plane extends Vehicle {
       else this.alt = ground + 0.12;
     }
 
-    this.prop.rotation.z += dt * 40 * (1 - 0.7 * this.stall);
+    if (this.prop) this.prop.rotation.z += dt * 40 * (1 - 0.7 * this.stall);
+    if (this.flame) this.flame.scale.set(1, 1, (boosting ? 1.7 : 1) * (0.7 + Math.random() * 0.5) * (1 - 0.6 * this.stall));
     this.sync();
     if ((this.trailT -= dt) <= 0) {
       this.trailT = boosting ? 0.03 : 0.07;

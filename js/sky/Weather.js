@@ -56,7 +56,7 @@ export class Weather {
 
   buildClouds() {
     const rng = this.planet.rng, look = this.planet.theme, fair = [], dark = [];
-    for (let i = 0; i < 22; i++) puffCluster(rng, rng.dir(), R + rng.range(2.4, 3.2), rng.range(0.8, 1.3), fair);
+    for (let i = 0; i < (look.air ? 0 : 22); i++) puffCluster(rng, rng.dir(), R + rng.range(2.4, 3.2), rng.range(0.8, 1.3), fair);
     this.storms = [];
     for (let i = 0; i < look.storms; i++) {
       const d = rng.dir(), alt = R + rng.range(2.5, 2.9), s = rng.range(1.4, 1.7);
@@ -66,12 +66,12 @@ export class Weather {
     }
     const opts = { near: 1.0, receive: false }; // flying through a cloud doesn't black out the view
     const c = look.clouds;
-    addMesh(this.group, mergeGeometries(fair), toon(c.fair, { emissive: c.fairGlow, emissiveIntensity: 0.3 }), 0.05, opts);
-    addMesh(this.group, mergeGeometries(dark), toon(c.dark, { emissive: c.darkGlow, emissiveIntensity: 0.3 }), 0.05, opts);
+    if (fair.length) addMesh(this.group, mergeGeometries(fair), toon(c.fair, { emissive: c.fairGlow, emissiveIntensity: 0.3 }), 0.05, opts);
+    if (dark.length) addMesh(this.group, mergeGeometries(dark), toon(c.dark, { emissive: c.darkGlow, emissiveIntensity: 0.3 }), 0.05, opts);
   }
 
   buildRain() {
-    const rng = this.planet.rng, precip = this.planet.theme.precip, kind = PRECIP[precip.kind];
+    const rng = this.planet.rng, precip = this.planet.theme.precip, kind = PRECIP[precip.kind] ?? PRECIP.rain; // ('none': no storms anyway)
     this.drops = [];
     for (const s of this.storms) {
       for (let k = 0; k < DROPS; k++) {

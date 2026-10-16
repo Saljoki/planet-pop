@@ -16,7 +16,7 @@ export class Balloons {
     this.planet = planet;
     const rng = planet.rng, root = planet.root;
     this.list = [];
-    for (let tries = 0; this.list.length < 6 && tries < 4000; tries++) {
+    for (let tries = 0; this.list.length < (planet.theme.air ? 0 : 6) && tries < 4000; tries++) { // (balloons need air)
       const d = rng.dir();
       if (planet.heightAt(d) < 0.1 || this.list.some((b) => b.d0.angleTo(d) < 0.5)) continue;
       this.list.push({

@@ -3,21 +3,26 @@ import { R } from '../core/Geo.js';
 import { VERSION } from '../core/Version.js';
 import { cleanName } from '../game/Settings.js';
 import { THEME_IDS } from '../world/Themes.js';
+import { WORLDS, WORLD_IDS } from '../space/Worlds.js';
 
 // What players in a room send each other, and checking what arrives: it comes from other people's browsers, so
 // nothing is trusted. Two messages: 'hi' (who I am and which planet I'm on) and 'st' (where my vehicle is now).
 
-export const PROTOCOL = 1;
+export const PROTOCOL = 2; // (2: the real worlds, Earth, the Moon and Mars)
 const KINDS = ['plane', 'car', 'boat'], CAR_KINDS = ['car', 'van', 'taxi'];
 const HEX = /^#[0-9a-f]{6}$/i;
 const _c = new THREE.Color();
 
-/** The planet as everyone builds it: { seed, land (%), cities, theme }, and as one comparable string. */
+/**
+ * The planet as everyone builds it: { seed, land (%), cities, theme }, plus `world` on a real world (which decides the
+ * rest), and as one comparable string.
+ */
 export function planetOf(params) {
-  return { seed: params.seed, land: Math.round(params.land * 100), cities: params.cities, theme: params.theme };
+  const p = { seed: params.seed, land: Math.round(params.land * 100), cities: params.cities, theme: params.theme };
+  return params.world ? { world: params.world, ...p } : p;
 }
 
-export function planetKey(p) { return `${p.seed}:${p.land}:${p.cities}:${p.theme}`; }
+export function planetKey(p) { return p.world ? `world:${p.world}` : `${p.seed}:${p.land}:${p.cities}:${p.theme}`; }
 
 export function makeHello(app) {
   return { v: PROTOCOL, name: app.settings.playerName || 'Pilot', planet: planetOf(app.params), game: VERSION };
@@ -26,7 +31,12 @@ export function makeHello(app) {
 /** A 'hi' from someone: { name, planet, key }, or null if it isn't one we understand. */
 export function readHello(d) {
   if (!d || typeof d !== 'object' || d.v !== PROTOCOL || !d.planet || typeof d.planet !== 'object') return null;
-  const { seed, land, cities, theme } = d.planet;
+  const { seed, land, cities, theme, world } = d.planet;
+  if (world !== undefined) { // a real world: its own seed, towns and look, whatever was sent
+    if (!WORLD_IDS.includes(world) || !Number.isInteger(land) || land < 25 || land > 70) return null;
+    const w = WORLDS[world], planet = { world, seed: w.seed, land, cities: w.cities, theme: w.theme };
+    return { name: (typeof d.name === 'string' && cleanName(d.name)) || 'Pilot', planet, key: planetKey(planet) };
+  }
   if (![seed, land, cities].every(Number.isInteger) || seed < 0 || seed > 1e9 || land < 25 || land > 70 || cities < 2 || cities > 8) return null;
   if (!THEME_IDS.includes(theme)) return null;
   const planet = { seed, land, cities, theme };

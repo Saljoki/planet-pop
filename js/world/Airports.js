@@ -35,7 +35,7 @@ export class Airports {
     this.list = [];
     this.entities = [];
     for (const city of planet.cities.sites) {
-      if (this.list.length >= MAX) break;
+      if (this.list.length >= (planet.theme.air ? 0 : MAX)) break; // (no runways where there's no air to fly in)
       const ap = this.find(city);
       if (!ap) continue;
       this.list.push(ap);

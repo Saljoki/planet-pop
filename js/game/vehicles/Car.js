@@ -29,7 +29,8 @@ const _m = new THREE.Matrix4(), _f = new THREE.Vector3(), _u = new THREE.Vector3
 /**
  * A car you drive: quickest on the highways, slower on grass, sand and snow, and slower still uphill. It hops over
  * crests, leans with the ground, slides along walls, and bumps into traffic (which waits behind it and honks).
- * kind: 'car', 'van' (a parcel on the roof) or 'taxi'.
+ * kind: 'car', 'van' (a parcel on the roof) or 'taxi'. Where there's next to no air (the Moon, Mars) a car is a six-wheeled
+ * rover, and every car falls with the world's own gravity: on the Moon a crest sends it six times as far.
  */
 export class Car extends GroundVehicle {
   constructor(planet, at, heading, stats, { kind = 'car', body, trim } = {}) {
@@ -41,6 +42,7 @@ export class Car extends GroundVehicle {
     this.roll = 0;
     this.spin = 0; // wheel rotation
     this.honkT = 0;
+    this.gravity = G * (planet.world?.gravity ?? 1);
     this.paint = { ...KINDS[kind], ...(body && { body }), ...(trim && { trim }) }; // (what friends see it painted)
     this.build(kind, this.paint);
     this.dust = new Trails(planet.root, { max: 50, color: planet.theme.pal.sand, life: 0.55, grow: 2.2, drag: 1.5, near: 0.45 });
@@ -83,6 +85,7 @@ export class Car extends GroundVehicle {
 
   build(kind, { body, trim }) {
     const g = this.group, bodyMat = toon(body), trimMat = toon(trim), glass = toon('#cfeaff'), ink = toon('#2a2540');
+    if (kind === 'car' && this.planet.theme.air) { this.buildRover(bodyMat, trimMat, glass, ink); return; }
     if (kind === 'van') {
       addMesh(g, new THREE.BoxGeometry(0.094, 0.07, 0.2).translate(0, 0.064, -0.012), bodyMat, 0.009);
       addMesh(g, new THREE.BoxGeometry(0.09, 0.04, 0.05).translate(0, 0.05, 0.11), bodyMat, 0.007);
@@ -108,6 +111,28 @@ export class Car extends GroundVehicle {
     addMesh(g, lamps(-0.1 - (kind === 'van' ? 0.012 : 0)), nightGlowMaterial('#a83a4e', '#ff3b3b'), 0, { cast: false });
   }
 
+  /** Six wheels, a bubble cab, a solar panel and a dish: for worlds without air to breathe. */
+  buildRover(bodyMat, trimMat, glass, ink) {
+    const g = this.group;
+    addMesh(g, new THREE.BoxGeometry(0.1, 0.03, 0.18).translate(0, 0.052, 0), bodyMat, 0.009);
+    addMesh(g, new THREE.SphereGeometry(0.04, 14, 8, 0, TAU, 0, Math.PI / 2).scale(1, 0.9, 1.2).translate(0, 0.066, 0.045), glass, 0.006);
+    addMesh(g, new THREE.BoxGeometry(0.12, 0.006, 0.08).translate(0, 0.09, -0.045), toon('#3f6fff', { flatShading: true }), 0.004);
+    addMesh(g, mergeGeometries([
+      new THREE.BoxGeometry(0.008, 0.02, 0.008).translate(-0.035, 0.078, -0.045),
+      new THREE.BoxGeometry(0.008, 0.02, 0.008).translate(0.035, 0.078, -0.045),
+      new THREE.CylinderGeometry(0.003, 0.003, 0.07, 6).translate(0.04, 0.1, 0.03),
+      new THREE.ConeGeometry(0.018, 0.01, 12, 1, true).rotateX(Math.PI).translate(0.04, 0.136, 0.03),
+    ]), trimMat, 0.004);
+    this.wheels = [-0.064, 0, 0.064].flatMap((z) => [-1, 1].map((sx) => {
+      const w = addMesh(g, new THREE.CylinderGeometry(WHEEL * 1.1, WHEEL * 1.1, 0.024, 12).rotateZ(Math.PI / 2), ink, 0.004);
+      w.position.set(sx * 0.06, WHEEL * 1.1, z);
+      return w;
+    }));
+    const lamps = (z) => mergeGeometries([-1, 1].map((sx) => new THREE.BoxGeometry(0.02, 0.012, 0.006).translate(sx * 0.032, 0.055, z)));
+    addMesh(g, lamps(0.092), nightGlowMaterial('#f2eefc', '#fff6b0'), 0, { cast: false });
+    addMesh(g, lamps(-0.092), nightGlowMaterial('#a83a4e', '#ff3b3b'), 0, { cast: false });
+  }
+
   update(dt) {
     this.t += dt;
     this.drive(dt);
@@ -129,9 +154,9 @@ export class Car extends GroundVehicle {
   /** Follow the ground, or fly off a crest and come down again. */
   fall(dt) {
     const g = this.ground.carR(this.up), rise = clamp((g - this.alt) / dt, -2.5, 2.5);
-    if (!this.airborne && this.alt > g + 0.002 && rise < this.vy - G * dt * 1.5) this.airborne = true; // the ground fell away
+    if (!this.airborne && this.alt > g + 0.002 && rise < this.vy - this.gravity * dt * 1.5) this.airborne = true; // the ground fell away
     if (this.airborne) {
-      this.vy -= G * dt;
+      this.vy -= this.gravity * dt;
       this.alt += this.vy * dt;
       if (this.alt > g) return;
       if (this.vy < -LAND_HURT && this.invuln <= 0) Object.assign(this, { crashed: true, impact: (-this.vy - LAND_HURT) * 0.3, invuln: 0.6 });

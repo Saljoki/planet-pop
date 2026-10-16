@@ -13,12 +13,13 @@ const _p = new THREE.Vector3(), _v = new THREE.Vector3(), _w = new THREE.Vector3
 
 /** A volcano that smokes all day and erupts every minute or so, throwing glowing lava bombs. */
 export class Volcano {
-  constructor(planet, index = 0) {
+  /** empty: a stand-in that never erupts, for worlds without volcanoes. */
+  constructor(planet, index = 0, empty = false) {
     this.planet = planet;
     this.entities = [];
     this.state = 'calm';
     this.timer = 30 + index * 17 + Math.random() * 20; // several volcanoes take turns
-    const d = this.find();
+    const d = !empty && this.find();
     if (!d) return;
     this.d = d;
     this.fwd = tangentBasis(d)[0];

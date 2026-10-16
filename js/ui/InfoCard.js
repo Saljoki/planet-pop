@@ -6,7 +6,7 @@ export const KINDS = {
   plane: ['✈️', 'Airliner'], helicopter: ['🚁', 'Helicopter'], boat: ['🚢', 'Boat'], whale: ['🐋', 'Whale'], balloon: ['🎈', 'Balloon'],
   bird: ['🐦', 'Bird'], storm: ['⛈️', 'Rain cloud'], airport: ['🛬', 'Airport'], harbour: ['⚓', 'Harbour'], volcano: ['🌋', 'Volcano'],
   ufo: ['🛸', 'U.F.O.'], rocket: ['🚀', 'Rocket'], satellite: ['🛰️', 'Satellite'], station: ['🛰️', 'Space station'], moon: ['🌕', 'Moon'],
-  spot: ['📍', 'Spot'],
+  spot: ['📍', 'Spot'], landmark: ['📌', 'Landmark'],
 };
 
 const WHALE = { swim: 'Swimming deep down', rise: 'Coming up for air', blow: 'Blowing a spout', breach: 'Leaping out of the sea!', dive: 'Diving, tail in the air' };
@@ -34,7 +34,7 @@ export function describe(e, p) {
     case 'whale': return WHALE[at(p.whales.list, e.id)?.state] ?? 'Swimming';
     case 'volcano': return { erupt: 'Erupting!', rumble: 'Rumbling…' }[p.volcano.state] ?? 'Asleep, for now';
     case 'ufo': return p.ufo.hovering ? 'Hovering. Catch it before it goes!' : 'Zipping about';
-    case 'rocket': return { countdown: 'Counting down', flight: 'Lift-off!' }[p.space.state] ?? 'On the launch pad';
+    case 'rocket': return { countdown: 'Counting down', flight: 'Lift-off!', boarding: 'Boarding for space', landing: 'Coming in to land' }[p.space.state] ?? 'On the launch pad';
     case 'city': return p.nightAt(e.pos) > 0.5 ? 'Lights on for the night' : 'Busy with the day';
     case 'storm': return 'Raining, with the odd lightning bolt';
     case 'balloon': return 'Drifting on the wind';
@@ -44,6 +44,7 @@ export function describe(e, p) {
     case 'satellite': return 'Orbiting the planet';
     case 'station': return 'Orbiting with its solar wings out';
     case 'moon': return 'Keeping an eye on things';
+    case 'landmark': return p.landmarks?.noteOf(e) ?? '';
     default: return '';
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "planet-pop",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "description": "A cartoony comic-book 3D planet with the Sky Courier mini-game, built with Three.js",
   "type": "module",
@@ -22,6 +22,8 @@
     "eslint": "9.39.5",
     "globals": "17.12.0",
     "puppeteer-core": "23.10.4",
-    "three": "0.160.0"
+    "three": "0.160.0",
+    "topojson-client": "3.1.0",
+    "world-atlas": "2.0.2"
   }
 }

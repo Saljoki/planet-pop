@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { makeWorld } from './helpers/world.mjs';
 import { Friends } from '../js/net/Friends.js';
 import { TabLink } from '../js/net/TabLink.js';
-import { makeState, readState, readHello, planetOf, planetKey } from '../js/net/Wire.js';
+import { makeState, readState, readHello, planetOf, planetKey, PROTOCOL } from '../js/net/Wire.js';
 
 const PARAMS = { seed: 20261014, land: 0.45, cities: 5, theme: 'classic' };
 const wait = (ms) => new Promise((ok) => setTimeout(ok, ms));
@@ -12,11 +12,11 @@ describe('what friends send each other', () => {
   it('only well-formed hellos and positions get through', () => {
     const planet = planetOf(PARAMS);
     assert.deepEqual(planet, { seed: 20261014, land: 45, cities: 5, theme: 'classic' });
-    assert.equal(readHello({ v: 1, name: ' <b>Sam</b> ', planet }).name, 'bSam/b');
-    assert.equal(readHello({ v: 1, name: 42, planet }).name, 'Pilot');
-    assert.equal(readHello({ v: 1, name: 'Sam', planet }).key, planetKey(planet));
-    for (const bad of [null, 'hi', { v: 2, name: 'Sam', planet }, { v: 1, name: 'Sam' }, { v: 1, planet: { ...planet, theme: 'mars' } },
-      { v: 1, planet: { ...planet, seed: -1 } }, { v: 1, planet: { ...planet, land: 45.5 } }, { v: 1, planet: { ...planet, cities: 99 } }]) {
+    assert.equal(readHello({ v: PROTOCOL, name: ' <b>Sam</b> ', planet }).name, 'bSam/b');
+    assert.equal(readHello({ v: PROTOCOL, name: 42, planet }).name, 'Pilot');
+    assert.equal(readHello({ v: PROTOCOL, name: 'Sam', planet }).key, planetKey(planet));
+    for (const bad of [null, 'hi', { v: PROTOCOL - 1, name: 'Sam', planet }, { v: PROTOCOL, name: 'Sam' }, { v: PROTOCOL, planet: { ...planet, theme: 'mars' } },
+      { v: PROTOCOL, planet: { ...planet, seed: -1 } }, { v: PROTOCOL, planet: { ...planet, land: 45.5 } }, { v: PROTOCOL, planet: { ...planet, cities: 99 } }]) {
       assert.equal(readHello(bad), null, JSON.stringify(bad));
     }
     const good = { k: 'plane', c: null, b: '#ffd23f', t: '#ff4d4d', u: [0, 1, 0], f: [1, 0, 0], a: 11.6, r: 0.2, p: 0.1, w: 0 };
@@ -113,13 +113,26 @@ describe('two players in a room', () => {
   it('a friend on another planet: 🌍 Go there builds it', async () => {
     let built = null;
     b.newPlanet = async (seed, initial, theme) => { built = { seed, theme }; };
-    b.friends.receive('far', 'hi', { v: 1, name: 'Kim', planet: { seed: 7, land: 30, cities: 3, theme: 'ice' } });
+    b.friends.receive('far', 'hi', { v: PROTOCOL, name: 'Kim', planet: { seed: 7, land: 30, cities: 3, theme: 'ice' } });
     assert.ok(b.toasts.some((t) => /Kim joined \(on another planet/.test(t)));
     await b.friends.goTo('far');
     assert.deepEqual(built, { seed: 7, theme: 'ice' });
     assert.equal(b.params.land, 0.3);
     assert.equal(b.params.cities, 3);
     Object.assign(b.params, PARAMS);
+  });
+
+  it('a friend on Mars: their hello names the world, and Go there takes us', async () => {
+    const mars = readHello({ v: PROTOCOL, name: 'Mo', planet: { world: 'mars', seed: 1, land: 45, cities: 2, theme: 'ice' } });
+    assert.deepEqual(mars.planet, { world: 'mars', seed: 1976, land: 45, cities: 5, theme: 'mars' }, 'a real world is always itself');
+    assert.equal(mars.key, 'world:mars');
+    assert.equal(readHello({ v: PROTOCOL, name: 'Mo', planet: { world: 'pluto', land: 45 } }), null);
+    assert.equal(planetKey(planetOf({ ...PARAMS, world: 'moon', land: 0.3 })), planetKey(planetOf({ ...PARAMS, world: 'moon' })), 'land doesn’t matter there');
+    let went = null;
+    b.visitWorld = (id) => { went = id; };
+    b.friends.receive('red', 'hi', { v: PROTOCOL, name: 'Mo', planet: { world: 'mars', land: 45 } });
+    await b.friends.goTo('red');
+    assert.equal(went, 'mars');
   });
 
   it('the plane’s pose survives the trip', () => {

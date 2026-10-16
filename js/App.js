@@ -26,11 +26,18 @@ import { Friends } from './net/Friends.js';
 import { FriendsMenu } from './ui/FriendsMenu.js';
 import { dailyParams } from './game/Daily.js';
 import { THEME_IDS, pickTheme } from './world/Themes.js';
+import { WORLD_IDS, worldOf } from './space/Worlds.js';
+import { SystemMap } from './space/SystemMap.js';
+import { Trip } from './space/Trip.js';
 
-/** Planet settings from the address bar (?seed=…&land=…&cities=…&theme=…), with defaults for anything missing. ?daily means today's planet. */
+/**
+ * Planet settings from the address bar (?seed=…&land=…&cities=…&theme=…), with defaults for anything missing.
+ * ?daily means today's planet; ?world=moon (or earth, mars) one of the real worlds.
+ */
 function paramsFromUrl() {
   const q = new URLSearchParams(location.search);
   if (q.has('daily')) return dailyParams();
+  const world = WORLD_IDS.includes(q.get('world')) ? q.get('world') : null;
   const num = (key, fallback, lo, hi) => {
     const v = Number(q.get(key));
     return q.has(key) && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
@@ -40,6 +47,7 @@ function paramsFromUrl() {
     land: num('land', 45, 25, 70) / 100,
     cities: Math.round(num('cities', 5, 2, 8)),
     theme: THEME_IDS.includes(q.get('theme')) ? q.get('theme') : 'classic', // links from before themes existed stay classic
+    world,
   };
 }
 
@@ -84,6 +92,8 @@ export class App {
     this.achievements = new Achievements(this.hud);
     this.trophies = new TrophyWatch(this);
     this.rig = new CameraRig(this);
+    this.map = new SystemMap(this);
+    this.trip = new Trip(this);
     this.game = new CourierGame(this);
     this.quality = new Quality(this);
     this.debug = new DebugStats(this);
@@ -110,28 +120,22 @@ export class App {
     this.postfx.setSize(Math.floor(w * pr), Math.floor(h * pr));
   }
 
-  /** theme: a theme id, or leave it out to follow the World setting (the first planet keeps the address bar's). */
-  async newPlanet(seed = Math.floor(Math.random() * 1e9), initial = false, theme = null) {
-    if (this.building) { this.pending = { seed, theme }; return; }
+  /**
+   * theme: a theme id, or leave it out to follow the World setting (the first planet keeps the address bar's).
+   * world: a real world's id ('earth', 'moon', 'mars'): it comes with its own seed and look; null for a made-up planet.
+   */
+  async newPlanet(seed = Math.floor(Math.random() * 1e9), initial = false, theme = null, world = null) {
+    if (this.building) { this.pending = { seed, theme, world }; return; }
     this.building = true;
     this.params.seed = seed;
-    if (!initial) this.params.theme = theme ?? (this.worldMode === 'random' ? pickTheme(seed) : this.worldMode);
+    if (!initial) {
+      this.params.theme = theme ?? (this.worldMode === 'random' ? pickTheme(seed) : this.worldMode);
+      this.params.world = world;
+    }
     this.hud.setLoading(true);
     await new Promise((res) => setTimeout(res, 30)); // let the overlay paint first
     try {
-      const planet = new Planet(this, this.params);
-      await planet.build();
-      await this.warmUp();
-      if (this.game.active) this.game.stop();
-      this.rig.release(true);
-      this.planet?.dispose();
-      this.planet = planet;
-      this.detail.collect(planet.root);
-      this.sky.setTheme(planet.theme);
-      this.hud.setTheme(planet.theme);
-      if (!initial) this.achievements.unlock('newworld');
-      this.achievements.visitTheme(planet.theme.id);
-      this.updateUrl();
+      this.swapIn(await this.buildPlanet(this.params), initial);
     } catch (err) {
       console.error(err);
       this.hud.toast('💥 Planet build failed (see console)');
@@ -151,10 +155,46 @@ export class App {
       this.game.openHangar();
     }
     if (this.pending) {
-      const { seed: s, theme: t } = this.pending;
+      const { seed: s, theme: t, world: w } = this.pending;
       this.pending = null;
-      this.newPlanet(s, false, t);
+      this.newPlanet(s, false, t, w);
     }
+  }
+
+  /** A planet, built and ready to show (it's in the scene, but nothing draws the scene while a trip cruises). */
+  async buildPlanet(params) {
+    const planet = new Planet(this, params);
+    await planet.build();
+    await this.warmUp();
+    return planet;
+  }
+
+  /** A real world built quietly in the background (a trip builds the next world during the cruise). */
+  async buildWorld(id) {
+    this.building = true;
+    try {
+      return await this.buildPlanet({ ...this.params, world: id });
+    } finally {
+      this.building = false;
+    }
+  }
+
+  /** Show a built planet in place of the old one. */
+  swapIn(planet, initial = false) {
+    if (this.game.active) this.game.stop();
+    this.rig.release(true);
+    this.map.close(true);
+    this.planet?.dispose();
+    this.planet = planet;
+    this.detail.collect(planet.root);
+    this.params.world = planet.world?.id ?? null;
+    if (planet.world) Object.assign(this.params, { seed: planet.params.seed, theme: planet.params.theme, cities: planet.params.cities });
+    this.sky.setTheme(planet.theme);
+    this.sky.dayLength = planet.world?.day ?? 150;
+    this.hud.setTheme(planet.world ?? planet.theme);
+    if (!initial) this.achievements.unlock('newworld');
+    if (!planet.world || planet.world.id === 'earth') this.achievements.visitTheme(planet.theme.id); // (the kinds of made-up world)
+    this.updateUrl();
   }
 
   /** Compile every shader while the loading screen is up, so nothing stutters the first time it appears. */
@@ -170,7 +210,8 @@ export class App {
   /** Keep the address bar pointing at the current planet, so the link can be shared. */
   updateUrl() {
     const p = this.params;
-    const q = new URLSearchParams({ seed: p.seed, land: Math.round(p.land * 100), cities: p.cities, theme: p.theme });
+    const q = p.world ? new URLSearchParams({ world: p.world })
+      : new URLSearchParams({ seed: p.seed, land: Math.round(p.land * 100), cities: p.cities, theme: p.theme });
     if (this.friends?.code) q.set('room', this.friends.code);
     if (this.friends?.tabs) q.set('net', 'tabs');
     try { history.replaceState(null, '', `${location.pathname}?${q}`); } catch { /* e.g. sandboxed iframe */ }
@@ -192,7 +233,8 @@ export class App {
     const scale = this.paused ? 0 : this.game.active ? 1 : this.timeScale;
     const dt = Math.min(real, 0.05) * scale;
     const steps = Math.max(1, Math.ceil(dt / 0.05)), h = dt / steps; // sub-steps keep fast-forward stable
-    for (let i = 0; i < steps; i++) {
+    const map = this.map.open; // (the planet waits, unseen, while the system map is up)
+    for (let i = 0; i < steps && !map; i++) {
       this.simTime += h;
       shared.uTime.value = this.simTime;
       this.sky.update(h);
@@ -201,20 +243,25 @@ export class App {
     this.trophies.update();
     this.gamepad.update();
     if (this.game.active) this.game.update(dt, real);
+    if (this.trip.active) this.trip.update(dt);
     this.friends.update(real);
     this.tour.update(real);
-    this.rig.update(real);
+    if (map) this.map.update(real);
+    else this.rig.update(real);
     this.hud.update(real);
     this.sfx.update(real);
     this.ambience.update(real);
     this.quality.tick(real);
-    this.sky.fitShadow(this.camera);
-    this.detail.update(this.camera);
-    if (this.quality.shadowFrame()) this.renderer.shadowMap.needsUpdate = true;
     this.debug.begin();
-    this.postfx.render(this.scene, this.camera);
-    if (this.game.active) this.game.draw(this.renderer);
-    this.friends.draw();
+    if (map) this.map.render(this.postfx);
+    else {
+      this.sky.fitShadow(this.camera);
+      this.detail.update(this.camera);
+      if (this.quality.shadowFrame()) this.renderer.shadowMap.needsUpdate = true;
+      this.postfx.render(this.scene, this.camera);
+      if (this.game.active) this.game.draw(this.renderer);
+      this.friends.draw();
+    }
     if (this.onRendered) { const done = this.onRendered; this.onRendered = null; done(this.renderer.domElement); }
     this.debug.end(real);
   }
@@ -232,7 +279,14 @@ export class App {
   setShadows(on) { this.userShadows = on; this.quality.apply(); }
   setQuality(mode) { this.quality.setMode(mode); }
   setTraffic(n) { this.params.traffic = n; this.planet?.traffic.rebuild(n); }
-  setWorldParam(key, value) { this.params[key] = value; this.newPlanet(this.params.seed, false, this.params.theme); }
+  /** Go straight to one of the real worlds ('earth', 'moon', 'mars'), no trip (a link, a friend). */
+  visitWorld(id) { if (worldOf(id)) this.newPlanet(this.params.seed, false, null, id); }
+
+  /** A slider moved: rebuild this planet that way (a real world becomes a made-up one, in the World setting's look). */
+  setWorldParam(key, value) {
+    this.params[key] = value;
+    this.newPlanet(this.params.seed, false, THEME_IDS.includes(this.params.theme) && !this.params.world ? this.params.theme : null);
+  }
 
   /** 'random', or a theme id: rebuilds this planet in that theme straight away. */
   setWorld(mode) {

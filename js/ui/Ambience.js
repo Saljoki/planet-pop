@@ -51,6 +51,7 @@ export class Ambience {
       if (p.heightAt(_s) < 0) sea += 1 / 9;
     }
     const nearest = Math.min(...p.cities.sites.map((s) => s.pos.distanceTo(cam)));
+    if (app.map?.open) return { alt: 1000, sea: 0, city: 0, night: 1 }; // (out in space on the system map: just the hum)
     return { alt: cam.length() - R, sea, city: 1 - smoothstep(1.2, 4.5, nearest), night: p.nightAt(cam) };
   }
 

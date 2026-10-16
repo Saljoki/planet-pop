@@ -9,7 +9,8 @@ const JOYRIDE = 60; // seconds in a borrowed car for the trophy
 /**
  * 🚗 Free drive and ⛵ free sail: no clock, no score, just roam. opts.drive is 'car' or 'boat'; opts.take is a car or
  * boat from the world ({ kind, id }, from its info card's Drive button) to take over where it is, or else it starts
- * at a town (a car) or in open water by one (a boat). Wrecks put a fresh one at the nearest town.
+ * at a town (a car) or in open water by one (a boat); opts.from 'pad' starts beside the spaceport's launch pad (just
+ * landed from a trip). Wrecks put a fresh one at the nearest town.
  */
 export class FreeDrive extends Run {
   static briefing({ drive = 'car', take = null } = {}) {
@@ -44,6 +45,11 @@ export class FreeDrive extends Run {
     if (this.take) {
       this.taken = this.source.take(this.take.id);
       if (this.taken) return { at: this.taken.pos.clone().normalize(), heading: this.taken.fwd };
+    }
+    const pad = this.opts.from === 'pad' && p.space?.site;
+    if (pad && !this.boat) {
+      const at = pad.d.clone().addScaledVector(pad.fwd, 0.1).normalize(); // (far enough that the camera behind clears the pad)
+      if (!ground.carBlock(at)) return { at, heading: pad.fwd };
     }
     const sites = p.cities.sites, town = sites[Math.floor(this.rand() * sites.length)];
     const spot = this.boat ? this.waterNear(ground, town) : ground.parking(town);

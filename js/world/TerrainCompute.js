@@ -1,5 +1,6 @@
 // Pure JS (no three.js) so it runs inside the terrain worker and as a main-thread fallback.
 import { Heightfield } from '../core/Noise.js';
+import { WorldShape } from '../core/WorldShape.js';
 
 const linear = (hex) => {
   const n = parseInt(hex.slice(1), 16);
@@ -11,12 +12,12 @@ const linear = (hex) => {
 const CLASSIC = { seabed: '#2c6fbf', sand: '#ffe08a', g1: '#a6e35d', g2: '#66c94e', g3: '#3f9f4d', rock: '#a28fd0', snow: '#ffffff', city: '#d9d2ea' };
 
 /**
- * unit: icosphere positions (non-indexed triangle soup on the unit sphere).
+ * unit: icosphere positions (non-indexed triangle soup on the unit sphere). shape: a WorldShape's spec, for a real world.
  * Returns the displaced flat-shaded mesh, a vertex-merged hull with smooth normals for the ink outline,
  * and an equirectangular height map the ocean shader uses for shallows and foam.
  */
-export function computeTerrain({ seed, sea, flats = [], pal = CLASSIC, radius, unit, cities, cityCos, mapW = 512, mapH = 256 }) {
-  const hf = new Heightfield(seed, sea, flats);
+export function computeTerrain({ seed, sea, flats = [], shape = null, pal = CLASSIC, radius, unit, cities, cityCos, mapW = 512, mapH = 256 }) {
+  const hf = new Heightfield(seed, sea, flats, shape && new WorldShape(shape, seed));
   const PAL = Object.fromEntries(Object.entries({ ...CLASSIC, ...pal }).map(([k, hex]) => [k, linear(hex)]));
   const n = unit.length / 3;
 
@@ -46,6 +47,8 @@ export function computeTerrain({ seed, sea, flats = [], pal = CLASSIC, radius, u
   const colorFor = (h, x, y, z) => {
     if (h < -0.2) return PAL.seabed;
     if (inCity(x, y, z)) return PAL.city;
+    const paint = h > 0 && hf.shape?.paint(x, y, z); // a real world's deserts, ice caps, dark lava seas…
+    if (paint && PAL[paint]) return PAL[paint];
     if (h < 0.07) return PAL.sand;
     const j = h + hf.perlin(x * 7 + 3, y * 7, z * 7) * 0.25;
     return j < 0.32 ? PAL.g1 : j < 0.62 ? PAL.g2 : j < 0.9 ? PAL.g3 : j < 1.12 ? PAL.rock : PAL.snow;

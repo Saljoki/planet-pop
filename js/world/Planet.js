@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { R, smoothstep, tangentBasis } from '../core/Geo.js';
 import { Heightfield } from '../core/Noise.js';
+import { WorldShape, fromLatLon } from '../core/WorldShape.js';
+import { worldOf } from '../space/Worlds.js';
 import { Random } from '../core/Random.js';
 import { Terrain } from './Terrain.js';
 import { Roads } from './Roads.js';
@@ -8,6 +10,7 @@ import { Cities, CITY_A } from './Cities.js';
 import { Railway } from './Railway.js';
 import { Nature } from './Nature.js';
 import { ForestFloor } from './ForestFloor.js';
+import { Landmarks } from './Landmarks.js';
 import { Airports } from './Airports.js';
 import { Harbours } from './Harbours.js';
 import { Volcano } from './Volcano.js';
@@ -37,14 +40,17 @@ const yieldFrame = () => new Promise((r) => setTimeout(r, 0));
 export class Planet {
   constructor(app, params) {
     this.app = app;
-    this.params = { ...params };
-    this.theme = themeOf(params.theme);
-    this.rng = new Random(params.seed);
-    this.sea = Heightfield.seaLevelFor(params.seed, params.land);
-    this.hf = new Heightfield(params.seed, this.sea);
+    this.world = worldOf(params.world); // a real world (Earth, the Moon, Mars), always the same; else a made-up one
+    this.params = { ...params, ...(this.world && { seed: this.world.seed, theme: this.world.theme, cities: this.world.cities }) };
+    const p = this.params;
+    this.theme = themeOf(p.theme);
+    this.rng = new Random(p.seed);
+    this.sea = this.world ? 0 : Heightfield.seaLevelFor(p.seed, p.land);
+    this.hf = new Heightfield(p.seed, this.sea, [], this.world && new WorldShape(this.world.shape, p.seed));
     this.root = new THREE.Group();
     this.reserved = [];
     this.keepClear = []; // spots mountains must avoid (airport approaches)
+    this.summits = (this.world?.peaks || []).map((k) => ({ d: new THREE.Vector3(...fromLatLon(k.lat, k.lon)), s: k.s })); // (roads and towns leave them be)
     this.modules = [];
     this.time = 0;
   }
@@ -57,6 +63,8 @@ export class Planet {
   /** Level the ground to `level` within `rIn` radians of d, blending back to natural terrain by `rOut`. */
   flatten(d, rIn, rOut, level) { this.hf.flats.push({ x: d.x, y: d.y, z: d.z, cosIn: Math.cos(rIn), cosOut: Math.cos(rOut), level }); }
   isReserved(d, pad = 0) { return this.reserved.some((r) => r.d.angleTo(d) < r.ang + pad); }
+  /** Whether d is within `pad` radians of the foot of a real world's famous summit. */
+  nearSummit(d, pad = 0) { return this.summits.some((m) => m.d.angleTo(d) < (m.s + 0.3) / R + pad); }
   nightAt(pos) { return smoothstep(0.15, -0.25, _v.copy(pos).normalize().dot(this.app.sky.sunDir)); }
 
   /** Radius of the highest solid thing at direction d: terrain, sea, mountain cones, city skyline. */
@@ -102,7 +110,7 @@ export class Planet {
     await yieldFrame();
     this.volcanoes = Array.from({ length: this.theme.volcanoes }, (_, i) => new Volcano(this, i)).filter((v) => v.cone);
     this.volcanoes.forEach((v) => this.add(null, v));
-    this.volcano = this.volcanoes[0] || new Volcano(this, 0); // (an empty one if no site was found)
+    this.volcano = this.volcanoes[0] || new Volcano(this, 0, true); // (an empty one if there's none)
     this.add('nature', new Nature(this));
     for (const v of this.volcanoes) this.nature.mountains.push(v.cone); // solid for planes, bombs and the camera
     this.cities.build();
@@ -124,6 +132,7 @@ export class Planet {
     await terrainReady;
     this.add('forestFloor', new ForestFloor(this));
     this.cities.buildStreets();
+    this.add('landmarks', new Landmarks(this));
     this.airports.build();
     this.harbours.build();
     this.add('boats', new Boats(this));

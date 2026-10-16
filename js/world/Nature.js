@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, TAU, frame, tangentBasis } from '../core/Geo.js';
+import { fromLatLon } from '../core/WorldShape.js';
 import { toon } from '../render/Toon.js';
 import { addInstanced, shareMatrices, cutaway } from '../render/Outline.js';
 import { InstanceFade } from '../render/InstanceFade.js';
@@ -43,7 +44,8 @@ export class Nature {
 
   placeMountains() {
     const p = this.planet, rng = p.rng;
-    for (let tries = 0, peaks = 0; peaks < 14 && tries < 8000; tries++) {
+    for (const k of p.world?.peaks || []) this.addMountain(new THREE.Vector3(...fromLatLon(k.lat, k.lon)), k.s, k.hgt); // real summits first
+    for (let tries = 0, peaks = 0; peaks < (p.theme.mountains.peaks ?? 14) && tries < 8000; tries++) {
       const d = rng.dir();
       if (p.heightAt(d) < 0.42) continue;
       const s = rng.range(0.6, 0.9);
@@ -66,7 +68,7 @@ export class Nature {
 
   placeWindFarms() {
     const p = this.planet, rng = p.rng;
-    for (let farms = 0, tries = 0; farms < 3 && tries < 3000; tries++) {
+    for (let farms = 0, tries = 0; farms < (p.theme.air ? 0 : 3) && tries < 3000; tries++) { // (no wind where there's next to no air)
       const c = rng.dir(), h = p.heightAt(c);
       if (h < 0.08 || h > 0.45 || this.badSpot(c, 0.1)) continue;
       const [u, v] = tangentBasis(c), wind = rng.dir(), before = this.turbines.length;

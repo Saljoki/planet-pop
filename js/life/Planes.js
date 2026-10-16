@@ -22,7 +22,7 @@ export class Planes {
   constructor(planet) {
     this.planet = planet;
     const rng = planet.rng, root = planet.root, airports = planet.airports?.list || [];
-    this.list = COLS.map((_, i) => {
+    this.list = (planet.theme.air ? [] : COLS).map((_, i) => { // (planes need air)
       const ap = airports[i % Math.max(1, airports.length)], slot = Math.floor(i / Math.max(1, airports.length));
       if (ap && slot < PER_AIRPORT) { // the two planes of an airport fly half a lap apart
         return { ap, a: slot ? Math.PI : 0, wait: slot ? 0 : 2 + i, trailT: 0, landed: false };
