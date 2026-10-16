@@ -97,7 +97,55 @@ export default async function space({ page, frames, until, scene, open }) {
     await frames(20);
   });
 
+  /** Fly to the first thing of `kind` (named `name`, if given), in morning light unless `light` is false. */
+  const visit = (kind, name, light = true) => page.evaluate(([kind, name, light]) => {
+    const e = app.planet.entities.find((x) => x.kind === kind && (!name || x.name === name)), sky = app.sky;
+    const d = e.getPos(app.camera.position.clone()).normalize();
+    if (light) { sky.angle = Math.atan2(d.dot(sky.sv), d.dot(sky.su)) - 0.4; sky.update(0); }
+    app.rig.focus(e);
+  }, [kind, name, light]);
+
+  await scene('real-venus', 'Venus: a sea of yellow cloud, a town on its raft, highway bridges, airships and acid storms', async () => {
+    await page.evaluate(() => app.game.stop());
+    await open('world=venus');
+    await lookAt(page, 11, -162.8, 14);
+    await frames(4);
+  });
+
+  await scene('venus-town', 'A cloud city, held up by balloons', async () => {
+    await visit('city');
+    await until(() => app.rig.mode === 'local');
+    await frames(6);
+  });
+
+  await scene('real-mercury', 'Mercury: Caloris basin, craters, the rails round the planet and a huge Sun', async () => {
+    await open('world=mercury');
+    await lookAt(page, 31.5, 162.7, 15);
+    await frames(4);
+  });
+
+  await scene('mercury-terminus', 'Terminus, rolling on its rails just ahead of the sunrise', async () => {
+    await visit('rolling', null, false);
+    await until(() => app.rig.mode === 'local');
+    await frames(6);
+  });
+
+  await scene('real-pluto', 'Pluto: the heart, the dark Belton Regio, ice mountains, Charon', async () => {
+    await open('world=pluto');
+    await lookAt(page, 15, 160, 15);
+    await frames(4);
+  });
+
+  await scene('pluto-hotel', 'The ice hotel on Pluto’s heart', async () => {
+    await visit('landmark', 'The Ice Hotel');
+    await until(() => app.rig.mode === 'local');
+    await frames(6);
+    await page.evaluate(() => app.hud.info.show(app.planet.landmarks.entities.find((x) => x.name === 'The Ice Hotel')));
+    await frames(2);
+  });
+
   await scene('phone-map', 'The system map on a phone, with a world’s card', async () => {
+    await page.evaluate(() => app.hud.info.hide());
     await page.evaluate(() => app.game.stop());
     await page.setViewport({ width: 390, height: 780, deviceScaleFactor: 1 });
     await page.evaluate(() => app.map.show());
