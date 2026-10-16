@@ -3,7 +3,8 @@ import { EARTH_LAND } from './EarthLand.js';
 /**
  * The real worlds you can visit, each always the same (a fixed seed), with its shape laid over the usual noise
  * (core/WorldShape.js: latitudes and longitudes are real, in degrees; r and width are degrees across the ground).
- * theme: the look (world/Themes.js or space/WorldThemes.js) · cities: how many towns · gravity: Earth = 1 (NASA).
+ * theme: the look (world/Themes.js or space/WorldThemes.js) · cities: how many towns · gravity: Earth = 1 (NASA) ·
+ * peaks: mountain cones on the real summits (s: size, hgt: height, in units) · landmarks: named places to find.
  */
 export const WORLDS = {
   earth: {
@@ -25,6 +26,12 @@ export const WORLDS = {
         { kind: 'paint', lat: -25, lon: 132, r: 10, pal: 'sand' }, // the Australian outback
       ],
     },
+    peaks: [{ lat: 27.99, lon: 86.93, s: 0.45, hgt: 0.9 }, { lat: -3.07, lon: 37.35, s: 0.35, hgt: 0.6 }, { lat: 35.36, lon: 138.73, s: 0.25, hgt: 0.5 }],
+    landmarks: [
+      { name: 'Mount Everest', lat: 27.99, lon: 86.93, note: 'The highest mountain on Earth: 8,849 m' },
+      { name: 'The Sahara', lat: 23, lon: 12, note: 'The biggest hot desert, nearly as big as the USA' },
+      { name: 'The Amazon', lat: -3, lon: -60, note: 'The biggest rainforest on Earth' },
+    ],
   },
   moon: {
     id: 'moon', name: 'The Moon', icon: '🌕', theme: 'moon', seed: 1110, cities: 4, gravity: 0.16,
@@ -50,8 +57,13 @@ export const WORLDS = {
         { kind: 'crater', lat: -20.4, lon: 129.1, r: 3, depth: 0.3 }, // Tsiolkovskiy
       ],
     },
-    // Tranquility Base, where people first walked on the Moon (Apollo 11, July 1969)
-    landmarks: [{ name: 'Tranquility Base', lat: 0.674, lon: 23.473 }],
+    landmarks: [
+      { name: 'Tranquility Base', lat: 0.674, lon: 23.473, model: 'lander', note: 'Where Apollo 11 landed: the first people on the Moon, 20 July 1969' },
+      { name: 'Tycho', lat: -43.3, lon: -11.2, note: 'A young crater 85 km across, with bright rays you can see from Earth' },
+      { name: 'Copernicus', lat: 9.6, lon: -20.1, note: 'A crater 93 km across and nearly 4 km deep' },
+      { name: 'Mare Imbrium', lat: 32.8, lon: -15.6, note: 'The Sea of Rains: dark plains of old lava, and not a drop of water' },
+      { name: 'The far side', lat: 10, lon: 180, note: 'Earth only ever sees the Moon\u2019s other face; this side is always turned away' },
+    ],
   },
   mars: {
     id: 'mars', name: 'Mars', icon: '🔴', theme: 'mars', seed: 1976, cities: 5, gravity: 0.38,
@@ -79,6 +91,17 @@ export const WORLDS = {
         { kind: 'cap', lat: -83, height: 0.08, pal: 'snow' },
       ],
     },
+    peaks: [ // (big cones on top of the domes, so the volcanoes stand out)
+      { lat: 18.65, lon: -133.8, s: 0.9, hgt: 1.5 }, { lat: 11.92, lon: -104.1, s: 0.55, hgt: 0.8 }, { lat: 1.48, lon: -113, s: 0.5, hgt: 0.7 },
+      { lat: -8.26, lon: -120.1, s: 0.55, hgt: 0.8 }, { lat: 25.02, lon: 147.21, s: 0.45, hgt: 0.6 },
+    ],
+    landmarks: [
+      { name: 'Olympus Mons', lat: 18.65, lon: -133.8, note: 'The tallest volcano known: about 22 km high, two and a half Everests' },
+      { name: 'Valles Marineris', lat: -11, lon: -68, note: 'A canyon about 4,000 km long, as long as the USA is wide' },
+      { name: 'Hellas Planitia', lat: -42.4, lon: 70.5, note: 'A huge old impact basin, 2,300 km across and over 7 km deep' },
+      { name: 'Gale crater', lat: -5.4, lon: 137.8, note: 'Where NASA\u2019s Curiosity rover has been exploring since 2012' },
+      { name: 'Jezero crater', lat: 18.4, lon: 77.5, note: 'An old lake bed, where NASA\u2019s Perseverance rover landed in 2021' },
+    ],
   },
 };
 

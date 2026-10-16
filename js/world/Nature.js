@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { R, TAU, frame, tangentBasis } from '../core/Geo.js';
+import { fromLatLon } from '../core/WorldShape.js';
 import { toon } from '../render/Toon.js';
 import { addInstanced, shareMatrices, cutaway } from '../render/Outline.js';
 import { InstanceFade } from '../render/InstanceFade.js';
@@ -43,6 +44,7 @@ export class Nature {
 
   placeMountains() {
     const p = this.planet, rng = p.rng;
+    for (const k of p.world?.peaks || []) this.addMountain(new THREE.Vector3(...fromLatLon(k.lat, k.lon)), k.s, k.hgt); // real summits first
     for (let tries = 0, peaks = 0; peaks < (p.theme.mountains.peaks ?? 14) && tries < 8000; tries++) {
       const d = rng.dir();
       if (p.heightAt(d) < 0.42) continue;

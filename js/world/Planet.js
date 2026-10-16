@@ -10,6 +10,7 @@ import { Cities, CITY_A } from './Cities.js';
 import { Railway } from './Railway.js';
 import { Nature } from './Nature.js';
 import { ForestFloor } from './ForestFloor.js';
+import { Landmarks } from './Landmarks.js';
 import { Airports } from './Airports.js';
 import { Harbours } from './Harbours.js';
 import { Volcano } from './Volcano.js';
@@ -128,6 +129,7 @@ export class Planet {
     await terrainReady;
     this.add('forestFloor', new ForestFloor(this));
     this.cities.buildStreets();
+    this.add('landmarks', new Landmarks(this));
     this.airports.build();
     this.harbours.build();
     this.add('boats', new Boats(this));
