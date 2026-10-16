@@ -26,7 +26,7 @@ export default async function courier({ page, frames, until, scene }) {
     await page.evaluate(() => app.settings.set('invertY', false));
     await frames(1);
   });
-  await scene('courier', 'Sky Courier in flight', async () => {
+  await scene('courier', 'Sky Courier in flight, with the player\'s name over the plane', async () => {
     await page.click('#bStart').catch(() => {}); // Start on the briefing (if that scene ran)
     await page.evaluate(() => { app.game.hangar.hide(); app.game.start(); });
     await until(() => app.rig.mode === 'game');

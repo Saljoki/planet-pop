@@ -199,7 +199,7 @@ export class App {
     if (this.quality.shadowFrame()) this.renderer.shadowMap.needsUpdate = true;
     this.debug.begin();
     this.postfx.render(this.scene, this.camera);
-    if (this.game.active) this.game.minimap.render(this.renderer);
+    if (this.game.active) this.game.draw(this.renderer);
     if (this.onRendered) { const done = this.onRendered; this.onRendered = null; done(this.renderer.domElement); }
     this.debug.end(real);
   }

@@ -62,7 +62,8 @@ service worker picks up the new version (the tests check this).
   other has summer; leaves turn in autumn and blossom in spring. The season where you are shows next to
   the world's name.
 - **ℹ️ About** (bottom of the panel, with the version number): who made Planet Pop, the credits, and **your name**,
-  which the game then uses on results cards, in the hangar, in the daily share and to say hello.
+  which the game then shows over your plane, car or boat (like Rex's), on results cards, in the hangar, in the daily
+  share and to say hello.
 - **Sound** (panel) mutes everything; **Ambience** sets the volume of the soundscape (wind, surf, a
   town's murmur, birds by day, crickets by night, a hum out in space), which follows the camera.
 - **P** pause · **N** new planet · **H** show/hide the control panel · **F** Find · **T** tour.
