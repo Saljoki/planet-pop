@@ -2,10 +2,10 @@ import * as THREE from 'three';
 import { TAU, clamp, mod, tangentBasis } from '../core/Geo.js';
 
 /** How far back to start from each kind of thing, and how close the camera may get to it. */
-const FRAME = { landmark: 2.6, car: 1.0, train: 1.3, boat: 1.2, plane: 1.7, balloon: 1.6, bird: 0.9, rocket: 2.2, satellite: 1.4, station: 3.2, moon: 6.5, storm: 5, city: 4.2, spot: 3,
+const FRAME = { landmark: 2.6, rolling: 2.4, car: 1.0, train: 1.3, boat: 1.2, plane: 1.7, balloon: 1.6, bird: 0.9, rocket: 2.2, satellite: 1.4, station: 3.2, moon: 6.5, storm: 5, city: 4.2, spot: 3,
   airport: 3.2, harbour: 2.2, person: 0.45, volcano: 4.2, ufo: 1.6, tram: 0.75, whale: 1.3, helicopter: 1.2 };
 const MIN_DIST = { moon: 2.3, station: 0.9, storm: 1.5, city: 1, person: 0.12 };
-const FROM_ABOVE = ['city', 'spot', 'airport', 'harbour', 'volcano', 'landmark']; // places look best from higher up
+const FROM_ABOVE = ['city', 'spot', 'airport', 'harbour', 'volcano', 'landmark', 'rolling']; // places look best from higher up
 const MIN_PITCH = 0.04, MAX_PITCH = 1.45, MAX_DIST = 14;
 const _v = new THREE.Vector3(), _w = new THREE.Vector3(), _e = new THREE.Vector3(), _n = new THREE.Vector3(), _q = new THREE.Quaternion();
 

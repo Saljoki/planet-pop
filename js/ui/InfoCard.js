@@ -6,7 +6,7 @@ export const KINDS = {
   plane: ['✈️', 'Airliner'], helicopter: ['🚁', 'Helicopter'], boat: ['🚢', 'Boat'], whale: ['🐋', 'Whale'], balloon: ['🎈', 'Balloon'],
   bird: ['🐦', 'Bird'], storm: ['⛈️', 'Rain cloud'], airport: ['🛬', 'Airport'], harbour: ['⚓', 'Harbour'], volcano: ['🌋', 'Volcano'],
   ufo: ['🛸', 'U.F.O.'], rocket: ['🚀', 'Rocket'], satellite: ['🛰️', 'Satellite'], station: ['🛰️', 'Space station'], moon: ['🌕', 'Moon'],
-  spot: ['📍', 'Spot'], landmark: ['📌', 'Landmark'],
+  spot: ['📍', 'Spot'], landmark: ['📌', 'Landmark'], rolling: ['🚉', 'Rolling town'],
 };
 
 const WHALE = { swim: 'Swimming deep down', rise: 'Coming up for air', blow: 'Blowing a spout', breach: 'Leaping out of the sea!', dive: 'Diving, tail in the air' };
@@ -45,6 +45,7 @@ export function describe(e, p) {
     case 'station': return 'Orbiting with its solar wings out';
     case 'moon': return 'Keeping an eye on things';
     case 'landmark': return p.landmarks?.noteOf(e) ?? '';
+    case 'rolling': return e.note ?? 'Rolling along ahead of the sunrise';
     default: return '';
   }
 }

@@ -68,7 +68,7 @@ export class Cities {
       }
       return true;
     };
-    const fits = (c, u, v) => okLand(c) && this.sites.every((o) => o.c.angleTo(c) >= 0.75) && !p.nearSummit(c, CITY_A)
+    const fits = (c, u, v) => okLand(c) && this.sites.every((o) => o.c.angleTo(c) >= 0.75) && !p.offLimits(c, CITY_A)
       && ring(c, CITY_A * 0.55, u, v) && ring(c, CITY_A, u, v);
     for (const road of p.roads.list) {
       let placed = 0;

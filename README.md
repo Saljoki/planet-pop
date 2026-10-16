@@ -5,8 +5,9 @@ strolling the streets, trams and traffic with signals, airports where planes lan
 with ferries, sightseeing helicopters, whales, a train with a tunnel, balloons, bird flocks, weather with
 rainbows, an erupting volcano, midnight fireworks, meteor showers, auroras over the poles, the odd UFO,
 a rocket pad, satellites, a space station, a moon and an ambient soundscape. Planets come in five kinds:
-classic, ice, desert, candy and lava, and there are three real worlds: **Earth** with its real continents, **the Moon**
-and **Mars**, mapped from real data, on a 🪐 **map of the solar system** with every planet where it really is today, and
+classic, ice, desert, candy and lava, and there are six real worlds to land on: **Earth** with its real continents,
+**the Moon** and **Mars** mapped from real data, the cloud cities of **Venus**, **Mercury** with its rolling town and
+**Pluto** with its ice hotel, on a 🪐 **map of the solar system** with every planet where it really is today, and
 **rocket trips** between them. Plus the **Sky Courier** mini-game with ten missions, a daily
 challenge and free flight, **road trips** (drive any car or steer any boat, taxi, van courier and a race round
 the world) with a 🗺️ mini-map, 👥 playing with friends on the same planet, a 📍 Find menu, a hands-free 📺 tour, a
@@ -14,7 +15,7 @@ photo mode and 42 trophies. It's built for
 phones as much as laptops (touch gestures, a thumbstick, tilt steering), installs as an app and works offline.
 
 Every planet is generated from a seed. The address bar always holds the current planet
-(`?seed=…&land=…&cities=…&theme=…`, or `?world=earth`, `moon` or `mars`), and **🔗 Share this planet** copies the link.
+(`?seed=…&land=…&cities=…&theme=…`, or `?world=earth`, `moon`, `mars`, `venus`, `mercury` or `pluto`), and **🔗 Share this planet** copies the link.
 
 ## Run it
 
@@ -92,13 +93,22 @@ service worker picks up the new version (the tests check this).
   the Tharsis volcanoes, Valles Marineris, Hellas, its ice caps, Gale and Jezero craters, and Phobos and Deimos
   overhead. Landmarks show up in 📍 Find with a card about each. No air means no clouds, birds, planes or wind farms,
   and there's no sea to sail on either; a Moon day lasts seven minutes.
+- **Venus** can't be landed on (it's 464°C down there), so you visit its cloud tops, 50 km up: a sea of yellow cloud
+  with six towns on rafts held up by balloons, joined by highway bridges, with airships, acid thunderstorms and the
+  Sun rising in the west. **Mercury** has Caloris and the other great basins where they really are, a Sun two and a
+  half times as wide, ice in its polar craters, and **Terminus**, a town on rails that rolls round the planet at walking
+  pace to stay just ahead of the sunrise; out in the sunshine it's 430°C, and whatever you're driving or flying
+  overheats, so keep to the night side. **Pluto** has its heart (Sputnik Planitia, a plain of frozen nitrogen), the
+  water-ice Tenzing and Hillary Montes, the ice volcano Wright Mons, the dark Belton Regio, a faint, tiny Sun, Charon
+  hanging huge and still in the sky, and the ice hotel on the heart.
 - **🚀 Trips:** a world's card has **Travel to …**: board the rocket on your spaceport's pad, 3-2-1, lift off, then
   cruise across the map: steer (drag, arrow keys or WASD) to catch ⭐ fuel stars (a coin each) and miss the rocks
   (thickest in the asteroid belt), and boost (Space, or **🔥 Boost**) with the fuel. The next world is built while you
   cruise, and the rocket lands on its pad, where you can drive off or start a courier run.
-- **Getting about:** with no air to speak of, cars on the Moon and Mars are six-wheeled rovers (traffic too), Sky
-  Courier flies a rocket hopper on the Moon and a long-winged glider on Mars, and everything falls with the world's real
-  gravity: a crest on the Moon sends a rover six times as far as on Earth.
+- **Getting about:** with no air to speak of, cars on the Moon, Mars, Mercury and Pluto are six-wheeled rovers
+  (traffic too), Sky Courier flies a rocket hopper where there's no air and a long-winged glider on Mars, and everything
+  falls with the world's real gravity: a crest on the Moon sends a rover six times as far as on Earth, and on Pluto
+  further still.
 - **👥 Friends** on a real world show up as "on Mars" (say), and **Go there** flies you there by rocket.
 - **On a phone** the control panel and Find slide up from the bottom (drag the bar down to close them), or in
   from the right with the phone on its side. Buttons are finger-sized and keep clear of notches. The screen
@@ -190,8 +200,9 @@ planet-pop/
 │  │                          Sparks (pooled glowing particles), Fireworks, Meteors, Rainbows
 │  ├─ world/                  Planet (the module list), Themes, Terrain + TerrainCompute + terrain.worker,
 │  │                          SurfaceIndex (exact ground height), Roads, Cities, Nature, TreeShapes, Railway, Airports,
-│  │                          Harbours, Volcano, Glow, Seasons, ForestFloor (forest-coloured ground), Happenings
-│  │                          (what's going on, for Find and the tour)
+│  │                          Harbours, Volcano, Glow, Seasons, ForestFloor (forest-coloured ground), Landmarks,
+│  │                          RollingTown (Mercury's Terminus), Rafts (Venus's balloons), Happenings (what's going
+│  │                          on, for Find and the tour)
 │  ├─ life/                   Trails, Traffic, People, Trams, Boats, Whales, Balloons, Planes, Helicopters, Birds,
 │  │                          Ufo, Space
 │  ├─ camera/                 CameraRig (modes and swoops), OrbitView, FollowView, ChaseView, Picker (what's under a

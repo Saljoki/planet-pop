@@ -18,8 +18,7 @@ export class LandedCard extends Widget {
     const air = this.app.planet?.theme.air, $ = (id) => this.$(id);
     $('lIcon').textContent = world.icon;
     $('lName').textContent = `Welcome to ${world.name}!`;
-    $('lNote').textContent = world.gravity === 1 ? 'Home sweet home.'
-      : `Gravity here is ${world.gravity} of Earth’s: everything falls slower, so crests send you flying.`;
+    $('lNote').textContent = world.welcome ?? '';
     $('lDrive').textContent = air ? '🚙 Drive the rover' : '🚗 Take a car';
     $('lFly').textContent = air === 'none' ? '🚀 Hopper courier' : '✈️ Sky Courier';
     super.show();

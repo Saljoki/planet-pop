@@ -237,8 +237,10 @@ describe('trips', () => {
   });
 });
 
-describe('getting about on the Moon and Mars', () => {
-  for (const world of ['moon', 'mars']) {
+const STYLE = { moon: 'hopper', mars: 'glider', venus: 'plane', mercury: 'hopper', pluto: 'hopper' };
+
+describe('getting about on the other worlds', () => {
+  for (const world of Object.keys(STYLE)) {
     it(`${world}: every run starts and runs, in the vehicles that suit it`, async () => {
       localStorage.clear();
       const { app, planet } = await makeWorld({ world });
@@ -246,13 +248,13 @@ describe('getting about on the Moon and Mars', () => {
       for (const opts of [{}, { free: true }, ...ROAD_TRIPS.filter((t) => t.needs !== 'sea').map((t) => t.opts)]) {
         game.start(opts);
         const pl = game.player;
-        if (pl.kind === 'plane') assert.equal(pl.style, world === 'moon' ? 'hopper' : 'glider');
+        if (pl.kind === 'plane') assert.equal(pl.style, STYLE[world]);
         run(app, 6, { game: true, camera: true });
         assert.ok(game.active || game.over, `${JSON.stringify(opts)} ended at once`);
         assert.ok(Number.isFinite(pl.pos.x) && pl.pos.length() > 9, `${JSON.stringify(opts)}: the vehicle went astray`);
         game.stop();
       }
-      assert.ok(planet.traffic.rover, 'rovers on the roads');
+      assert.equal(planet.traffic.rover, world !== 'venus', 'rovers on the roads where there’s no air');
       assertFiniteInstances(planet.root, world);
     });
   }
@@ -272,5 +274,64 @@ describe('getting about on the Moon and Mars', () => {
     };
     const earth = await hang('earth'), moon = await hang('moon');
     assert.ok(moon > earth * 4, `in the air ${moon.toFixed(2)} s on the Moon, ${earth.toFixed(2)} s on Earth`);
+  });
+});
+
+describe('Venus, Mercury and Pluto', () => {
+  it('Venus: towns on rafts in a sea of cloud, joined by bridges; airships, acid storms, the Sun rising in the west', async () => {
+    const { app, planet } = await makeWorld({ world: 'venus' });
+    assert.equal(planet.cities.sites.length, WORLDS.venus.cities, 'a town on every raft');
+    for (const s of planet.cities.sites) assert.ok(planet.heightAt(s.c) > 0.1, 'a town off its raft');
+    assert.ok(planet.terrain.ocean, 'the cloud sea');
+    assert.ok(planet.roads.list.every((r, i) => r.n.distanceTo(new planet.roads.list[0].n.constructor(...WORLDS.venus.roads[i]).normalize()) < 1e-9), 'the highways where the rafts are');
+    assert.ok(planet.roads.list.some((r) => r.water.some(Boolean)), 'bridges over the clouds');
+    assert.ok(planet.heightAt(planet.padSite.d) > 0.1, 'the spaceport on its raft');
+    assert.equal(planet.birds.flocks.length, 0, 'birds on Venus');
+    assert.equal(planet.boats.boats.length + planet.whales.list.length, 0);
+    assert.ok(planet.balloons.blimp && planet.balloons.list.length > 0, 'airships');
+    assert.ok(planet.weather.storms.length > 0, 'acid storms');
+    assert.ok(planet.rafts.list.length >= planet.cities.sites.length * 5, 'balloons holding up the rafts');
+    assert.ok(WORLDS.venus.day < 0, 'the Sun rises in the west');
+    run(app, 10);
+    assertFiniteInstances(planet.root, 'venus');
+  });
+
+  it('Mercury: Terminus rolls ahead of the sunrise, and the sunshine cooks you', async () => {
+    const { app, planet } = await makeWorld({ world: 'mercury' });
+    const town = planet.rolling, sky = app.sky, at = () => town.entities[0].getPos(app.camera.position.clone());
+    app.sky.dayLength = WORLDS.mercury.day;
+    for (const s of planet.cities.sites) assert.ok(!planet.inBand(s.c, 0.14), 'a town on the rails');
+    for (let i = 0; i < 3; i++) {
+      run(app, 60);
+      const c = sky.clock(at());
+      assert.ok(c < 0 && c > -0.5, `Terminus at clock ${c.toFixed(2)}: should be just before dawn`);
+    }
+    assert.ok(at().length() > planet.surfR(at().normalize()) + 0.2, 'up on its rails');
+    const game = app.game;
+    game.start({ drive: 'car' });
+    const pl = game.player, sun = sky.sunDir.clone();
+    pl.place(sun, pl.fwd);
+    pl.alt = pl.ground.carR(pl.up);
+    game.update(0.5);
+    for (let i = 0; i < 40; i++) game.update(0.05);
+    assert.ok(game.hazards.hot && pl.health < 0.97, 'cooking in the sunshine');
+    const hurt = pl.health;
+    pl.place(sun.clone().negate(), pl.fwd);
+    pl.alt = pl.ground.carR(pl.up);
+    for (let i = 0; i < 40; i++) game.update(0.05);
+    assert.ok(!game.hazards.hot && Math.abs(pl.health - hurt) < 0.02, 'fine at night');
+    game.stop();
+  });
+
+  it('Pluto: the heart, ice mountains, Charon in the sky, the ice hotel, the lightest gravity', async () => {
+    const { app, planet } = await makeWorld({ world: 'pluto' });
+    assert.equal(planet.hf.shape.paint(...fromLatLon(19.5, 178.7)), 'snow', 'the heart is bright');
+    assert.equal(planet.hf.shape.paint(...fromLatLon(0, 90)), 'mare', 'Belton Regio is dark');
+    assert.equal(planet.space.moons.length, 1, 'Charon');
+    assert.ok(planet.landmarks.entities.some((e) => e.name === 'The Ice Hotel'));
+    assert.ok(planet.padSite.d.angleTo(new planet.padSite.d.constructor(...fromLatLon(30, -175))) < 1e-6, 'the spaceport where Pluto says');
+    assert.ok(Math.min(...Object.values(WORLDS).map((w) => w.gravity)) === WORLDS.pluto.gravity);
+    run(app, 10);
+    assertFiniteInstances(planet.root, 'pluto');
   });
 });

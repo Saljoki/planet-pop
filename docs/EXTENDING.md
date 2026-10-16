@@ -151,8 +151,12 @@ planets pick it up from there. Add its id to the list of worlds `tests/themes.te
   heights and colours; it's plain JS so the terrain worker uses it too. `peaks` puts mountain cones on famous
   summits (highways and towns keep off them) and `landmarks` are places Find and the info card know. Its look goes in
   `WORLD_THEMES` (`js/space/WorldThemes.js`): `air` ('none' or 'thin') switches off clouds, birds, planes, balloons and
-  wind farms, `sea.none` the sea, and `moons` says what hangs in its sky. Give its body in `BODIES` a `world` so the
-  map's card offers a trip there, and add it to the tests in `tests/space.test.mjs`.
+  wind farms, `sea.none` the sea, and `moons` says what hangs in its sky (`sun` how big the Sun looks, `wildlife`,
+  `aurora` and `balloons: 'blimp'` the rest). A world can also fix where its spaceport is (`pad`), lay its highways
+  along set great circles (`roads`: Venus's rafts sit on them), scorch vehicles in sunshine (`heat`, in
+  `FlightHazards`), run a town on rails round its spin axis (`rolling`: `world/RollingTown.js`; towns, the railway
+  and new mountains keep off the band) or float its towns on rafts (`floating`: `world/Rafts.js`). Give its body in
+  `BODIES` a `world` so the map's card offers a trip there, and add it to the tests in `tests/space.test.mjs`.
 - **A body on the map** (`js/space/Bodies.js`): NASA's numbers for the card, how it's drawn (`look`: picked up by
   `BodyArt`), and `orbit`, its name in `ORBITS` (`js/space/Orbits.js`, JPL's elements). The map squeezes sizes and
   distances with a square root (`mapSize`, `mapPosition`).

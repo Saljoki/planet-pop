@@ -35,7 +35,7 @@ export class Nature {
     const p = this.planet;
     if (p.heightAt(d) < 0.15 || p.roads.near(d, (s + 0.3) / R) || p.railway.near(d, (s + 0.25) / R)) return false;
     if (p.cities.sites.some((o) => o.c.angleTo(d) < CITY_A + (s + 0.2) / R) || p.isReserved(d, s / R)) return false;
-    if (p.keepClear.some((k) => k.d.angleTo(d) < k.ang + s / R)) return false;
+    if (p.keepClear.some((k) => k.d.angleTo(d) < k.ang + s / R) || p.inBand(d, (s + 0.4) / R)) return false;
     if (this.mountains.some((m) => m.d.angleTo(d) < ((s + m.s) * 0.6) / R)) return false;
     const base = p.surfR(d) - 0.3;
     this.mountains.push({ d, s, base, hgt: Math.min(hgt + 0.1, R + 2.2 - base) });

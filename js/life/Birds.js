@@ -16,7 +16,7 @@ export class Birds {
     const rng = planet.rng, root = planet.root;
     this.flocks = [];
     this.birds = [];
-    for (let f = 0; f < (planet.theme.air ? 0 : FLOCKS); f++) { // (no birds without proper air)
+    for (let f = 0; f < (planet.theme.air || planet.theme.wildlife === false ? 0 : FLOCKS); f++) { // (no birds without proper air, or life)
       const c = rng.dir(), axis = new THREE.Vector3().crossVectors(c, rng.dir()).normalize();
       const flock = { target: c.clone(), axis, turn: rng.range(-0.3, 0.3), speed: rng.range(0.05, 0.065), name: NAMES[f] };
       this.flocks.push(flock);

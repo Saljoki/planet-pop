@@ -63,6 +63,14 @@ export class Vehicle {
     return this.wrecked;
   }
 
+  /** Slow harm that doesn't shake anything (Mercury's sunshine). Returns true if that wrecked it. */
+  wear(amount) {
+    if (this.wrecked) return false;
+    this.health = Math.max(0, this.health - amount * (this.stats.armour ?? 1));
+    this.wrecked = this.health <= 0;
+    return this.wrecked;
+  }
+
   repair(amount) {
     if (!this.wrecked) this.health = Math.min(1, this.health + amount);
   }

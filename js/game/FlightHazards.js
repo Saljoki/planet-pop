@@ -2,11 +2,11 @@ import { TAU, tangentBasis } from '../core/Geo.js';
 import { HALF } from '../world/Airports.js';
 import { HARM } from './vehicles/Vehicle.js';
 
-const REFUEL = 0.9, REPAIR = 0.3, ASH_ENGINE = 0.55;
+const REFUEL = 0.9, REPAIR = 0.3, ASH_ENGINE = 0.55, HEAT = 1 / 45; // (a full tank of health lasts 45 s in Mercury's sunshine)
 
 /**
  * What the planet does to the plane in any run: thunderstorms buffet and zap it, runways refuel it, volcanic ash
- * chokes the engine. The effects on the plane happen here; the run hears about them (zapped, refuelled, inAsh) to
+ * chokes the engine, and on Mercury (world.heat) the sunshine slowly cooks whatever you're in. The effects on the plane happen here; the run hears about them (zapped, refuelled, inAsh) to
  * score them its own way.
  */
 export class FlightHazards {
@@ -17,13 +17,14 @@ export class FlightHazards {
 
   /** A fresh run: warnings will be shown again. */
   reset() {
-    Object.assign(this, { stormT: 1.2, warnedStorm: false, refuelling: false, warnedAsh: false, ashT: 0 });
+    Object.assign(this, { stormT: 1.2, warnedStorm: false, refuelling: false, warnedAsh: false, ashT: 0, hot: false, warnedHeat: false, heatT: 0 });
   }
 
   update(dt) {
     this.storm(dt);
     this.runways(dt);
     this.ash(dt);
+    this.heat(dt);
   }
 
   /** Inside a thundercloud the plane is buffeted, and every few seconds lightning may hit it. */
@@ -65,6 +66,19 @@ export class FlightHazards {
     }
     if (on && !this.refuelling) { g.run.refuelled(); g.app.sfx.pop(pl.pos.clone(), 'REFUEL!', '#3fa7ff', 'ring'); }
     this.refuelling = on;
+  }
+
+  /** Where the sunshine is scorching (Mercury), the vehicle overheats in daylight: keep to the night side. */
+  heat(dt) {
+    const g = this.game, pl = g.player, p = g.planet;
+    this.hot = !!p.world?.heat && p.nightAt(pl.pos) < 0.5;
+    if (!this.hot) return;
+    pl.wear(HEAT * dt);
+    if (!this.warnedHeat) {
+      this.warnedHeat = true;
+      g.app.hud.toast('☀️ 430°C in the sunshine! You’re overheating: head for the night side.');
+    }
+    if ((this.heatT -= dt) <= 0) { this.heatT = 4; g.app.sfx.pop(pl.pos.clone(), 'SIZZLE!', '#ff8c42', 'screech'); }
   }
 
   /** An erupting volcano's ash plume chokes the engine and empties the boost tank. */

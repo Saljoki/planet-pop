@@ -20,12 +20,12 @@ export class Roads {
   constructor(planet) {
     this.planet = planet;
     this.entities = [];
-    const rng = planet.rng, q = new THREE.Quaternion();
-    for (let tries = 0; tries < 80; tries++) { // (on a real world, turned so no highway runs over a famous summit)
+    const rng = planet.rng, q = new THREE.Quaternion(), fixed = planet.world?.roads;
+    for (let tries = 0; tries < 80 && !fixed; tries++) { // (on a real world, turned so no highway runs over a famous spot)
       q.setFromAxisAngle(rng.dir(), rng.range(0, TAU));
-      if (BASE.every((b) => planet.summits.every((m) => Math.abs(_d.set(...b).normalize().applyQuaternion(q).dot(m.d)) > Math.sin((m.s + 0.6) / R)))) break;
+      if (BASE.every((b) => planet.spots.every((m) => Math.abs(_d.set(...b).normalize().applyQuaternion(q).dot(m.d)) > Math.sin((m.s + 0.6) / R)))) break;
     }
-    this.list = BASE.map((b, idx) => this.trace(new THREE.Vector3(...b).normalize().applyQuaternion(q), idx));
+    this.list = (fixed ?? BASE).map((b, idx) => this.trace(new THREE.Vector3(...b).normalize().applyQuaternion(q), idx));
     this.crossings = [];
     for (let i = 0; i < this.list.length; i++) {
       for (let j = i + 1; j < this.list.length; j++) {
