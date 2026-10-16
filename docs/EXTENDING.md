@@ -111,7 +111,7 @@ a new kind of progress kept under a new key should be added there, or it won't m
 Add an entry to `MISSIONS` in `js/game/Missions.js`. `goal.stat` names one of the counters in
 `DeliveryRun.tally` (deliveries, urgent, fragile, heavy, broken, rings, refuels, rexStreak, ufo, ash, night, zaps,
 landmark); `failIf` names one that ends the mission when it goes above zero. Setup flags (`rival`, `night`, `dark`,
-`ufoIn`, `eruptions`, `cargo`, `landmark`, `carry`) are applied in `MissionRun.setup()`; a new one goes there. Pick a
+`ufoIn`, `eruptions`, `cargo`, `landmark`, `carry`, `item`) are applied in `MissionRun.setup()`; a new one goes there. Pick a
 planet that has what the mission needs; `tests/missions.test.mjs` checks that. `planet: { world: 'mars' }` flies it on
 a real world: those missions are a list of their own on the board, opening up in order after the first.
 

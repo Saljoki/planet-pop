@@ -132,7 +132,7 @@ describe('missions on the real worlds', () => {
     assert.equal(run.dest.name, 'Tranquility Base');
     assert.ok(!run.rival, 'Rex on the Moon');
     game.update(1 / 60);
-    assert.match(game.hud.dom.goal.textContent, /Tranquility Base/);
+    assert.match(game.hud.dom.goal.textContent, /🚩 Flag → Tranquility Base/);
     pl.up.copy(run.dest.c);
     pl.alt = planet.surfR(run.dest.c) + 1;
     game.update(1 / 60);

@@ -69,6 +69,9 @@ export class DeliveryRun extends Run {
   /** What the goal line says once the destination is close. */
   get arriveHint() { return `swoop down over ${this.dest.name}!`; }
 
+  /** What's being carried, for the goal line. */
+  get what() { return `${this.cargo.icon} ${this.cargo.name}`; }
+
   /** Show where the parcel goes: the beacon over its town. */
   markDest() { this.game.props.placeBeacon(this.dest); }
 
@@ -252,7 +255,7 @@ export class DeliveryRun extends Run {
     h.pointAt(c);
     const km = Math.round(pl.up.angleTo(c) * R * 100);
     const comboLeft = Math.max(0, Math.ceil(this.par - this.elapsed));
-    const what = `${this.cargo.icon} ${this.cargo.name}${this.broken ? ' (broken!)' : ''}`;
+    const what = `${this.what}${this.broken ? ' (broken!)' : ''}`;
     const rex = this.rival ? ` · 😈 ${this.rival.kmTo(c)} km` : '';
     d.goal.textContent = aim ? `${aim.text} · ${km} km` : km < 90
       ? `${what}: ${this.arriveHint}${rex}`

@@ -9,7 +9,7 @@ import { worldOf } from '../space/Worlds.js';
  * Setup flags: cargo (weight multipliers), rival (Rex from the start), night (the sun stands still with the start city in
  * darkness, and parcels go to dark cities), dark (parcels go to dark cities, and the sun keeps moving), ufoIn (seconds
  * until the UFO drops in; it lingers), eruptions (volcanoes start early), landmark (the one parcel goes to this landmark
- * instead of a town), carry (that parcel's kind).
+ * instead of a town), carry (that parcel's kind), item (what it's called on the goal line).
  */
 export const MISSIONS = [
   { id: 'first', icon: '📦', name: 'First Flight', brief: 'Deliver 3 parcels.',
@@ -34,7 +34,7 @@ export const MISSIONS = [
     planet: { seed: 20261014, land: 0.45, cities: 5, theme: 'lava' }, goal: { stat: 'deliveries', target: 4 }, failIf: 'ash', reward: 400, eruptions: true },
   // on the real worlds
   { id: 'flag', icon: '🚩', name: 'One Small Step', brief: 'Fly a flag to Tranquility Base, where Apollo 11 landed.',
-    planet: { world: 'moon' }, goal: { stat: 'landmark', target: 1 }, reward: 150, landmark: 'Tranquility Base' },
+    planet: { world: 'moon' }, goal: { stat: 'landmark', target: 1 }, reward: 150, landmark: 'Tranquility Base', item: '🚩 Flag' },
   { id: 'dust', icon: '🌪️', name: 'Dust Storm Medicine', brief: 'Deliver 3 urgent parcels of medicine while dust storms sweep Mars.',
     planet: { world: 'mars' }, goal: { stat: 'urgent', target: 3 }, reward: 250, cargo: { urgent: 4 } },
   { id: 'acid', icon: '⚡', name: 'Acid Rain', brief: 'Deliver 3 parcels between the cloud towns of Venus. Get struck by lightning and it’s over.',
@@ -42,7 +42,7 @@ export const MISSIONS = [
   { id: 'shade', icon: '🌗', name: 'Keep to the Shade', brief: 'Deliver 3 parcels to towns on Mercury’s night side. The sunshine cooks you.',
     planet: { world: 'mercury' }, goal: { stat: 'night', target: 3 }, reward: 350, dark: true },
   { id: 'hotel', icon: '🛎️', name: 'Room Service', brief: 'Fly a birthday cake to the Ice Hotel on Pluto’s heart. Crash and it’s over.',
-    planet: { world: 'pluto' }, goal: { stat: 'landmark', target: 1 }, failIf: 'broken', reward: 400, landmark: 'The Ice Hotel', carry: 'fragile' },
+    planet: { world: 'pluto' }, goal: { stat: 'landmark', target: 1 }, failIf: 'broken', reward: 400, landmark: 'The Ice Hotel', carry: 'fragile', item: '🎂 Birthday cake' },
 ];
 
 /** Where a mission is flown, for the board and the briefing: a real world, or a kind of made-up planet ({ icon, name }). */

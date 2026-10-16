@@ -39,6 +39,9 @@ export class MissionRun extends DeliveryRun {
 
   get layout() { return { ...super.layout, badge: 'mission' }; }
 
+  /** A landmark mission's one parcel has its own name (a flag, a cake). */
+  get what() { return this.spot && this.def.item ? this.def.item : super.what; }
+
   /** Rex only races on the made-up planets (or when the mission asks for him). */
   get hasRival() { return !this.def.planet.world; }
 
