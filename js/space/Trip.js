@@ -82,7 +82,8 @@ export class Trip {
     const space = planet.space, rig = app.rig;
     if (space?.site) {
       const d = space.site.d, sky = app.sky;
-      sky.angle = Math.atan2(d.dot(sky.sv), d.dot(sky.su)) - 0.5; // (mid-morning at the pad)
+      const way = Math.sign(sky.dayLength) || 1, pad = Math.atan2(d.dot(sky.sv), d.dot(sky.su));
+      sky.angle = planet.world.heat ? pad - way * (Math.PI / 2 + 0.15) : pad - way * 0.5; // (mid-morning; on Mercury, just before dawn)
       sky.update(0);
       Object.assign(rig.orbit, { yaw: Math.atan2(d.x, d.z), pitch: Math.asin(d.y), alt: 30, heading: 0, tilt: 0 });
       rig.apply(rig.orbit.pose(rig.pose));

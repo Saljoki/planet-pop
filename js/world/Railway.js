@@ -32,7 +32,7 @@ export class Railway {
       for (let k = 0; k < 48 && !bad; k++) {
         smallCircle(d, c, u, v, A, (k / 48) * TAU);
         if (p.heightAt(d) < 0.04) water++;
-        if (water > 5 || p.cities.sites.some((s) => s.c.angleTo(d) < CITY_A + 0.1)) bad = true;
+        if (water > 5 || p.cities.sites.some((s) => s.c.angleTo(d) < CITY_A + 0.1) || p.offLimits(d, 0.03)) bad = true;
       }
       if (bad) continue;
       Object.assign(this, { c, u, v, A });

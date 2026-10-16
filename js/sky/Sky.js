@@ -37,6 +37,7 @@ export class Sky {
     u.uDay.value.set(theme.halo.day);
     u.uNight.value.set(theme.halo.night);
     u.uStrength.value = theme.halo.strength ?? 1; // (0: no air, a black sky)
+    this.sun.scale.setScalar(80 * (theme.sun ?? 1)); // (huge from Mercury, a bright star from Pluto)
   }
 
   update(dt) {

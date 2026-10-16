@@ -4,12 +4,17 @@ import { EARTH_LAND } from './EarthLand.js';
  * The real worlds you can visit, each always the same (a fixed seed), with its shape laid over the usual noise
  * (core/WorldShape.js: latitudes and longitudes are real, in degrees; r and width are degrees across the ground).
  * theme: the look (world/Themes.js or space/WorldThemes.js) · cities: how many towns · gravity: Earth = 1 (NASA) ·
- * day: seconds from one sunrise to the next (Earth's 150; a Moon day is 29.5 Earth days, squeezed to 7 minutes) ·
- * peaks: mountain cones on the real summits (s: size, hgt: height, in units) · landmarks: named places to find.
+ * day: seconds from one sunrise to the next (Earth's 150; a Moon day is 29.5 Earth days, squeezed to 7 minutes; below 0
+ * the Sun rises in the west) · welcome: a line for the card on landing · peaks: mountain cones on the real summits
+ * (s: size, hgt: height, in units) · landmarks: named places to find (model: something built there).
+ * Some worlds also set: pad (where the spaceport's launch pad is), roads (the highways' great circles, by their
+ * normals, when the map needs them in set places), heat (sunshine overheats vehicles), rolling (a town on rails that
+ * keeps ahead of the sunrise: world/RollingTown.js) and floating (towns on rafts held up by balloons: world/Rafts.js).
  */
 export const WORLDS = {
   earth: {
     id: 'earth', name: 'Earth', icon: '🌍', theme: 'classic', seed: 1969, cities: 8, gravity: 1, day: 150,
+    welcome: 'Home sweet home.',
     shape: {
       land: EARTH_LAND,
       features: [
@@ -36,6 +41,7 @@ export const WORLDS = {
   },
   moon: {
     id: 'moon', name: 'The Moon', icon: '🌕', theme: 'moon', seed: 1110, cities: 4, gravity: 0.16, day: 420,
+    welcome: 'Gravity here is a sixth of Earth’s: hit a crest and you’ll fly.',
     shape: {
       lift: 0.42, relief: 0.55, floor: 0.04,
       craters: { count: 170, min: 0.01, max: 0.07, depth: 0.22 },
@@ -68,6 +74,7 @@ export const WORLDS = {
   },
   mars: {
     id: 'mars', name: 'Mars', icon: '🔴', theme: 'mars', seed: 1976, cities: 5, gravity: 0.38, day: 154,
+    welcome: 'Gravity here is about a third of Earth’s, and the air is far too thin to breathe.',
     shape: {
       lift: 0.42, relief: 0.5, floor: 0.04,
       craters: { count: 120, min: 0.01, max: 0.06, depth: 0.18 },
@@ -102,6 +109,77 @@ export const WORLDS = {
       { name: 'Hellas Planitia', lat: -42.4, lon: 70.5, note: 'A huge old impact basin, 2,300 km across and over 7 km deep' },
       { name: 'Gale crater', lat: -5.4, lon: 137.8, note: 'Where NASA\u2019s Curiosity rover has been exploring since 2012' },
       { name: 'Jezero crater', lat: 18.4, lon: 77.5, note: 'An old lake bed, where NASA\u2019s Perseverance rover landed in 2021' },
+    ],
+  },
+  venus: {
+    id: 'venus', name: 'Venus', icon: '🟡', theme: 'venus', seed: 1961, cities: 6, gravity: 0.91, day: -600, floating: true,
+    welcome: 'You’re 50 km up: the ground is 464°C, so everyone lives on rafts in the clouds.',
+    // fixed highways, so the rafts can sit on them: the towns are 67° apart and well clear of the crossings
+    roads: [[0.25, 1, 0.15], [1, 0.2, -0.45], [-0.4, 0.35, 1]],
+    pad: { lat: 5.69, lon: 65.72 },
+    shape: {
+      lift: -0.45, relief: 0.08, // (all cloud, but for the rafts)
+      features: [
+        ...[[11, -162.8], [-11, 17.2], [-28.74, 108.49], [28.74, -71.51], [-67.37, -150.6], [67.37, 29.4]]
+          .map(([lat, lon]) => ({ kind: 'basin', lat, lon, r: 14, level: 0.18 })), // a raft for each town
+        { kind: 'basin', lat: 2.23, lon: 66.72, r: 7, level: 0.18 }, // the spaceport's raft
+      ],
+    },
+    landmarks: [],
+  },
+  mercury: {
+    id: 'mercury', name: 'Mercury', icon: '🪨', theme: 'mercury', seed: 1974, cities: 4, gravity: 0.38, day: 720, heat: true,
+    welcome: 'It’s 430°C in the sunshine: keep to the night side, or you’ll overheat.',
+    rolling: { name: 'Terminus', note: 'A town on rails that rolls round Mercury at walking pace, staying just ahead of the sunrise, where it’s neither 430°C nor −180°C' },
+    pad: { lat: 48, lon: -95 },
+    shape: {
+      lift: 0.42, relief: 0.5, floor: 0.04,
+      craters: { count: 210, min: 0.01, max: 0.07, depth: 0.22 },
+      features: [ // Mercury's big basins are named after artists, writers and composers
+        { kind: 'crater', lat: 31.5, lon: 162.7, r: 18, depth: 0.2 }, // Caloris: its ring of mountains…
+        { kind: 'basin', lat: 31.5, lon: 162.7, r: 15, level: 0.14, pal: 'sand' }, // …and its smooth, pale floor
+        { kind: 'crater', lat: -43.3, lon: 75.4, r: 8.4, depth: 0.25 }, // Rembrandt
+        { kind: 'crater', lat: -20.8, lon: -123.6, r: 7.4, depth: 0.25 }, // Beethoven
+        { kind: 'crater', lat: -16.3, lon: -161.6, r: 4.1, depth: 0.22 }, // Tolstoj
+        { kind: 'crater', lat: 27.6, lon: 57.6, r: 3.4, depth: 0.25 }, // Rachmaninoff
+        { kind: 'paint', lat: 57.8, lon: 16.8, r: 7, pal: 'sand' }, // Hokusai's bright rays…
+        { kind: 'crater', lat: 57.8, lon: 16.8, r: 1.4, depth: 0.25 }, // …round a young crater
+        { kind: 'cap', lat: 84, height: 0.02, pal: 'snow' }, // ice in craters the Sun never shines into
+        { kind: 'cap', lat: -86, height: 0.02, pal: 'snow' },
+      ],
+    },
+    landmarks: [
+      { name: 'Caloris Planitia', lat: 31.5, lon: 162.7, note: 'An impact basin 1,550 km across: the crash shook up the ground on the far side of Mercury' },
+      { name: 'Rembrandt', lat: -43.3, lon: 75.4, note: 'A basin 715 km across; Mercury’s craters are named after artists, writers and musicians' },
+      { name: 'Beethoven', lat: -20.8, lon: -123.6, note: 'A crater 630 km across, named after the composer' },
+      { name: 'Hokusai', lat: 57.8, lon: 16.8, note: 'A young crater with bright rays splashed far across the ground' },
+      { name: 'Prokofiev', lat: 85.8, lon: -62.9, note: 'Its floor never sees the Sun, so it holds ice: on the planet closest to the Sun' },
+    ],
+  },
+  pluto: {
+    id: 'pluto', name: 'Pluto', icon: '🤍', theme: 'pluto', seed: 2015, cities: 3, gravity: 0.063, day: -280,
+    welcome: 'Gravity here is a sixteenth of Earth’s: the longest jumps in the solar system.',
+    pad: { lat: 30, lon: -175 },
+    shape: {
+      lift: 0.4, relief: 0.45, floor: 0.04,
+      craters: { count: 70, min: 0.01, max: 0.05, depth: 0.18 },
+      features: [
+        ...[30, 65, 100, 135].map((lon) => ({ kind: 'paint', lat: 0, lon, r: 17, pal: 'mare' })), // Belton Regio, the long dark "whale"
+        { kind: 'basin', lat: 19.5, lon: 178.7, r: 24, level: 0.1, pal: 'snow' }, // Sputnik Planitia: the heart's left lobe, smooth ice
+        { kind: 'paint', lat: 5, lon: -155, r: 20, pal: 'snow' }, // the heart's right lobe, bright frost
+        { kind: 'dome', lat: -15.6, lon: 177.4, r: 6, height: 0.55 }, // Tenzing Montes
+        { kind: 'dome', lat: 3.3, lon: 169.6, r: 6, height: 0.45 }, // Hillary Montes
+        { kind: 'dome', lat: -21.4, lon: 173.2, r: 4, height: 0.4 }, // Wright Mons, an ice volcano…
+        { kind: 'crater', lat: -21.4, lon: 173.2, r: 1.2, depth: 0.3 }, // …with a great hole on top
+      ],
+    },
+    peaks: [{ lat: -15.6, lon: 177.4, s: 0.5, hgt: 0.9 }, { lat: 3.3, lon: 169.6, s: 0.45, hgt: 0.7 }],
+    landmarks: [
+      { name: 'The Ice Hotel', lat: 22, lon: 170, model: 'hotel', note: 'The only hotel on Pluto, on the frozen plain of the heart: rooms from −230°C' },
+      { name: 'Sputnik Planitia', lat: 19.5, lon: 178.7, note: 'The left half of Pluto’s heart: a plain of frozen nitrogen 1,000 km across, slowly churning like a lava lamp' },
+      { name: 'Tenzing Montes', lat: -15.6, lon: 177.4, note: 'Mountains of water ice up to 6 km high (at −230°C, ice is as hard as rock)' },
+      { name: 'Wright Mons', lat: -21.4, lon: 173.2, note: 'Probably an ice volcano: about 4 km high, with a huge hole on top' },
+      { name: 'Belton Regio', lat: 0, lon: 90, note: 'A dark stripe 3,000 km long round the equator, stained red-brown by haze falling from the sky' },
     ],
   },
 };

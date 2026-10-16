@@ -14,7 +14,8 @@ export class Aurora {
     this.planet = planet;
     this.poles = [1, -1].map((s) => planet.app.sky.axis.clone().multiplyScalar(s));
     const rng = planet.rng, pos = [], uv = [], out = [], idx = [];
-    for (const pole of planet.theme.air ? [] : this.poles) { // (an aurora needs an atmosphere to glow in)
+    this.lit = planet.theme.air || planet.theme.aurora === false ? [] : this.poles; // (an aurora needs an atmosphere to glow in)
+    for (const pole of this.lit) {
       const [u, v] = tangentBasis(pole);
       for (let c = 0; c < CURTAINS; c++) {
         const ph = rng.range(0, TAU), base = pos.length / 3;
@@ -48,7 +49,7 @@ export class Aurora {
     const app = this.planet.app, cam = app.camera.position;
     if (cam.length() > R + 9 || this.planet.nightAt(cam) < 0.5) return;
     _c.copy(cam).normalize();
-    if (this.poles.some((p) => p.angleTo(_c) < 0.75)) app.achievements?.unlock('aurora');
+    if (this.lit.some((p) => p.angleTo(_c) < 0.75)) app.achievements?.unlock('aurora');
   }
 }
 

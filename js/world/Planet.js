@@ -11,6 +11,8 @@ import { Railway } from './Railway.js';
 import { Nature } from './Nature.js';
 import { ForestFloor } from './ForestFloor.js';
 import { Landmarks } from './Landmarks.js';
+import { RollingTown } from './RollingTown.js';
+import { Rafts } from './Rafts.js';
 import { Airports } from './Airports.js';
 import { Harbours } from './Harbours.js';
 import { Volcano } from './Volcano.js';
@@ -50,7 +52,13 @@ export class Planet {
     this.root = new THREE.Group();
     this.reserved = [];
     this.keepClear = []; // spots mountains must avoid (airport approaches)
-    this.summits = (this.world?.peaks || []).map((k) => ({ d: new THREE.Vector3(...fromLatLon(k.lat, k.lon)), s: k.s })); // (roads and towns leave them be)
+    const w = this.world, at = (l) => new THREE.Vector3(...fromLatLon(l.lat, l.lon));
+    this.spots = [ // a real world's famous summits, its launch pad and its landmark buildings: roads and towns leave them be
+      ...(w?.peaks || []).map((k) => ({ d: at(k), s: k.s })),
+      ...(w?.pad ? [{ d: at(w.pad), s: 0.35 }] : []),
+      ...(w?.landmarks || []).filter((l) => l.model).map((l) => ({ d: at(l), s: 0.4 })),
+    ];
+    this.band = w?.rolling ? { axis: app.sky.axis.clone(), half: 0.16 } : null; // rails round the planet (RollingTown)
     this.modules = [];
     this.time = 0;
   }
@@ -64,7 +72,11 @@ export class Planet {
   flatten(d, rIn, rOut, level) { this.hf.flats.push({ x: d.x, y: d.y, z: d.z, cosIn: Math.cos(rIn), cosOut: Math.cos(rOut), level }); }
   isReserved(d, pad = 0) { return this.reserved.some((r) => r.d.angleTo(d) < r.ang + pad); }
   /** Whether d is within `pad` radians of the foot of a real world's famous summit. */
-  nearSummit(d, pad = 0) { return this.summits.some((m) => m.d.angleTo(d) < (m.s + 0.3) / R + pad); }
+  nearSpot(d, pad = 0) { return this.spots.some((m) => m.d.angleTo(d) < (m.s + 0.3) / R + pad); }
+  /** Whether d is within `pad` radians of the band a rolling town's rails run round. */
+  inBand(d, pad = 0) { return !!this.band && Math.abs(d.dot(this.band.axis)) < Math.sin(this.band.half + pad); }
+  /** Somewhere towns, the railway and new mountains must keep off. */
+  offLimits(d, pad = 0) { return this.nearSpot(d, pad) || this.inBand(d, pad); }
   nightAt(pos) { return smoothstep(0.15, -0.25, _v.copy(pos).normalize().dot(this.app.sky.sunDir)); }
 
   /** Radius of the highest solid thing at direction d: terrain, sea, mountain cones, city skyline. */
@@ -133,6 +145,8 @@ export class Planet {
     this.add('forestFloor', new ForestFloor(this));
     this.cities.buildStreets();
     this.add('landmarks', new Landmarks(this));
+    this.add('rolling', new RollingTown(this));
+    this.add('rafts', new Rafts(this));
     this.airports.build();
     this.harbours.build();
     this.add('boats', new Boats(this));
@@ -147,6 +161,13 @@ export class Planet {
 
   /** Coastal, flat-ish land away from everything else: home of the rocket pad. */
   findPadSite() {
+    const pad = this.world?.pad;
+    if (pad) { // a real world's spaceport is where the world says, on levelled ground
+      const c = new THREE.Vector3(...fromLatLon(pad.lat, pad.lon));
+      this.reserve(c, 0.06);
+      this.flatten(c, 0.035, 0.07, Math.max(this.heightAt(c), 0.06));
+      return { d: c, fwd: tangentBasis(c)[0] };
+    }
     const d = new THREE.Vector3();
     let site = null;
     for (let tries = 0; tries < 3000; tries++) {
@@ -155,6 +176,7 @@ export class Planet {
       if (this.roads.near(c, 0.05) || this.railway.near(c, 0.05)) continue;
       if (this.cities.sites.some((s) => s.c.angleTo(c) < CITY_A + 0.1)) continue;
       if (this.railway.mountain && this.railway.mountain.d.angleTo(c) < 0.15) continue;
+      if (this.inBand(c, 0.06)) continue;
       const [u, v] = tangentBasis(c);
       let coast = false;
       for (let k = 0; k < 8 && !coast; k++) {

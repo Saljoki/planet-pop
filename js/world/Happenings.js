@@ -54,7 +54,7 @@ export function happenings(planet) {
 
 /** Every kind of thing worth finding, with how many there are, for the Find menu. */
 export const FIND_KINDS = ['city', 'train', 'tram', 'plane', 'helicopter', 'boat', 'whale', 'balloon', 'bird', 'airport', 'harbour',
-  'volcano', 'rocket', 'satellite', 'station', 'moon', 'landmark'];
+  'volcano', 'rocket', 'satellite', 'station', 'moon', 'landmark', 'rolling'];
 
 export function findable(planet) {
   const byKind = new Map(FIND_KINDS.map((k) => [k, []]));
