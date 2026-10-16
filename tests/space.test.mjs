@@ -6,6 +6,8 @@ import { BODIES } from '../js/space/Bodies.js';
 import { position, moonAngle, mapPosition } from '../js/space/Orbits.js';
 import { fromLatLon } from '../js/core/WorldShape.js';
 import { SystemMap } from '../js/space/SystemMap.js';
+import { Trip } from '../js/space/Trip.js';
+import { App } from '../js/App.js';
 
 const day = (iso) => Date.parse(`${iso}T12:00:00Z`);
 const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
@@ -110,7 +112,7 @@ describe('the system map', () => {
     const { app } = await makeWorld({ world: 'mars' });
     const map = (app.map = new SystemMap(app));
     const went = [];
-    app.visitWorld = (id) => went.push(id);
+    app.trip = { go: (id) => { went.push(id); map.close(true); } };
     assert.equal(map.show(), true);
     assert.equal(map.state, 'opening');
     for (let i = 0; i < 60 && map.state !== 'open'; i++) map.update(0.05);
@@ -149,5 +151,82 @@ describe('the system map', () => {
     app.map = new SystemMap(app);
     app.game.active = true;
     assert.equal(app.map.show(), false);
+  });
+});
+
+/** The test world, with the parts of App a trip uses (building and swapping planets; no WebGL). */
+async function travelApp(world) {
+  const { app } = await makeWorld({ world });
+  for (const k of ['buildPlanet', 'buildWorld', 'swapIn']) app[k] = App.prototype[k].bind(app);
+  Object.assign(app, { warmUp: async () => {}, detail: { collect() {} }, updateUrl() {}, haptics: null });
+  app.map = new SystemMap(app);
+  app.trip = new Trip(app);
+  return app;
+}
+
+/** Run the app's frame the way App.frame does (planet, trip, map or camera), letting the background build go on. */
+async function fly(app, seconds, until = () => false) {
+  const dt = 1 / 20;
+  for (let t = 0; t < seconds && !until(); t += dt) {
+    if (!app.map.open) {
+      app.simTime += dt;
+      app.sky.update(dt);
+      app.planet.update(dt, app.simTime);
+    }
+    if (app.trip.active) app.trip.update(dt);
+    if (app.map.open) app.map.update(dt);
+    else app.rig.update(dt);
+    if (Math.round(t / dt) % 10 === 0) await new Promise((r) => setTimeout(r, 0));
+  }
+}
+
+describe('trips', () => {
+  it('Earth to the Moon: board, lift off, cruise, land', async () => {
+    const app = await travelApp('earth');
+    const coins = app.game.progress.coins;
+    assert.equal(app.trip.go('moon'), true);
+    assert.equal(app.trip.state, 'countdown');
+    assert.equal(app.planet.space.state, 'boarding', 'the rocket waits for us');
+    assert.equal(app.trip.go('mars'), false, 'one trip at a time');
+    await fly(app, 10, () => app.trip.state === 'cruise');
+    assert.equal(app.trip.state, 'cruise');
+    assert.equal(app.map.state, 'cruise');
+    assert.equal(app.rig.view, app.map.cruiser, 'drags steer the ship');
+    const c = app.map.cruiser;
+    c.items.push({ star: true, s: c.s + 0.01, x: c.x, y: c.y, size: 0.13 });
+    await fly(app, 0.2);
+    assert.ok(c.stars >= 1, 'caught a fuel star');
+    app.rig.view.dragVelocity(400, 0);
+    assert.ok(c.x > 0.5, 'a drag moves the ship across');
+    await fly(app, 60, () => app.trip.state === 'landing');
+    assert.equal(app.trip.state, 'landing');
+    assert.equal(app.planet.world.id, 'moon');
+    assert.equal(app.params.world, 'moon');
+    assert.equal(app.map.state, 'closed');
+    assert.equal(app.sky.dayLength, WORLDS.moon.day);
+    assert.equal(app.planet.space.state, 'landing');
+    await fly(app, 10, () => !app.trip.active);
+    assert.equal(app.trip.state, 'idle');
+    assert.equal(app.planet.space.state, 'countdown', 'landed, and back to its own launches');
+    assert.equal(app.game.progress.coins, coins + c.stars, 'a coin a star');
+  });
+
+  it('from a made-up planet, and not to where we are', async () => {
+    const { app: made } = await makeWorld({ seed: 4242, land: 0.45, cities: 5, theme: 'classic' });
+    made.map = new SystemMap(made);
+    made.trip = new Trip(made);
+    made.buildWorld = () => new Promise(() => {}); // (never finishes: the ship waits in orbit)
+    assert.equal(made.trip.go('earth'), true);
+    assert.equal(made.trip.from, 'away');
+    made.trip.cruise();
+    const c = made.map.cruiser;
+    assert.equal(c.from, made.map.scene.away);
+    c.s = c.len;
+    made.map.update(0.05);
+    assert.equal(made.trip.arrived, true);
+    assert.equal(made.trip.state, 'cruise', 'waits in orbit until the world is built');
+
+    const app = await travelApp('mars');
+    assert.equal(app.trip.go('mars'), false);
   });
 });

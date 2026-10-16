@@ -68,7 +68,7 @@ export class Nature {
 
   placeWindFarms() {
     const p = this.planet, rng = p.rng;
-    for (let farms = 0, tries = 0; farms < 3 && tries < 3000; tries++) {
+    for (let farms = 0, tries = 0; farms < (p.theme.air ? 0 : 3) && tries < 3000; tries++) { // (no wind where there's next to no air)
       const c = rng.dir(), h = p.heightAt(c);
       if (h < 0.08 || h > 0.45 || this.badSpot(c, 0.1)) continue;
       const [u, v] = tangentBasis(c), wind = rng.dir(), before = this.turbines.length;

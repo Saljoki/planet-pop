@@ -1,6 +1,7 @@
 /* The system map: its bar, the way back, name tags over the worlds, a world's card. The planet view's furniture steps aside. */
 .in-map #topBtns, .in-map #panel, .in-map #follow, .in-map #worldTag, .in-map #hint, .in-map #find, .in-map #info,
-.in-map #tourBar, .in-map .tag, .in-map #hoverLabel { display: none !important; }
+.in-map #tourBar, .in-map .tag, .in-map #hoverLabel, .on-trip #topBtns, .on-trip #panel, .on-trip #worldTag, .on-trip #hint, .on-trip #follow,
+.on-trip #find, .on-trip #info { display: none !important; }
 
 #mapBar { top: calc(14px + var(--st)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; font-size: 19px;
   white-space: nowrap; background: var(--blue); }
@@ -42,4 +43,25 @@
 @media (max-height: 500px) and (orientation: landscape) {
   #mapHint { display: none; }
   #worldCard { top: calc(60px + var(--st)); bottom: calc(10px + var(--sb)); transform: none; max-height: none; width: min(320px, 46vw); }
+}
+
+/* A trip's cruise: route and progress, the boost tank and button, a message, the hint. */
+#cBar { top: calc(14px + var(--st)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; font-size: 19px; white-space: nowrap;
+  background: var(--yellow); }
+.cMeter { width: 120px; height: 14px; border: 2px solid var(--ink); background: #fff; overflow: hidden; }
+.cMeter i { display: block; height: 100%; width: 0; background: var(--pink); }
+#cFuel { top: calc(64px + var(--st)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; font-size: 16px; padding: 3px 10px 1px; }
+#cFuel .cMeter { width: 90px; }
+#cFuel .cMeter i { background: #ff8c42; }
+#cBoost { position: fixed; z-index: 6; right: calc(18px + var(--sr)); bottom: calc(24px + var(--sb)); width: 104px; height: 104px; border-radius: 50%;
+  font-size: 22px; padding: 0; touch-action: none; }
+#cMsg { top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 22px; background: var(--blue); }
+#cHint { bottom: calc(14px + var(--sb)); left: 50%; transform: translateX(-50%); border-radius: 14px; font-size: 16px; pointer-events: none;
+  width: max-content; max-width: calc(100vw - 170px); text-align: center; }
+@media (pointer: fine) { #cBoost { display: none; } #cHint { max-width: calc(100vw - 32px); } }
+@media (max-width: 700px) {
+  #cBar { font-size: 15px; gap: 6px; padding: 4px 8px 2px; top: calc(66px + var(--st)); }
+  #cBar .cMeter { width: 70px; }
+  #cFuel { top: calc(112px + var(--st)); }
+  #cHint { font-size: 13px; left: calc(12px + var(--sl)); transform: none; max-width: calc(100vw - 150px); }
 }

@@ -39,7 +39,7 @@ export class CameraRig {
 
   /** The view that takes drags, pinches and twists right now (none while flying or in a run). */
   get view() {
-    if (this.app.map?.open) return this.app.map.view; // (the system map has a camera of its own)
+    if (this.app.map?.open) return this.app.map.input; // (the system map has a camera of its own; on a trip, the ship steers)
     return this.mode === 'orbit' ? this.orbit : this.mode === 'local' ? this.local : null;
   }
 
@@ -246,7 +246,8 @@ export class CameraRig {
         break;
       default: this.orbit.update(dt, this.idle > 6 && still); // gentle auto-rotate when left alone
     }
-    // low behind a car or a boat, trees and buildings next to the camera step aside
-    setCutaway(this.mode === 'game' && this.chase.player && this.chase.player.kind !== 'plane' ? CUTAWAY : 0);
+    // low behind a car or a boat (or watching our rocket on a trip), trees and buildings next to the camera step aside
+    const low = (this.mode === 'game' && this.chase.player && this.chase.player.kind !== 'plane') || (this.app.trip?.active && this.entity?.kind === 'rocket');
+    setCutaway(low ? CUTAWAY : 0);
   }
 }

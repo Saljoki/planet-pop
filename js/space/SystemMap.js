@@ -3,13 +3,15 @@ import { MapView } from './MapView.js';
 import { SystemBar, SPEEDS } from '../ui/SystemBar.js';
 import { MapLabels } from '../ui/MapLabels.js';
 import { WorldCard } from '../ui/WorldCard.js';
+import { Cruise } from './Cruise.js';
 
 const DAY = 86400000;
 
 /**
  * The system map (🪐, M, or zoom out past the edge): our solar system on today's date, drawn in place of the planet.
  * The planet stays as it was underneath and comes back when the map closes. Built the first time it opens.
- * state: 'closed', 'opening' (zooming out from our world), 'open', or 'closing' (zooming back in).
+ * state: 'closed', 'opening' (zooming out from our world), 'open', 'closing' (zooming back in), or 'cruise' (a trip's
+ * ship crossing it: see Cruise).
  */
 export class SystemMap {
   constructor(app) {
@@ -26,6 +28,9 @@ export class SystemMap {
   }
 
   get open() { return this.state !== 'closed'; }
+
+  /** What takes the drags and pinches: the map's camera, or the ship while cruising. */
+  get input() { return this.state === 'cruise' ? this.cruiser : this.view; }
 
   build() {
     this.scene = new SystemScene();
@@ -46,7 +51,7 @@ export class SystemMap {
   /** Whether the map can open now (not during a run, a photo, or while a planet builds). */
   get allowed() {
     const a = this.app;
-    return !!a.planet && !a.building && !a.game.active && !a.photo?.active;
+    return !!a.planet && !a.building && !a.game.active && !a.photo?.active && !a.trip?.active;
   }
 
   toggle() { if (this.open) this.close(); else this.show(); }
@@ -83,6 +88,7 @@ export class SystemMap {
   close(instant = false) {
     if (!this.open || (this.state === 'closing' && !instant)) return;
     this.card.hide();
+    if (this.state === 'cruise') { this.cruiser.end(); instant = true; }
     const done = () => {
       this.state = 'closed';
       document.body.classList.remove('in-map');
@@ -101,10 +107,28 @@ export class SystemMap {
     if (this.card.open) this.card.refresh();
   }
 
-  /** Off to another world. */
-  travel(id) {
-    this.close(true);
-    this.app.visitWorld(id);
+  /** Off to another world: by rocket. */
+  travel(id) { this.app.trip.go(id); }
+
+  /**
+   * Straight into a trip's cruise (no zooming out): the ship flies from body `fromId` ('away' for a made-up planet) to
+   * `toId`, on today's positions, with the clock stopped. onArrive() once it gets there.
+   */
+  cruise(fromId, toId, onArrive) {
+    if (!this.scene) this.build();
+    this.cruiser ??= new Cruise(this.app, this);
+    this.card.hide();
+    const p = this.app.planet;
+    this.scene.setAway(p?.world ? null : `Planet ${p?.params.seed}`, p?.theme.pal.g1 ?? '#ffffff');
+    this.date = Date.now();
+    this.scene.place(this.date, this.view.camera);
+    const from = fromId === 'away' ? this.scene.away : this.scene.byId[fromId];
+    this.state = 'cruise';
+    document.body.classList.add('in-map');
+    this.bar.hide();
+    this.labels.show();
+    this.cruiser.begin(from, this.scene.byId[toId], onArrive);
+    this.scene.place(this.date, this.view.camera);
   }
 
   /** Centre on a body and show its card. */
@@ -140,6 +164,13 @@ export class SystemMap {
 
   /** dt: real seconds. The clock runs while the map is open (not while paused). */
   update(dt) {
+    if (this.state === 'cruise') {
+      this.scene.update(dt);
+      this.cruiser.update(this.app.paused ? 0 : dt);
+      this.scene.place(this.date, this.view.camera);
+      this.labels.update();
+      return;
+    }
     if (this.state === 'open' && !this.app.paused) {
       this.date += dt * DAY * SPEEDS[this.speed];
       this.barT = (this.barT ?? 0) - dt;

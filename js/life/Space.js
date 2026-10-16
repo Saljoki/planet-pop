@@ -8,6 +8,7 @@ import { ObjectEntity } from '../core/ObjectEntity.js';
 import { Trails } from './Trails.js';
 
 const NO_SHADOW = { cast: false, receive: false };
+const LAND_FROM = 9, LAND_TIME = 5.5; // a landing: from how high (units above the pad) and how long it takes (s)
 const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _p2 = new THREE.Vector3();
 const _up = new THREE.Vector3(), _f = new THREE.Vector3(), _v = new THREE.Vector3();
 
@@ -140,6 +141,30 @@ export class Space {
     if (app.camera.position.distanceTo(this.rocket.position) < 8 || app.rig?.entity === this.rocketEntity) app.achievements?.unlock('liftoff');
   }
 
+  /** A trip is starting: the rocket stands on the pad for its passenger (no countdown of its own). */
+  board() {
+    if (!this.rocket) return;
+    this.resetRocket();
+    this.state = 'boarding';
+  }
+
+  /** A trip arriving: the rocket comes down out of the sky onto the pad, then onDone(). */
+  land(onDone) {
+    if (!this.rocket) { onDone?.(); return; }
+    this.resetRocket();
+    Object.assign(this, { state: 'landing', t: 0, smokeT: 0, onLanded: onDone });
+    this.flame.visible = true;
+    this.placeLanding(0);
+  }
+
+  /** Where the landing rocket is, k of the way down (0..1): fast at first, gently at the end. */
+  placeLanding(k) {
+    const s = this.site, h = LAND_FROM * (1 - k) ** 2.2;
+    this.rocket.position.copy(s.d).multiplyScalar(s.base + 0.08 + h);
+    this.flame.scale.set(1, (0.8 + Math.random() * 0.5) * (1.4 - k * 0.6), 1);
+    return h;
+  }
+
   endFlight() {
     const app = this.planet.app;
     this.state = 'gone';
@@ -181,7 +206,20 @@ export class Space {
         }
       }
       if (this.t > 15) this.endFlight();
-    } else if (this.timer <= 0) {
+    } else if (this.state === 'landing') {
+      this.t += dt;
+      const k = Math.min(1, this.t / LAND_TIME), h = this.placeLanding(k);
+      if ((this.smokeT -= dt) <= 0 && h < 1.6) { // dust blown out across the pad
+        this.smokeT = 0.04;
+        this.smoke.emit(_p2.copy(s.d).multiplyScalar(s.base + 0.1), 0.08, _v.copy(s.fwd).applyAxisAngle(s.d, Math.random() * TAU).multiplyScalar(0.8));
+      }
+      if (k >= 1) {
+        const done = this.onLanded;
+        this.onLanded = null;
+        this.resetRocket();
+        done?.();
+      }
+    } else if (this.state !== 'boarding' && this.timer <= 0) {
       this.resetRocket();
     }
     this.smoke.update(dt);

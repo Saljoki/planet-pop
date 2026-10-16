@@ -34,7 +34,7 @@ export function describe(e, p) {
     case 'whale': return WHALE[at(p.whales.list, e.id)?.state] ?? 'Swimming';
     case 'volcano': return { erupt: 'Erupting!', rumble: 'Rumbling…' }[p.volcano.state] ?? 'Asleep, for now';
     case 'ufo': return p.ufo.hovering ? 'Hovering. Catch it before it goes!' : 'Zipping about';
-    case 'rocket': return { countdown: 'Counting down', flight: 'Lift-off!' }[p.space.state] ?? 'On the launch pad';
+    case 'rocket': return { countdown: 'Counting down', flight: 'Lift-off!', boarding: 'Boarding for space', landing: 'Coming in to land' }[p.space.state] ?? 'On the launch pad';
     case 'city': return p.nightAt(e.pos) > 0.5 ? 'Lights on for the night' : 'Busy with the day';
     case 'storm': return 'Raining, with the odd lightning bolt';
     case 'balloon': return 'Drifting on the wind';

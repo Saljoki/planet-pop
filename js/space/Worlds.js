@@ -4,11 +4,12 @@ import { EARTH_LAND } from './EarthLand.js';
  * The real worlds you can visit, each always the same (a fixed seed), with its shape laid over the usual noise
  * (core/WorldShape.js: latitudes and longitudes are real, in degrees; r and width are degrees across the ground).
  * theme: the look (world/Themes.js or space/WorldThemes.js) · cities: how many towns · gravity: Earth = 1 (NASA) ·
+ * day: seconds from one sunrise to the next (Earth's 150; a Moon day is 29.5 Earth days, squeezed to 7 minutes) ·
  * peaks: mountain cones on the real summits (s: size, hgt: height, in units) · landmarks: named places to find.
  */
 export const WORLDS = {
   earth: {
-    id: 'earth', name: 'Earth', icon: '🌍', theme: 'classic', seed: 1969, cities: 8, gravity: 1,
+    id: 'earth', name: 'Earth', icon: '🌍', theme: 'classic', seed: 1969, cities: 8, gravity: 1, day: 150,
     shape: {
       land: EARTH_LAND,
       features: [
@@ -34,7 +35,7 @@ export const WORLDS = {
     ],
   },
   moon: {
-    id: 'moon', name: 'The Moon', icon: '🌕', theme: 'moon', seed: 1110, cities: 4, gravity: 0.16,
+    id: 'moon', name: 'The Moon', icon: '🌕', theme: 'moon', seed: 1110, cities: 4, gravity: 0.16, day: 420,
     shape: {
       lift: 0.42, relief: 0.55, floor: 0.04,
       craters: { count: 170, min: 0.01, max: 0.07, depth: 0.22 },
@@ -66,7 +67,7 @@ export const WORLDS = {
     ],
   },
   mars: {
-    id: 'mars', name: 'Mars', icon: '🔴', theme: 'mars', seed: 1976, cities: 5, gravity: 0.38,
+    id: 'mars', name: 'Mars', icon: '🔴', theme: 'mars', seed: 1976, cities: 5, gravity: 0.38, day: 154,
     shape: {
       lift: 0.42, relief: 0.5, floor: 0.04,
       craters: { count: 120, min: 0.01, max: 0.06, depth: 0.18 },

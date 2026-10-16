@@ -28,6 +28,7 @@ import { dailyParams } from './game/Daily.js';
 import { THEME_IDS, pickTheme } from './world/Themes.js';
 import { WORLD_IDS, worldOf } from './space/Worlds.js';
 import { SystemMap } from './space/SystemMap.js';
+import { Trip } from './space/Trip.js';
 
 /**
  * Planet settings from the address bar (?seed=…&land=…&cities=…&theme=…), with defaults for anything missing.
@@ -92,6 +93,7 @@ export class App {
     this.trophies = new TrophyWatch(this);
     this.rig = new CameraRig(this);
     this.map = new SystemMap(this);
+    this.trip = new Trip(this);
     this.game = new CourierGame(this);
     this.quality = new Quality(this);
     this.debug = new DebugStats(this);
@@ -133,21 +135,7 @@ export class App {
     this.hud.setLoading(true);
     await new Promise((res) => setTimeout(res, 30)); // let the overlay paint first
     try {
-      const planet = new Planet(this, this.params);
-      await planet.build();
-      await this.warmUp();
-      if (this.game.active) this.game.stop();
-      this.rig.release(true);
-      this.map.close(true);
-      this.planet?.dispose();
-      this.planet = planet;
-      this.detail.collect(planet.root);
-      if (planet.world) Object.assign(this.params, { seed: planet.params.seed, theme: planet.params.theme, cities: planet.params.cities });
-      this.sky.setTheme(planet.theme);
-      this.hud.setTheme(planet.world ?? planet.theme);
-      if (!initial) this.achievements.unlock('newworld');
-      if (!planet.world || planet.world.id === 'earth') this.achievements.visitTheme(planet.theme.id); // (the kinds of made-up world)
-      this.updateUrl();
+      this.swapIn(await this.buildPlanet(this.params), initial);
     } catch (err) {
       console.error(err);
       this.hud.toast('💥 Planet build failed (see console)');
@@ -171,6 +159,42 @@ export class App {
       this.pending = null;
       this.newPlanet(s, false, t, w);
     }
+  }
+
+  /** A planet, built and ready to show (it's in the scene, but nothing draws the scene while a trip cruises). */
+  async buildPlanet(params) {
+    const planet = new Planet(this, params);
+    await planet.build();
+    await this.warmUp();
+    return planet;
+  }
+
+  /** A real world built quietly in the background (a trip builds the next world during the cruise). */
+  async buildWorld(id) {
+    this.building = true;
+    try {
+      return await this.buildPlanet({ ...this.params, world: id });
+    } finally {
+      this.building = false;
+    }
+  }
+
+  /** Show a built planet in place of the old one. */
+  swapIn(planet, initial = false) {
+    if (this.game.active) this.game.stop();
+    this.rig.release(true);
+    this.map.close(true);
+    this.planet?.dispose();
+    this.planet = planet;
+    this.detail.collect(planet.root);
+    this.params.world = planet.world?.id ?? null;
+    if (planet.world) Object.assign(this.params, { seed: planet.params.seed, theme: planet.params.theme, cities: planet.params.cities });
+    this.sky.setTheme(planet.theme);
+    this.sky.dayLength = planet.world?.day ?? 150;
+    this.hud.setTheme(planet.world ?? planet.theme);
+    if (!initial) this.achievements.unlock('newworld');
+    if (!planet.world || planet.world.id === 'earth') this.achievements.visitTheme(planet.theme.id); // (the kinds of made-up world)
+    this.updateUrl();
   }
 
   /** Compile every shader while the loading screen is up, so nothing stutters the first time it appears. */
@@ -219,6 +243,7 @@ export class App {
     this.trophies.update();
     this.gamepad.update();
     if (this.game.active) this.game.update(dt, real);
+    if (this.trip.active) this.trip.update(dt);
     this.friends.update(real);
     this.tour.update(real);
     if (map) this.map.update(real);
@@ -254,7 +279,7 @@ export class App {
   setShadows(on) { this.userShadows = on; this.quality.apply(); }
   setQuality(mode) { this.quality.setMode(mode); }
   setTraffic(n) { this.params.traffic = n; this.planet?.traffic.rebuild(n); }
-  /** Go to one of the real worlds ('earth', 'moon', 'mars'). */
+  /** Go straight to one of the real worlds ('earth', 'moon', 'mars'), no trip (a link, a friend). */
   visitWorld(id) { if (worldOf(id)) this.newPlanet(this.params.seed, false, null, id); }
 
   /** A slider moved: rebuild this planet that way (a real world becomes a made-up one, in the World setting's look). */

@@ -59,7 +59,7 @@ export class Hud {
     addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
       if (e.code === 'KeyP') app.togglePause();
-      else if (e.code === 'KeyN' && !app.game.active) app.newPlanet();
+      else if (e.code === 'KeyN' && !app.game.active && !app.trip?.active) app.newPlanet();
       else if (e.code === 'KeyH' && !app.game.active) this.panel.toggle();
       else if (e.code === 'KeyT' && !app.game.active) app.tour?.toggle();
       else if (e.code === 'KeyM' && !app.game.active) app.map?.toggle();

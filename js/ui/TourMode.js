@@ -40,7 +40,7 @@ export class TourMode {
   /** Nothing else is going on (no game, photo or menu), so a tour may start. */
   get free() {
     const a = this.app;
-    return !!a.planet && !a.building && !a.game.active && !a.map?.open && !a.photo?.active && !a.game.hangar.open && !a.paused
+    return !!a.planet && !a.building && !a.game.active && !a.map?.open && !a.trip?.active && !a.photo?.active && !a.game.hangar.open && !a.paused
       && (typeof document.visibilityState !== 'string' || document.visibilityState === 'visible');
   }
 
