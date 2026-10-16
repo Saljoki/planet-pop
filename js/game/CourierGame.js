@@ -9,6 +9,7 @@ import { FlightControls } from './input/FlightControls.js';
 import { runClass } from './runs/modes.js';
 import { CourierHud } from './screens/CourierHud.js';
 import { MiniMap } from './screens/MiniMap.js';
+import { EngineSound } from '../ui/EngineSound.js';
 import { ResultsScreen } from './screens/ResultsScreen.js';
 import { PauseMenu } from './screens/PauseMenu.js';
 import { Briefing } from './screens/Briefing.js';
@@ -41,6 +42,8 @@ export class CourierGame {
     this.el = this.layer.el;
     this.hud = new CourierHud(this);
     this.minimap = new MiniMap(this);
+    this.engine = new EngineSound(app.sfx);
+    this.hornT = 0;
     this.results = new ResultsScreen(this);
     this.controls = new FlightControls(this);
     this.controls.bindBoost(this.hud.dom.boostBtn);
@@ -120,6 +123,7 @@ export class CourierGame {
     this.results.hide();
     this.hud.setLayout(run.layout, this.player);
     this.minimap.begin();
+    this.engine.start(this.player.kind);
     this.controls.attach();
     app.wakeLock?.want('game', true);
     app.sfx.play('start');
@@ -142,6 +146,7 @@ export class CourierGame {
     this.props.dispose();
     this.props = null;
     this.minimap.end();
+    this.engine.stop();
     this.app.wakeLock?.want('game', false);
     this.layer.hide();
     this.results.hide();
@@ -188,7 +193,17 @@ export class CourierGame {
   /** Once a frame, after the camera has moved: what's drawn over the view (the player's name tag, the mini-map). */
   draw(renderer) {
     this.hud.placeYou();
+    this.engine.update(this.player, !this.over && !this.app.paused && this.respawnT <= 0);
     this.minimap.render(renderer);
+  }
+
+  /** The horn (H, the 📯 button, or Y on a controller): a car honks, a boat toots; a plane has none. */
+  horn() {
+    const pl = this.player, now = this.app.simTime ?? 0;
+    if (!this.active || this.over || !pl || pl.kind === 'plane' || now - this.hornT < 0.35) return false;
+    this.hornT = now;
+    this.app.sfx.pop(pl.pos.clone().addScaledVector(pl.up, 0.15), pl.kind === 'boat' ? 'TOOT TOOT!' : 'HONK!', '#ffd23f');
+    return true;
   }
 
   /** Out of health: up in smoke. The run decides what then (game over, or a fresh one in the free modes). */

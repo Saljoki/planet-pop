@@ -5,7 +5,7 @@ const SOUND_FOR = {
   'KRAKA-BOOM!': 'boom', 'WHOOOSH!': 'whoosh', 'FWOOSH!': 'whoosh', 'ZOOM!': 'zoom', 'VROOM!': 'vroom',
   'BEEP BEEP!': 'beep', 'CHOO CHOO!': 'choo', 'TOOT TOOT!': 'toot', 'SQUAWK!': 'squawk', 'BONK!': 'crash',
   'SCREECH!': 'screech', 'RUMBLE…': 'rumble', 'KABOOM!': 'boom', 'BWEE-OOO!': 'ufo', 'HI!': 'chirp', 'NICE DAY!': 'chirp', 'OOH!': 'chirp',
-  'PFFFT!': 'spout', 'SPLOOSH!': 'splash', 'DING DING!': 'ding', 'WHUP WHUP!': 'whup',
+  'PFFFT!': 'spout', 'SPLOOSH!': 'splash', 'DING DING!': 'ding', 'WHUP WHUP!': 'whup', 'HONK!': 'horn',
 };
 const AMBIENT = {
   plane: [['ZOOM!', '#3fa7ff']],
@@ -95,6 +95,7 @@ export class Sfx {
       case 'vroom': T(90, 170, 0.45, 'sawtooth', 0.05); break;
       case 'choo': N(0.16, 0.25, 3000, 900); N(0.16, 0.25, 3000, 900, 0.25); break;
       case 'toot': T(330, 0, 0.4, 'triangle', 0.09); break;
+      case 'horn': T(415, 0, 0.3, 'square', 0.045); T(523, 0, 0.3, 'square', 0.035); break;
       case 'screech': N(0.5, 0.12, 5000, 1400); T(1400, 900, 0.35, 'sawtooth', 0.02); break;
       case 'shutter': N(0.06, 0.4, 6000, 2500); N(0.09, 0.3, 4000, 1200, 0.09); break;
       case 'firework': N(0.5, 0.3, 2500, 200); [0.15, 0.25, 0.32, 0.41, 0.5].forEach((d) => N(0.05, 0.12, 6000, 3000, d)); break;

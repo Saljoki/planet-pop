@@ -129,9 +129,11 @@ the hangar), A / B answer the end-of-run screen.
   and Ash Dodger. The arrow points where a mission needs you (a runway, the next ring, the UFO), and
   each pays coins the first time you complete it.
 - **🚗 Road trips** (in the hangar), in a car on the ground: ↑ / W to go, ↓ / S to brake and reverse (on phones,
-  drag up and down on the left). Highways are quickest; grass, sand and snow are slower and hills slow you going up,
-  and you get a little air over crests. Buildings, steep mountains and the sea are walls: glance off them and you
-  scrape along, hit them square on and it hurts. Traffic keeps left, queues behind you and honks.
+  drag up and down on the left). Highways and town streets are quickest (two main streets cross in the middle of
+  every town); grass, sand and snow are slower and hills slow you going up, and you get a little air over crests.
+  Steering eases in and turns wider at speed. Buildings, trees, steep mountains and the sea are in the way: glance
+  off them and you scrape along, hit them square on and it hurts. Traffic keeps left, queues behind you and honks;
+  honk back with **H** (📯 on phones, Y on a controller). The engine growls through the gears (a boat putt-putts).
   - **Free drive** (or take over a car from its info card) and **⛵ free sail**: no clock, just roam.
   - **🚕 Taxi:** people wait on a green pad at the edge of town; pull in slowly to pick them up and take them to
     the next town. Quick rides tip and build a combo, bumpy ones pay less, and every fare adds time to the shift.
@@ -172,8 +174,8 @@ planet-pop/
 │  │                          checked), TrysteroLink (over the internet), TabLink (between tabs, ?net=tabs)
 │  ├─ ui/                     Widget + Overlay (UI building blocks), Hud, ControlPanel (☰), AboutCard, FriendsMenu,
 │  │                          InfoCard, FindMenu, TourMode, PhotoMode, Sfx (bubbles + synthesized sound), Ambience
-│  │                          (soundscape),
-│  │                          Achievements + TrophyWatch, Haptics, WakeLock, DebugStats (?debug)
+│  │                          (soundscape), EngineSound (cars and boats), Achievements + TrophyWatch, Haptics,
+│  │                          WakeLock, DebugStats (?debug)
 │  └─ game/                   CourierGame (runs the show), Rival + RoadRival (Rex in the air and on the road), Cargo,
 │     │                       CourierProps (beacon, rings, pads, race arches), FlightHazards (storms, runways, ash),
 │     │                       Progress, Settings, Daily, Missions

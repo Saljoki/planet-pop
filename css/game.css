@@ -33,6 +33,8 @@
   background: var(--yellow); border: 3px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); }
 #gStick .ghost { position: fixed; left: calc(24px + var(--sl)); bottom: calc(78px + var(--sb)); font-size: 18px; color: #fff;
   text-shadow: 2px 2px 0 var(--ink); opacity: 0.85; pointer-events: none; }
+#gHornBtn { position: fixed; right: calc(128px + var(--sr)); bottom: calc(36px + var(--sb)); width: 62px; height: 62px; border-radius: 50%;
+  background: #fff; font-size: 26px; pointer-events: auto; touch-action: none; padding: 0; }
 #gBoostBtn { position: fixed; right: calc(20px + var(--sr)); bottom: calc(28px + var(--sb)); width: 96px; height: 96px; border-radius: 50%;
   background: #3fa7ff; color: #fff; font-size: 19px; text-shadow: 2px 2px 0 var(--ink); pointer-events: auto; touch-action: none; padding: 0; }
 #gPause .col { display: flex; flex-direction: column; gap: 10px; min-width: 240px; }

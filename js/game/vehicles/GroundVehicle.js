@@ -5,12 +5,14 @@ import { Ground } from './Ground.js';
 
 const SLIDE = [0.4, -0.4, 0.8, -0.8, 1.2, -1.2]; // directions to try (radians off straight ahead) when something's in the way
 const HURT = 0.45;   // hitting a wall faster than this (units/s) does damage
+const STEER_IN = 4, STEER_OUT = 8; // how fast the wheel turns toward full lock, and back to straight (per second)
+const CALM = 0.6;    // how much less it turns at speed: turning slows by 1 / (1 + CALM × (speed − 0.3))
 const _axis = new THREE.Vector3(), _up = new THREE.Vector3(), _fwd = new THREE.Vector3(), _dir = new THREE.Vector3();
 const _probe = new THREE.Vector3();
 
 /**
  * A vehicle that keeps to the surface: a car on land, a boat on water. It speeds up and slows down along `fwd`,
- * turns more the faster it goes, slides along walls and gets hurt hitting them hard. Subclasses say how fast it
+ * steers smoothly (sharpest at town speeds, wider on the open road), slides along walls and gets hurt hitting them hard. Subclasses say how fast it
  * goes where (limits), what stops it (blocked) and how high it sits (surfaceR).
  */
 export class GroundVehicle extends Vehicle {
@@ -23,6 +25,7 @@ export class GroundVehicle extends Vehicle {
     this.impact = 0;     // how hard the last crash was, as damage (the game applies it)
     this.hitWhat = null; // what it last bumped into ('building', 'water', 'land'…)
     this.scraping = 0;   // > 0 while sliding along a wall
+    this.steer = 0;      // the steering wheel, -1 right … 1 left: eases toward what's asked, so keys don't jerk it
   }
 
   get tiltClimbs() { return false; }
@@ -50,6 +53,7 @@ export class GroundVehicle extends Vehicle {
   respawn(at, heading) {
     super.respawn(at, heading);
     this.v = 0;
+    this.steer = 0;
     this.alt = this.surfaceR(this.up);
   }
 
@@ -68,8 +72,12 @@ export class GroundVehicle extends Vehicle {
       this.v -= Math.sign(this.v) * Math.min(Math.abs(this.v), L.coast * dt);
     }
     if (this.v > max) this.v = Math.max(max, this.v - L.brake * dt); // off the road (or out of boost): ease down to the new top speed
+    const want = this.turnInput(), toward = Math.abs(want) > Math.abs(this.steer) && want * this.steer >= 0;
+    const rate = (toward ? STEER_IN : STEER_OUT) * dt;
+    this.steer += clamp(want - this.steer, -rate, rate);
     const grip = clamp(Math.abs(this.v) / 0.3, 0, 1) * Math.sign(this.v); // no turning on the spot; reversing turns the other way
-    this.fwd.applyAxisAngle(this.up, this.turnInput() * L.turn * st.turn * (this.controls.sensitivity ?? 1) * grip * dt);
+    const calm = 1 / (1 + CALM * Math.max(0, Math.abs(this.v) - 0.3)); // wider turns at speed, so it doesn't twitch
+    this.fwd.applyAxisAngle(this.up, this.steer * L.turn * st.turn * (this.controls.sensitivity ?? 1) * grip * calm * dt);
     this.move(this.v * dt);
     return boosting;
   }

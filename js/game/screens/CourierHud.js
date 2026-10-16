@@ -25,19 +25,21 @@ export class CourierHud {
       <div id="gBoost" class="badge" title="Boost"><div></div></div>
       <div id="gSpeed" class="badge hidden"></div>
       <div id="gHelp" class="badge">←/→ steer · ↑/↓ climb · Space boost · P pause · Esc quit</div>
-      <button id="gBoostBtn">BOOST</button>`);
+      <button id="gBoostBtn">BOOST</button>
+      <button id="gHornBtn" class="hidden" title="Horn (H)">📯</button>`);
     const $ = (id) => game.el.querySelector(`#${id}`);
     this.dom = {
       daily: $('gDaily'), mission: $('gMission'), free: $('gFree'), rival: $('gRival'), you: $('gYou'),
       score: $('gScore'), time: $('gTime'), combo: $('gCombo'), coins: $('gCoins'), arrow: $('gArrow'), goal: $('gGoal'),
       boost: $('gBoost').firstElementChild, help: $('gHelp'), boostBtn: $('gBoostBtn'),
-      healthBox: $('gHealth'), speed: $('gSpeed'),
+      healthBox: $('gHealth'), speed: $('gSpeed'), horn: $('gHornBtn'),
     };
     this.dom.stats = [this.dom.score, this.dom.time, this.dom.combo, this.dom.coins];
     this.dom.health = this.dom.healthBox.firstElementChild;
     // phones get the BOOST button instead of the keyboard help
     this.dom.boostBtn.classList.toggle('hidden', !game.touch);
     this.dom.help.classList.toggle('hidden', game.touch);
+    this.dom.horn.addEventListener('pointerdown', (e) => { e.preventDefault(); game.horn(); });
     $('gPauseBtn').addEventListener('click', () => { if (!game.over && !game.app.paused) game.app.togglePause(); });
   }
 
@@ -49,8 +51,9 @@ export class CourierHud {
     d.arrow.classList.toggle('hidden', !arrow);
     this.showSpeed = !!vehicle && vehicle.kind !== 'plane';
     d.speed.classList.toggle('hidden', !this.showSpeed);
+    d.horn.classList.toggle('hidden', !this.showSpeed || !this.game.touch); // (phones; keyboards have H)
     const move = vehicle?.kind === 'plane' || !vehicle ? `↑/↓ ${invert ? 'dive / climb (inverted)' : 'climb / dive'}` : '↑ go · ↓ brake / reverse';
-    d.help.textContent = `←/→ steer · ${move} · Space boost · P pause · Esc quit`;
+    d.help.textContent = `←/→ steer · ${move} · Space boost${this.showSpeed ? ' · H horn' : ''} · P pause · Esc quit`;
   }
 
   update() {

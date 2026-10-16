@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { makeWorld, run } from './helpers/world.mjs';
 import { R } from '../js/core/Geo.js';
+import { engineNote } from '../js/ui/EngineSound.js';
 
 const left = (pl) => new THREE.Vector3().crossVectors(pl.up, pl.fwd); // (up × fwd points left)
 
@@ -84,6 +85,113 @@ describe('driving', () => {
     assert.ok(pl.health < 0.95, 'driving into a wall at full speed should hurt');
     assert.equal(planet.cities.buildingAt(pl.up), null, 'the car ended up inside the building');
     game.stop();
+  });
+
+  it('every town has two main streets, crossing in the middle: a car drives right through', () => {
+    game.start({ drive: 'car' });
+    const pl = game.player, cities = planet.cities;
+    const at = (city, x, z) => city.c.clone().addScaledVector(city.u, x / R).addScaledVector(city.v, z / R).normalize();
+    for (const city of cities.sites) {
+      for (const along of ['x', 'z']) {
+        if (along === 'x' && pl.ground.roadAt(city.c)) continue; // (that one's the highway)
+        const dir = along === 'x' ? city.u : city.v, start = along === 'x' ? at(city, -1.7, 0) : at(city, 0, -1.7);
+        if (pl.ground.carBlock(start)) continue; // (the street runs into the sea or a mountain out there)
+        pl.respawn(start, dir);
+        Object.assign(pl, { invuln: 0, health: 1 });
+        pl.input.up = true;
+        let bumps = 0, middle = Infinity;
+        run(app, 4.5, { dt: 1 / 60, game: true, each: () => { // (out the far side it may well run into the sea: fine)
+          if ((pl.scraping || pl.crashed) && (pl.hitWhat === 'building' || pl.up.angleTo(city.c) * R < 1.45)) bumps++;
+          middle = Math.min(middle, pl.up.angleTo(city.c) * R);
+        } });
+        pl.input.up = false;
+        assert.ok(middle < 0.12, `${city.name}: didn't get to the middle along its ${along} street (${middle.toFixed(2)})`);
+        assert.equal(bumps, 0, `${city.name}: bumped into something on its ${along} street`);
+      }
+      assert.equal(pl.ground.surface(at(city, 0.6, 0)), 'road', 'streets are as quick as roads');
+    }
+    game.stop();
+  });
+
+  it('trees are solid: glance off them, and a head-on hit hurts', () => {
+    game.start({ drive: 'car' });
+    const pl = game.player, nature = planet.nature, g = pl.ground;
+    const ahead = (t, dir, k) => t.d.clone().addScaledVector(dir, -k / R).normalize();
+    let tree = null, dir = null;
+    for (const t of nature.treeGroups.flatMap((x) => x.list)) { // a tree with clear, flat ground in front of it
+      const [u] = [new THREE.Vector3(0, 1, 0).cross(t.d).normalize()];
+      const solid = nature.treeAt(t.d);
+      if (!solid || [0.12, 0.3, 0.5].some((k) => g.carBlock(ahead(t, u, solid.r + k)) || g.mountain(ahead(t, u, solid.r + k)).r)) continue;
+      tree = solid;
+      dir = u;
+      break;
+    }
+    assert.ok(tree, 'no tree to drive into');
+    const face = (speed) => {
+      pl.respawn(ahead(tree, dir, tree.r + 0.12), dir);
+      Object.assign(pl, { v: speed, invuln: 0, health: 1 });
+      pl.input.up = true;
+      let closest = Infinity;
+      run(app, 0.5, { dt: 1 / 60, game: true, each: () => { closest = Math.min(closest, pl.up.angleTo(tree.d) * R); } });
+      pl.input.up = false;
+      return closest;
+    };
+    assert.ok(face(0.2) > tree.r, 'the car drove into the tree');
+    assert.equal(pl.health, 1, 'a gentle bump should not hurt');
+    face(1.05);
+    assert.ok(pl.health < 0.95, 'driving into a tree at full speed should hurt');
+    game.stop();
+  });
+
+  it('steering eases in, and turns wider at speed', () => {
+    game.start({ drive: 'car' });
+    const pl = game.player;
+    onHighway(pl);
+    pl.v = 0.4;
+    pl.input.left = true;
+    run(app, 0.05, { dt: 1 / 60, game: true });
+    assert.ok(pl.steer > 0 && pl.steer < 0.4, `the wheel should turn gradually (${pl.steer.toFixed(2)})`);
+    const turnRate = (speed) => {
+      onHighway(pl);
+      Object.assign(pl, { v: speed, steer: 1 });
+      pl.input.left = true;
+      pl.input.up = speed > 0.5;
+      const f0 = pl.fwd.clone();
+      run(app, 0.25, { dt: 1 / 60, game: true });
+      return f0.angleTo(pl.fwd) / 0.25;
+    };
+    const slow = turnRate(0.35), fast = turnRate(1.05);
+    assert.ok(fast < slow * 0.85, `full speed should turn more gently (${fast.toFixed(2)} vs ${slow.toFixed(2)} rad/s)`);
+    pl.input.left = false;
+    game.stop();
+  });
+
+  it('the horn: H honks a car, toots a boat, and a plane has none', () => {
+    const said = [], pop = app.sfx.pop;
+    app.sfx.pop = (pos, text) => said.push(text);
+    game.start({ drive: 'car' });
+    assert.equal(game.horn(), true);
+    assert.equal(game.horn(), false, 'not a continuous blare');
+    game.stop();
+    game.start({ drive: 'boat' });
+    app.simTime += 1;
+    assert.equal(game.horn(), true);
+    game.stop();
+    game.start({ free: true });
+    app.simTime += 1;
+    assert.equal(game.horn(), false);
+    game.stop();
+    app.sfx.pop = pop;
+    assert.deepEqual(said, ['HONK!', 'TOOT TOOT!']);
+  });
+
+  it('the engine note climbs through the gears and growls louder on the gas', () => {
+    const notes = [0.1, 0.33, 0.4].map((v) => engineNote('car', v, 1).freq);
+    assert.ok(notes[0] < notes[1], 'revs rise in a gear');
+    assert.ok(notes[2] < notes[1], 'and drop when it changes up');
+    assert.ok(engineNote('car', 0.5, 1).vol > engineNote('car', 0.5, 0).vol);
+    assert.ok(engineNote('car', 1.6, 1).freq > engineNote('car', 1.0, 1).freq, 'boost revs past the top');
+    assert.ok(engineNote('boat', 0.8, 1).chug > engineNote('boat', 0, 0).chug, 'a boat putt-putts faster');
   });
 
   it('a boat stays on the water', () => {

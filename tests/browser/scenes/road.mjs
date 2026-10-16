@@ -1,5 +1,6 @@
-// On the road and at sea: the road trips menu, driving a car (on the highway, off-road, one taken from the traffic),
-// sailing a boat, the taxi, the van courier (and the mini-map zoomed out), the race round the world, damage and wrecks.
+// On the road and at sea: the road trips menu, driving a car (on the highway, off-road, down a town's main street,
+// one taken from the traffic), sailing a boat, the taxi, the van courier (and the mini-map zoomed out), the race round
+// the world, damage and wrecks.
 // One of the screenshot run's scene files (see ../screenshots.mjs); the helpers are described in ../harness.mjs.
 
 export default async function road({ page, frames, until, scene }) {
@@ -37,6 +38,16 @@ export default async function road({ page, frames, until, scene }) {
       for (let i = 0; i < 40; i++) g.update(1 / 30);
     });
     await frames(8);
+  });
+  await scene('road-street', 'Driving down a town’s main street: streets cross in the middle of every town, and on the mini-map', async () => {
+    await page.evaluate(() => { // into a town that isn't on a highway, along its street
+      const g = app.game, pl = g.player, city = app.planet.cities.sites.find((s) => !pl.ground.roadAt(s.c));
+      const at = (z) => city.c.clone().addScaledVector(city.v, z / 10).normalize();
+      pl.respawn(at(-0.9), city.v);
+      pl.input.up = true;
+      for (let i = 0; i < 20; i++) g.update(1 / 30);
+    });
+    await frames(10);
   });
   await scene('road-damage', 'A battered car: smoking, with the health bar in the red', async () => {
     await page.evaluate(() => { app.game.player.health = 0.22; });

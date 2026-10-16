@@ -119,7 +119,8 @@ describe('controller', () => {
   const pad = (axes, pressed = []) => ({ axes, buttons: Array.from({ length: 16 }, (_, i) => ({ pressed: pressed.includes(i), value: pressed.includes(i) ? 1 : 0 })) });
 
   it('maps sticks, d-pad and buttons to flight controls', () => {
-    assert.deepEqual(readPad(pad([-0.9, 0])), { left: true, right: false, up: false, down: false, boost: false, a: false, b: false, start: false });
+    assert.deepEqual(readPad(pad([-0.9, 0])), { left: true, right: false, up: false, down: false, boost: false, a: false, b: false, start: false, horn: false });
+    assert.ok(readPad(pad([0, 0], [3])).horn, 'Y honks');
     const s = readPad(pad([0.1, -0.8], [0, 9]));
     assert.ok(!s.left && !s.right && s.up && s.boost && s.a && s.start, 'stick up, A and Start');
     assert.ok(readPad(pad([0, 0], [15])).right, 'd-pad right');

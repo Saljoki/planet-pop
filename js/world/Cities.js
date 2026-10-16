@@ -1,12 +1,14 @@
 import * as THREE from 'three';
-import { R, TAU, LAYER_FX, frame, tangentBasis, canvasTexture } from '../core/Geo.js';
+import { R, TAU, LAYER_FX, frame, tangentBasis, canvasTexture, ribbonGeometry } from '../core/Geo.js';
 import { toon, WPOS_DECL, WPOS_VERT } from '../render/Toon.js';
-import { addInstanced, cutaway } from '../render/Outline.js';
+import { addMesh, addInstanced, cutaway } from '../render/Outline.js';
 import { PointEntity } from '../core/PointEntity.js';
 import { ROAD_W, ROAD_N } from './Roads.js';
 
 export const CITY_A = 0.14; // angular radius of a city
 export const GRID = 0.3; // building plot spacing
+export const STREET_W = 0.2; // the main streets: two, crossing in the middle of every town (a car is 0.09 wide)
+export const STREET_LIFT = 0.01; // how far the street surface sits above the ground
 const NAMES = ['Pop City', 'Zapville', 'Boomtown', 'Kablam Bay', 'Whamford', 'Bonkton', 'Fizzburg', 'Splatport',
   'Zing Harbor', 'Kapow Falls', 'Biffington', 'Swooshire', 'Blammo Springs', 'Crunchfield', 'Plinkton', 'Thwackmore'];
 const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _d = new THREE.Vector3(), _c = new THREE.Color();
@@ -87,6 +89,17 @@ export class Cities {
 
   inCity(d) { return this.sites.some((s) => s.c.dot(d) > this.cosR); }
 
+  /** Whether plot (gx, gz) is on one of the town's main streets (left empty: they cross at the middle). */
+  static onStreet(gx, gz) { return gx === 0 || gz === 0; }
+
+  /** Whether direction d is on a town's main street (the street surface, a little wider than its paint). */
+  streetAt(d) {
+    const city = this.cityAt(d);
+    if (!city?.streets) return false;
+    const k = R / d.dot(city.c), x = d.dot(city.u) * k, z = d.dot(city.v) * k;
+    return Math.min(Math.abs(x), Math.abs(z)) < STREET_W / 2 + 0.02 && Math.hypot(x, z) < CITY_A * R * 1.08;
+  }
+
   /** The town around direction d, if any. */
   cityAt(d) { return this.sites.find((s) => s.c.dot(d) > this.cosR) || null; }
 
@@ -126,19 +139,21 @@ export class Cities {
             if (room.max < 0.1) continue;
             b[room.key] = Math.min(b[room.key], room.max);
           }
+          b.street = Cities.onStreet(gx, gz); // (worked out after the dice are thrown, so the rest of the planet stays the same)
           data.push(b);
         }
       }
     }
     // each town's footprints on its grid (x along u, z along v), so cars can bump into them
     for (const city of this.sites) city.blocks = new Map();
-    for (const b of data) b.city.blocks.set(`${b.gx},${b.gz}`, { x: b.x, z: b.z, hx: b.dp / 2, hz: b.w / 2, h: b.h });
+    for (const b of data) if (!b.street) b.city.blocks.set(`${b.gx},${b.gz}`, { x: b.x, z: b.z, hx: b.dp / 2, hz: b.w / 2, h: b.h });
     const wall = wallMaterial(), roof = toon('#efeaff');
     const mesh = (this.buildings = addInstanced(p.root, new THREE.BoxGeometry(1, 1, 1).translate(0, 0.5, 0),
       [wall, wall, roof, roof, wall, wall], data.length, 0.012));
     cutaway(mesh);
     data.forEach((b, i) => {
-      mesh.setMatrixAt(i, frame(_m, _p.copy(b.d).multiplyScalar(p.surfR(b.d) - 0.07), b.d, b.u, b.w, b.h + 0.07, b.dp));
+      const s = b.street ? 0 : 1; // (no building on a main street)
+      mesh.setMatrixAt(i, frame(_m, _p.copy(b.d).multiplyScalar(p.surfR(b.d) - 0.07), b.d, b.u, b.w * s, (b.h + 0.07) * s, b.dp * s));
       mesh.setColorAt(i, _c.set(rng.pick(p.theme.buildings)));
     });
 
@@ -161,6 +176,44 @@ export class Cities {
       p.root.add(spr);
       return spr;
     });
+  }
+
+  /**
+   * The main streets, laid on the finished terrain (Planet.build, once the mesh is ready): two through every town,
+   * crossing in the middle, from one edge to the other. Where a highway crosses, the highway goes on top.
+   */
+  buildStreets() {
+    const p = this.planet, W = CITY_A * R * 1.06, STEP = 0.05;
+    const tex = canvasTexture(32, 64, (g) => {
+      g.fillStyle = '#57516e'; g.fillRect(0, 0, 32, 64);
+      g.fillStyle = '#d9d2ea'; g.fillRect(0, 0, 2, 64); g.fillRect(30, 0, 2, 64); // kerbs
+      g.fillStyle = '#ffffff'; g.fillRect(15, 8, 2, 30); // the dashed middle line
+    });
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.anisotropy = p.app.renderer.capabilities.getMaxAnisotropy();
+    const mat = toon('#ffffff', { map: tex, side: THREE.DoubleSide });
+    const pos = [], nor = [], uv = [], idx = [], at = (city, x, z) => city.c.clone().addScaledVector(city.u, x / R).addScaledVector(city.v, z / R).normalize();
+    for (const city of this.sites) {
+      for (const along of ['x', 'z']) {
+        let run = 0; // points in the current stretch
+        for (let s = -W; s <= W + 1e-6; s += STEP) {
+          const d = along === 'x' ? at(city, s, 0) : at(city, 0, s);
+          const clear = p.heightAt(d) > 0.02 && !p.roads.near(d, (ROAD_W / 2 + 0.03) / R);
+          if (!clear) { run = 0; continue; }
+          for (const side of [-1, 1]) {
+            const e = along === 'x' ? at(city, s, (side * STREET_W) / 2) : at(city, (side * STREET_W) / 2, s);
+            _p.copy(e).multiplyScalar(p.meshR(e) + STREET_LIFT);
+            pos.push(_p.x, _p.y, _p.z);
+            nor.push(e.x, e.y, e.z);
+            uv.push(side < 0 ? 0 : 1, s / 0.45);
+          }
+          const b = pos.length / 3 - 2;
+          if (run++) idx.push(b - 2, b - 1, b + 1, b - 2, b + 1, b);
+        }
+      }
+      city.streets = true;
+    }
+    if (idx.length) this.streetMesh = addMesh(p.root, ribbonGeometry(pos, nor, uv, idx), mat, 0, { cast: false });
   }
 
   update() {

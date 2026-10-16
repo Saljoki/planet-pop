@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { R, TAU, tangentBasis } from '../../core/Geo.js';
 import { ROAD_W, LANE } from '../../world/Roads.js';
-import { CITY_A } from '../../world/Cities.js';
+import { CITY_A, STREET_LIFT } from '../../world/Cities.js';
 
 const SEA = 0.006;          // ground lower than this above sea level is water
 const SHORE = -0.012;       // a boat needs at least this much water under it
@@ -40,6 +40,7 @@ export class Ground {
   /** How high (as a radius) a car's wheels sit at d: the road deck, or the ground (a little way up a mountain's foot). */
   carR(d, road = this.roadAt(d)) {
     if (road) return this.planet.roads.radius(road.road, road.a);
+    if (this.planet.cities.streetAt(d)) return this.planet.meshR(d) + STREET_LIFT;
     return Math.max(this.planet.meshR(d), this.mountain(d).r);
   }
 
@@ -57,19 +58,20 @@ export class Ground {
 
   /** What a car drives on at d: 'road', 'sand', 'snow' or 'grass' (each has its own top speed and grip). */
   surface(d, road = this.roadAt(d)) {
-    if (road) return 'road';
+    if (road || this.planet.cities.streetAt(d)) return 'road'; // (town streets are kept clear of snow)
     const p = this.planet;
     if (p.theme.id === 'desert') return 'sand';
     if (p.theme.id === 'ice' || p.seasons?.snowAt?.(d) > 0.5) return 'snow';
     return 'grass';
   }
 
-  /** Why a car can't be at d: 'water', 'lava', 'mountain' or 'building'; null if it can. */
+  /** Why a car can't be at d: 'water', 'lava', 'mountain', 'building' or 'tree'; null if it can. */
   carBlock(d) {
     if (this.roadAt(d)) return null; // roads (and their bridges) are always open
     if (this.isWater(d)) return this.lava ? 'lava' : 'water';
     if (this.mountain(d).t > MOUNTAIN_WALL) return 'mountain';
     if (this.planet.cities.buildingAt(d, BUILDING_PAD)) return 'building';
+    if (this.planet.nature?.treeAt(d, BUILDING_PAD)) return 'tree';
     return null;
   }
 

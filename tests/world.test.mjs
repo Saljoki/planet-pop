@@ -147,6 +147,7 @@ for (const params of PLANETS) {
           for (let i = 0; i < b.count; i++) {
             b.getMatrixAt(i, m);
             m.decompose(pos, q, sc);
+            if (sc.x === 0) continue; // (a plot left empty for a main street)
             const loc = d.clone().multiplyScalar(pos.length()).sub(pos).applyQuaternion(q.invert());
             assert.ok(Math.abs(loc.x) > sc.x / 2 + 0.025 || Math.abs(loc.z) > sc.z / 2 + 0.025, `${l.city.name}: a building on the tram tracks`);
           }

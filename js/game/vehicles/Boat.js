@@ -45,7 +45,7 @@ export class Boat extends GroundVehicle {
     if (this.crashed) this.impact *= 0.6; // running aground is softer than hitting a wall
     this.invuln = Math.max(0, this.invuln - dt);
     this.shake = Math.max(0, this.shake - dt * 2.5);
-    this.lean += (-this.turnInput() * Math.min(1, Math.abs(this.v) / 0.5) * 0.12 - this.lean) * Math.min(1, dt * 3);
+    this.lean += (-this.steer * Math.min(1, Math.abs(this.v) / 0.5) * 0.12 - this.lean) * Math.min(1, dt * 3);
     this.sync();
     const fast = Math.abs(this.v) > 0.08;
     if (fast && (this.wakeT -= dt) <= 0) {

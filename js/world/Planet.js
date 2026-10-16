@@ -123,6 +123,7 @@ export class Planet {
     // 3. Things that sit on the exact rendered ground wait for the terrain mesh.
     await terrainReady;
     this.add('forestFloor', new ForestFloor(this));
+    this.cities.buildStreets();
     this.airports.build();
     this.harbours.build();
     this.add('boats', new Boats(this));

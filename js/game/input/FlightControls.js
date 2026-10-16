@@ -51,6 +51,7 @@ export class FlightControls {
     const g = this.game;
     if (e.code === 'Escape' && down) { g.stop(); return; }
     if (e.code === 'KeyM' && down && !e.repeat && e.target?.tagName !== 'INPUT') { g.minimap.toggleShown(); return; }
+    if (e.code === 'KeyH' && down && !e.repeat && e.target?.tagName !== 'INPUT') { g.horn(); return; }
     const k = KEYMAP[e.code];
     if (!k || !g.player || g.over) return;
     e.preventDefault();
@@ -60,6 +61,7 @@ export class FlightControls {
   /** Controller input arrives as on/off states; only changes are applied, so the keyboard still works alongside. */
   pad(s, prev) {
     const inp = this.game.player.input;
+    if (s.horn && !prev.horn) this.game.horn();
     for (const k of ['left', 'right', 'up', 'down', 'boost']) if (s[k] !== !!prev[k]) inp[k] = s[k];
   }
 

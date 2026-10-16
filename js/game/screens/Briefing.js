@@ -8,9 +8,9 @@ export function briefingFor(opts = {}) { return runClass(opts).briefing(opts); }
 export function controlsFor({ touch = false, pad = false, invertY = false, vehicle = 'plane' } = {}) {
   const lines = [];
   if (vehicle !== 'plane') {
-    if (touch) lines.push('👆 Put a thumb on the left half and drag: sideways to steer, up to go, down to brake and reverse', '🔵 Hold BOOST to speed up', '⏸ Pause · 🗺️ shows or hides the map (tap the map to zoom)');
-    else lines.push('⬅️➡️ Arrow keys or A / D to steer', '⬆️ Up or W to go, ⬇️ down or S to brake and reverse', '⚡ Space or Shift to boost', '⏸ P pauses, Esc quits · M shows or hides the map (click it to zoom)');
-    if (pad) lines.push('🎮 Left stick steers, up to go and down to brake, A / RB / RT boost, Start pauses');
+    if (touch) lines.push('👆 Put a thumb on the left half and drag: sideways to steer, up to go, down to brake and reverse', '🔵 Hold BOOST to speed up, 📯 to honk', '⏸ Pause · 🗺️ shows or hides the map (tap the map to zoom)');
+    else lines.push('⬅️➡️ Arrow keys or A / D to steer', '⬆️ Up or W to go, ⬇️ down or S to brake and reverse', '⚡ Space or Shift to boost · 📯 H honks', '⏸ P pauses, Esc quits · M shows or hides the map (click it to zoom)');
+    if (pad) lines.push('🎮 Left stick steers, up to go and down to brake, A / RB / RT boost, Y honks, Start pauses');
     return lines;
   }
   const climb = invertY ? 'dive, down to climb (Invert Y is on)' : 'climb, down to dive';

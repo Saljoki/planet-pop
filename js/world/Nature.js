@@ -10,6 +10,9 @@ import { TREE_SHAPES } from './TreeShapes.js';
 
 /** Trees shrink away between these distances (units) from the camera; from further off a forest is its floor colour (ForestFloor). */
 export const TREE_FADE = { near: 6, far: 10 };
+const TREE_R = 0.045;   // how wide (units) a tree is solid, at size 1, for cars bumping into it
+const CELL = 0.03;      // the tree lookup's grid, in unit-sphere coordinates
+const cellKey = (x, y, z) => ((Math.floor(x / CELL) + 64) * 128 + Math.floor(y / CELL) + 64) * 128 + Math.floor(z / CELL) + 64;
 
 const _m = new THREE.Matrix4(), _r = new THREE.Matrix4(), _p = new THREE.Vector3(), _c = new THREE.Color();
 
@@ -119,7 +122,27 @@ export class Nature {
       });
       this.treeGroups.push({ mesh, list, deciduous: k === 1 });
     });
+    this.treeCells = new Map(); // trees by grid cell, for treeAt()
+    for (const t of groups.flat()) {
+      const key = cellKey(t.d.x, t.d.y, t.d.z);
+      if (!this.treeCells.has(key)) this.treeCells.set(key, []);
+      this.treeCells.get(key).push({ d: t.d, r: TREE_R * t.s });
+    }
     this.treeFade = new InstanceFade([trunks, ...this.treeGroups.map((g) => g.mesh)], TREE_FADE.near, TREE_FADE.far);
+  }
+
+  /** The tree at direction d (grown by `pad` all round, in units), if any: { d, r }. */
+  treeAt(d, pad = 0) {
+    const cx = Math.floor(d.x / CELL), cy = Math.floor(d.y / CELL), cz = Math.floor(d.z / CELL);
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        for (let k = -1; k <= 1; k++) {
+          const list = this.treeCells?.get(((cx + i + 64) * 128 + cy + j + 64) * 128 + cz + k + 64);
+          if (list) for (const t of list) if (t.d.distanceTo(d) * R < t.r + pad) return t;
+        }
+      }
+    }
+    return null;
   }
 
   buildTurbines() {

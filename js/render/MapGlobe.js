@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { R } from '../core/Geo.js';
 import { ROAD_W } from '../world/Roads.js';
-import { CITY_A } from '../world/Cities.js';
+import { CITY_A, STREET_W } from '../world/Cities.js';
 import { HALF, RUNWAY_W } from '../world/Airports.js';
 
 const MAX = { roads: 4, towns: 8, peaks: 64, airports: 2 };
@@ -17,7 +17,7 @@ const FRAG = /* glsl */ `
   uniform sampler2D uHeight; uniform sampler2D uForest;
   uniform vec3 uSea, uShallow, uSand, uG1, uG2, uG3, uRock, uCity, uFloor, uRoad, uInk;
   uniform vec3 uRoads[${MAX.roads}]; uniform int uRoadN; uniform float uRoadW;
-  uniform vec4 uTowns[${MAX.towns}]; uniform int uTownN;
+  uniform vec4 uTowns[${MAX.towns}]; uniform vec3 uTownU[${MAX.towns}]; uniform int uTownN; uniform float uStreetW;
   uniform vec4 uPeaks[${MAX.peaks}]; uniform int uPeakN;
   uniform vec3 uAirC[${MAX.airports}]; uniform vec3 uAirF[${MAX.airports}]; uniform int uAirN; uniform vec2 uAirSize;
   uniform vec4 uRail; uniform vec3 uRailCol; uniform float uRailW; // the railway: a small circle round uRail.xyz, uRail.w (radians) out
@@ -48,7 +48,11 @@ const FRAG = /* glsl */ `
     for (int i = 0; i < ${MAX.towns}; i++) {
       if (i >= uTownN) break;
       float a = acos(clamp(dot(d, uTowns[i].xyz), -1.0, 1.0));
-      if (a < uTowns[i].w) c = a > uTowns[i].w - uInkW ? uInk : uCity;
+      if (a < uTowns[i].w) {
+        c = a > uTowns[i].w - uInkW ? uInk : uCity;
+        float street = min(abs(dot(d, uTownU[i])), abs(dot(d, cross(uTowns[i].xyz, uTownU[i])))); // its two main streets
+        if (street < uStreetW) c = uRoad;
+      }
     }
     for (int i = 0; i < ${MAX.airports}; i++) {
       if (i >= uAirN) break;
@@ -70,8 +74,9 @@ const FRAG = /* glsl */ `
 
 /**
  * A flat cartoon map of a planet, for the mini-map: a sphere drawn with land and sea from the terrain's height map,
- * forests, mountains, towns, airports, the railway and the highways, all worked out in its shader (so it's crisp at
- * any zoom and costs one draw call). The mini-map points an orthographic camera at it from above the player.
+ * forests, mountains, towns and their main streets, airports, the railway and the highways, all worked out in its
+ * shader (so it's crisp at any zoom and costs one draw call). The mini-map points an orthographic camera at it from
+ * above the player.
  */
 export class MapGlobe {
   constructor(planet) {
@@ -98,6 +103,8 @@ export class MapGlobe {
         uFloor: { value: col(planet.theme.trees.floor || pal.g3) }, uRoad: { value: col('#4a4560') }, uInk: { value: col('#1b1530') },
         uRoads: { value: pad(roads, MAX.roads, () => new THREE.Vector3()) }, uRoadN: { value: roads.length }, uRoadW: { value: ROAD_W / 2 / R },
         uTowns: { value: pad(towns, MAX.towns, () => new THREE.Vector4()) }, uTownN: { value: towns.length },
+        uTownU: { value: pad(planet.cities.sites.slice(0, MAX.towns).map((s) => s.u.clone()), MAX.towns, () => new THREE.Vector3(1, 0, 0)) },
+        uStreetW: { value: STREET_W / 2 / R },
         uPeaks: { value: pad(peaks, MAX.peaks, () => new THREE.Vector4()) }, uPeakN: { value: peaks.length },
         uAirC: { value: pad(airports.map((a) => a.c.clone()), MAX.airports, () => new THREE.Vector3()) },
         uAirF: { value: pad(airports.map((a) => a.fwd.clone()), MAX.airports, () => new THREE.Vector3()) },

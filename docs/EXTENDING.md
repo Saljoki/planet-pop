@@ -72,7 +72,9 @@ file; there's no build step. After adding, renaming or removing any file under `
 
 Shared by every run: `CourierProps` (the beacon, rings, the pull-in pad with a waiting passenger, race arches),
 `FlightHazards` (storms, runways, ash) and, for anything on the ground, `Ground` (`js/game/vehicles/Ground.js`:
-road or not, water, buildings, mountains, and `parking(town)` / `stops(town)` for where to start and pull in).
+road, town street or not, water, buildings, trees, mountains, and `parking(town)` / `stops(town)` for where to start
+and pull in). Something new that cars should bump into goes in `Ground.carBlock()`, with a quick lookup like
+`Nature.treeAt()` (it's asked several times a frame).
 
 ## Add a vehicle
 
