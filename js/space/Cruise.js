@@ -7,6 +7,8 @@ import { CruiseHud } from '../ui/CruiseHud.js';
 
 const MAX = 80;                  // fuel stars and rocks, each
 const BELT = [148, 182];         // the asteroid belt's reach from the Sun, on the map
+const RING_ICE = 0.25;           // the share of the route nearest Saturn that's thick with ring ice
+const ROCK = new THREE.Color('#9a8a7c'), ICE = new THREE.Color('#dff2ff');
 const KEYS = { ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0], ArrowUp: [0, 1], KeyW: [0, 1], ArrowDown: [0, -1], KeyS: [0, -1] };
 const Y = new THREE.Vector3(0, 1, 0);
 const _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _m = new THREE.Matrix4(), _s = new THREE.Vector3();
@@ -15,7 +17,7 @@ const _look = new THREE.Vector3(), _e = new THREE.Euler();
 /**
  * A trip's cruise across the system map: the ship flies the straight route from one world to the next on its own;
  * the player steers it across the route (a lane, ±1 each way, `L` map units wide) to catch fuel stars and miss rocks
- * (most of them in the asteroid belt), and boosts with the fuel. While it's on, CameraRig hands drags here (the
+ * (most of them in the asteroid belt, and chunks of ring ice near Saturn), and boosts with the fuel. While it's on, CameraRig hands drags here (the
  * dragVelocity/spin/zoomBy… surface of a camera view), and it flies the map's camera behind the ship.
  */
 export class Cruise {
@@ -28,7 +30,8 @@ export class Cruise {
     map.scene.scene.add(this.group);
     this.buildShip();
     this.starMesh = new THREE.InstancedMesh(new THREE.OctahedronGeometry(1, 0), new THREE.MeshBasicMaterial({ color: '#ffd23f' }), MAX);
-    this.rockMesh = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), toon('#9a8a7c', { flatShading: true }), MAX);
+    this.rockMesh = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), toon('#ffffff', { flatShading: true }), MAX); // (coloured per rock: stone or ice)
+    for (let i = 0; i < MAX; i++) this.rockMesh.setColorAt(i, ROCK); // (colours from the start, so its shader has them)
     for (const m of [this.starMesh, this.rockMesh]) { m.frustumCulled = false; this.group.add(m); }
     this.hud = new CruiseHud(this, app.hud.touch);
     this.held = {};
@@ -84,17 +87,18 @@ export class Cruise {
     this.hud.hide();
   }
 
-  /** Stars spread evenly along the way; rocks anywhere, but mostly where the route crosses the asteroid belt. */
+  /** Stars spread evenly along the way; rocks anywhere, but mostly where the route crosses the asteroid belt, and ice near Saturn. */
   lay(seed = Date.now()) {
     const rng = mulberry32(seed & 0x7fffffff), items = (this.items = []), len = this.len;
+    const ringed = (s) => (this.to?.def.id === 'saturn' && s > len * (1 - RING_ICE)) || (this.from?.def.id === 'saturn' && s < len * RING_ICE);
     const nStars = Math.min(MAX, Math.round(this.time * 0.9)), nRocks = Math.min(MAX, Math.round(this.time * 0.8));
     for (let i = 0; i < nStars; i++) {
       items.push({ star: true, s: len * (0.08 + (0.84 * (i + rng() * 0.6)) / nStars), x: (rng() * 2 - 1) * 0.8, y: (rng() * 2 - 1) * 0.6, size: 0.13 });
     }
     for (let tries = 0, n = 0; n < nRocks && tries < nRocks * 12; tries++) {
-      const s = len * (0.1 + 0.8 * rng()), r = this.at(s, 0, 0, _p).length(), inBelt = r > BELT[0] && r < BELT[1];
-      if (rng() > (inBelt ? 1 : 0.3)) continue;
-      items.push({ star: false, s, x: (rng() * 2 - 1) * 0.95, y: (rng() * 2 - 1) * 0.8, size: 0.1 + rng() * 0.14, spin: rng() * 6 });
+      const s = len * (0.1 + 0.8 * rng()), r = this.at(s, 0, 0, _p).length(), inBelt = r > BELT[0] && r < BELT[1], ice = ringed(s);
+      if (rng() > (inBelt || ice ? 1 : 0.3)) continue;
+      items.push({ star: false, ice, s, x: (rng() * 2 - 1) * 0.95, y: (rng() * 2 - 1) * 0.8, size: 0.1 + rng() * 0.14, spin: rng() * 6 });
       n++;
     }
   }
@@ -169,7 +173,7 @@ export class Cruise {
       this.rocks++;
       this.slow = 0.9;
       this.shake = 0.5;
-      app.sfx.pop(null, 'BONK!', '#ff4d4d', 'crash');
+      app.sfx.pop(null, it.ice ? 'CRUNCH!' : 'BONK!', it.ice ? '#cfeaff' : '#ff4d4d', 'crash');
       app.haptics?.buzz('crash');
     }
   }
@@ -188,8 +192,10 @@ export class Cruise {
       const mesh = it.star ? this.starMesh : this.rockMesh;
       _e.set(this.t * (it.star ? 2 : 0.4) + (it.spin ?? 0), this.t * (it.star ? 0 : 0.3), 0);
       _m.compose(this.at(it.s, it.x, it.y, _p), _q.setFromEuler(_e), _s.setScalar(it.size * L));
+      if (!it.star) this.rockMesh.setColorAt(nr, it.ice ? ICE : ROCK);
       mesh.setMatrixAt(it.star ? ns++ : nr++, _m);
     }
+    if (this.rockMesh.instanceColor) this.rockMesh.instanceColor.needsUpdate = true;
     this.starMesh.count = ns;
     this.rockMesh.count = nr;
     this.starMesh.instanceMatrix.needsUpdate = this.rockMesh.instanceMatrix.needsUpdate = true;

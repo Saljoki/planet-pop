@@ -4,6 +4,7 @@ import { toon, WPOS_DECL, WPOS_VERT } from '../render/Toon.js';
 import { addMesh, addInstanced, cutaway } from '../render/Outline.js';
 import { PointEntity } from '../core/PointEntity.js';
 import { ROAD_W, ROAD_N } from './Roads.js';
+import { fromLatLon } from '../core/WorldShape.js';
 
 export const CITY_A = 0.14; // angular radius of a city
 export const GRID = 0.3; // building plot spacing
@@ -55,7 +56,7 @@ export class Cities {
     this.entities = this.sites.map((s) => new PointEntity(s.pos.clone().addScaledVector(s.c, 0.4), 'city', s.name, s.u));
   }
 
-  /** Prefer sites on the highways, then fill up with inland cities. */
+  /** A world's set places first (a giant's stations), then sites on the highways, then fill up with inland cities. */
   choose(count) {
     const p = this.planet, rng = p.rng;
     const okLand = (d) => { const h = p.heightAt(d); return h > 0.05 && h < 0.75; };
@@ -70,6 +71,10 @@ export class Cities {
     };
     const fits = (c, u, v) => okLand(c) && this.sites.every((o) => o.c.angleTo(c) >= 0.75) && !p.offLimits(c, CITY_A)
       && ring(c, CITY_A * 0.55, u, v) && ring(c, CITY_A, u, v);
+    for (const [lat, lon] of p.world?.towns || []) { // (a giant's stations: on their rafts)
+      const c = new THREE.Vector3(...fromLatLon(lat, lon)), [u, v] = tangentBasis(c);
+      if (this.sites.length < count && fits(c, u, v)) this.sites.push({ c, u, v });
+    }
     for (const road of p.roads.list) {
       let placed = 0;
       const off = rng.int(0, ROAD_N - 1);

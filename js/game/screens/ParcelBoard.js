@@ -1,6 +1,7 @@
 import { Overlay } from '../../ui/Overlay.js';
 import { worldOf } from '../../space/Worlds.js';
 import { clock } from '../../space/SpaceCourier.js';
+import { CRAFT, styleFor } from '../vehicles/Plane.js';
 
 /**
  * 🚀 The space courier's board: the parcel you're carrying (deliver it, fly on with it, or drop it), and three parcels
@@ -17,6 +18,7 @@ export class ParcelBoard extends Overlay {
       <div id="pList"></div>` });
     this.app = app;
     this.courier = courier;
+    this.dom = { job: this.$('pJob'), list: this.$('pList') };
     this.on('pClose', 'click', () => this.hide());
     this.el.addEventListener('click', (e) => {
       const b = e.target.closest?.('button[data-act]');
@@ -42,11 +44,11 @@ export class ParcelBoard extends Overlay {
 
   render() {
     const c = this.courier, job = c.job, air = this.app.planet?.theme.air, here = worldOf(c.here);
-    const jobEl = this.$('pJob'), list = this.$('pList');
+    const { job: jobEl, list } = this.dom;
     if (job) {
       const to = worldOf(job.to);
-      const go = c.due
-        ? `<button data-act="drive" class="big drive">${air ? '🚙 Rover' : '🚗 Car'}</button><button data-act="fly" class="big">${{ none: '🚀 Hopper', thin: '🪂 Glider' }[air] ?? '✈️ Plane'}</button>`
+      const drive = this.app.planet?.world?.giant ? '' : `<button data-act="drive" class="big drive">${air ? '🚙 Rover' : '🚗 Car'}</button>`;
+      const go = c.due ? `${drive}<button data-act="fly" class="big">${CRAFT[styleFor(this.app.planet)]}</button>`
         : '<button data-act="resume" class="big">🚀 Fly there</button>';
       jobEl.innerHTML = `<div class="mission job"><span class="icon">${job.cargo.icon}</span><div class="info">Your parcel → ${to.icon} ${to.name}
         <small></small></div>${go}<button data-act="drop" title="Give up on it">✖</button></div>`;

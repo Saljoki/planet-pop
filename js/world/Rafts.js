@@ -9,8 +9,9 @@ const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Vector3
 const _c = new THREE.Color(), _quat = new THREE.Quaternion(), _s = new THREE.Vector3();
 
 /**
- * Venus's towns float on rafts in the clouds (planet.world.floating): a ring of big balloons round the edge of each
- * town's raft, and the spaceport's, holds it up on tethers, bobbing gently.
+ * Towns that float on rafts in the clouds (planet.world.floating: Venus, and the giants' stations): a ring of big
+ * balloons round the edge of each town's raft, and the spaceport's, holds it up on tethers, bobbing gently. A theme's
+ * `rafts` sets how many balloons a town has, how big they are and their colours (Venus: five, in every colour).
  */
 export class Rafts {
   constructor(planet) {
@@ -18,20 +19,21 @@ export class Rafts {
     this.entities = [];
     this.list = [];
     if (!planet.world?.floating) return;
-    const rafts = [...planet.cities.sites.map((s) => ({ c: s.c, a: CITY_A * 1.12, n: AROUND })),
-      ...(planet.padSite ? [{ c: planet.padSite.d, a: 0.075, n: 3 }] : [])];
+    const look = planet.theme.rafts ?? { n: AROUND, size: 0.26, colors: COLORS };
+    const rafts = [...planet.cities.sites.map((s) => ({ c: s.c, a: CITY_A * 1.12, n: look.n, size: look.size })),
+      ...(planet.padSite ? [{ c: planet.padSite.d, a: 0.075, n: 3, size: 0.2 }] : [])];
     for (const raft of rafts) {
       const [u, v] = tangentBasis(raft.c);
       for (let k = 0; k < raft.n; k++) {
         const ang = (k / raft.n) * TAU + 0.3, d = raft.c.clone().addScaledVector(u, Math.cos(ang) * Math.tan(raft.a)).addScaledVector(v, Math.sin(ang) * Math.tan(raft.a)).normalize();
         const foot = planet.meshR(d);
-        this.list.push({ d, foot, top: foot + 1.9 + (k % 2) * 0.3, size: raft.n === AROUND ? 0.26 : 0.2, ph: k * 1.7 + raft.c.x * 9 });
+        this.list.push({ d, foot, top: foot + 1.9 + (k % 2) * 0.3, size: raft.size, ph: k * 1.7 + raft.c.x * 9 });
       }
     }
     const n = this.list.length, root = planet.root;
     this.env = addInstanced(root, new THREE.SphereGeometry(1, 18, 12).scale(1, 1.1, 1), toon('#ffffff'), n, 0.012, { cast: false });
     this.rope = addInstanced(root, new THREE.CylinderGeometry(0.006, 0.006, 1, 5).translate(0, 0.5, 0), toon('#4b4566'), n, 0, { cast: false });
-    this.list.forEach((b, i) => this.env.setColorAt(i, _c.set(COLORS[i % COLORS.length])));
+    this.list.forEach((b, i) => this.env.setColorAt(i, _c.set(look.colors[i % look.colors.length])));
     this.update(0, 0);
   }
 

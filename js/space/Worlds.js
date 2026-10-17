@@ -10,7 +10,27 @@ import { EARTH_LAND } from './EarthLand.js';
  * Some worlds also set: pad (where the spaceport's launch pad is), roads (the highways' great circles, by their
  * normals, when the map needs them in set places), heat (sunshine overheats vehicles), rolling (a town on rails that
  * keeps ahead of the sunrise: world/RollingTown.js) and floating (towns on rafts held up by balloons: world/Rafts.js).
+ * The giants (giant: true) have no ground at all: their towns are cloud stations on rafts, with no roads, so you get
+ * about by ship; rings (world/Rings.js: inner and outer radius, in units) and wind (how hard it pushes a ship along,
+ * in units a second) are theirs too, and towns (where each town goes, [lat, lon]). A landmark with pin: false is a
+ * place in the clouds, with no flag; loop names the trophy for flying a loop round it (game/Feats.js).
  */
+
+/**
+ * A giant's cloud sea, with a raft for each station and a smaller one for the spaceport: towns (where the stations go,
+ * [lat, lon]), the pad, no roads, and the shape.
+ */
+const stations = (towns, pad) => ({
+  towns, pad, roads: [],
+  shape: {
+    lift: -0.45, relief: 0.08,
+    features: [
+      ...towns.map(([lat, lon]) => ({ kind: 'basin', lat, lon, r: 14, level: 0.18 })),
+      { kind: 'basin', lat: pad.lat, lon: pad.lon, r: 7, level: 0.18 },
+    ],
+  },
+});
+
 export const WORLDS = {
   earth: {
     id: 'earth', name: 'Earth', icon: '🌍', theme: 'classic', seed: 1969, cities: 8, gravity: 1, day: 150,
@@ -180,6 +200,39 @@ export const WORLDS = {
       { name: 'Tenzing Montes', lat: -15.6, lon: 177.4, note: 'Mountains of water ice up to 6 km high (at −230°C, ice is as hard as rock)' },
       { name: 'Wright Mons', lat: -21.4, lon: 173.2, note: 'Probably an ice volcano: about 4 km high, with a huge hole on top' },
       { name: 'Belton Regio', lat: 0, lon: 90, note: 'A dark stripe 3,000 km long round the equator, stained red-brown by haze falling from the sky' },
+    ],
+  },
+  jupiter: {
+    id: 'jupiter', name: 'Jupiter', icon: '🟠', theme: 'jupiter', seed: 1610, cities: 5, gravity: 2.36, day: 115, floating: true, giant: true,
+    welcome: 'There’s no ground at all, just cloud thousands of km deep, so the stations hang from balloons.',
+    ...stations([[22, -150], [-8, -80], [38, 10], [-45, 150], [10, 110]], { lat: 8, lon: -30 }),
+    landmarks: [
+      { name: 'The Great Red Spot', lat: -22, lon: 60, pin: false, loop: 'redspot', note: 'A storm wider than Earth that has been blowing for at least 190 years' },
+    ],
+  },
+  saturn: {
+    id: 'saturn', name: 'Saturn', icon: '🪐', theme: 'saturn', seed: 1655, cities: 4, gravity: 0.92, day: 118, floating: true, giant: true,
+    welcome: 'Look up: the rings fill the sky. They’re billions of chunks of ice, so mind the inner edge.',
+    ...stations([[28, -120], [-32, -30], [12, 85], [-18, 165]], { lat: -4, lon: 20 }),
+    rings: { inner: 13.2, outer: 21 },
+    landmarks: [
+      { name: 'The Hexagon', lat: 78, lon: 0, pin: false, note: 'A six-sided jet stream round Saturn’s north pole: each side is wider than Earth' },
+    ],
+  },
+  uranus: {
+    id: 'uranus', name: 'Uranus', icon: '💠', theme: 'uranus', seed: 1781, cities: 3, gravity: 0.89, day: -136, floating: true, giant: true,
+    welcome: 'Uranus rolls round the Sun on its side, and it’s −195°C up here. Wrap up warm.',
+    ...stations([[30, -110], [-22, 30], [18, 150]], { lat: -5, lon: -40 }),
+    rings: { inner: 14, outer: 15.4, faint: true },
+    landmarks: [],
+  },
+  neptune: {
+    id: 'neptune', name: 'Neptune', icon: '🔵', theme: 'neptune', seed: 1846, cities: 3, gravity: 1.12, day: 133, floating: true, giant: true,
+    welcome: 'The windiest place in the solar system: hold on tight, the wind pushes you along.',
+    ...stations([[28, -95], [-48, -150], [22, 120]], { lat: 5, lon: -25 }),
+    wind: 0.5,
+    landmarks: [
+      { name: 'The Great Dark Spot', lat: -20, lon: 30, pin: false, note: 'A storm as wide as Earth, found by Voyager 2 in 1989, with white methane clouds round it' },
     ],
   },
 };

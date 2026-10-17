@@ -1,7 +1,10 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeWorld, run, assertFiniteInstances } from './helpers/world.mjs';
-import { WORLDS } from '../js/space/Worlds.js';
+import * as THREE from 'three';
+import { WORLDS, WORLD_IDS } from '../js/space/Worlds.js';
+import { styleFor } from '../js/game/vehicles/Plane.js';
+import { RoadBoard } from '../js/game/screens/RoadBoard.js';
 import { BODIES } from '../js/space/Bodies.js';
 import { position, moonAngle, mapPosition } from '../js/space/Orbits.js';
 import { fromLatLon } from '../js/core/WorldShape.js';
@@ -130,7 +133,9 @@ describe('the system map', () => {
     assert.equal(map.card.body, earth);
     assert.equal(map.card.goal().text, '🚀 Travel to Earth');
     map.select(map.scene.byId.jupiter);
-    assert.equal(map.card.goal().act, null, 'no landing on Jupiter yet');
+    assert.equal(map.card.goal().text, '🚀 Travel to Jupiter');
+    map.select(map.scene.byId.sun);
+    assert.equal(map.card.goal().act, null, 'a trip into the Sun');
     map.select(map.here);
     assert.match(map.card.goal().text, /Back down/);
 
@@ -405,6 +410,26 @@ describe('the space courier', () => {
   });
 });
 
+describe('the space courier on a giant', () => {
+  it('the last stretch is by ship, and the board offers no car', async () => {
+    const app = await travelApp('neptune'), courier = app.spaceCourier, game = app.game;
+    courier.job = { ...courier.offer('earth', 'neptune', () => 0.1), left: 80, broken: false };
+    assert.ok(courier.job.pay >= 100, 'Neptune is a long way: it should pay well');
+    courier.openBoard();
+    assert.ok(!courier.board.dom.job.innerHTML.includes('data-act="drive"'), 'a car on Neptune');
+    assert.match(courier.board.dom.job.innerHTML, /🚀 Ship/);
+    courier.board.hide();
+    game.start({ space: true });
+    assert.equal(game.player.style, 'ship');
+    const run = game.run, pl = game.player;
+    pl.up.copy(run.town.c);
+    pl.alt = app.planet.surfR(run.town.c) + 1;
+    game.update(1 / 60);
+    assert.ok(game.over && !courier.job, 'swooped over the station');
+    game.stop();
+  });
+});
+
 describe('space trophies', () => {
   it('Earthrise, All Aboard, Check In, Giant Leap and the Grand Tour', async () => {
     localStorage.clear();
@@ -433,11 +458,114 @@ describe('space trophies', () => {
     }
 
     const a = app.achievements;
-    for (const id of ['earth', 'moon', 'mars', 'venus', 'mercury']) a.visitWorld(id);
+    const last = WORLD_IDS.at(-1);
+    for (const id of WORLD_IDS.slice(0, -1)) a.visitWorld(id);
     assert.ok(!app.unlocked.includes('grandtour'));
     a.visitWorld('mars');
-    a.visitWorld('pluto');
+    a.visitWorld(last);
     assert.ok(app.unlocked.includes('grandtour'));
-    assert.deepEqual(JSON.parse(localStorage.getItem('planetpop.visited')).length, 6);
+    assert.deepEqual(JSON.parse(localStorage.getItem('planetpop.visited')).length, WORLD_IDS.length);
+  });
+});
+
+describe('the giants', () => {
+  it('Jupiter to Neptune: striped cloud, stations on rafts, no roads, a ship, and nothing to drive', async () => {
+    for (const id of ['jupiter', 'saturn', 'uranus', 'neptune']) {
+      const { app, planet } = await makeWorld({ world: id }), w = WORLDS[id];
+      assert.equal(planet.roads.list.length, 0, `${id}: roads in the clouds`);
+      assert.equal(planet.cities.sites.length, w.cities, `${id}: a station missing`);
+      for (const c of planet.cities.sites) assert.ok(planet.heightAt(c.c) > 0.05, `${id}: a station off its raft`);
+      assert.ok(planet.rafts.list.length >= w.cities * 3, `${id}: no balloons`);
+      assert.ok(planet.terrain.ocean.material.customProgramCacheKey().includes(id), `${id}: no stripes`);
+      assert.ok(!planet.terrain.ocean.material.customProgramCacheKey().includes(id === 'jupiter' ? 'saturn' : 'jupiter'));
+      assert.equal(styleFor(planet), 'ship');
+      app.game.start();
+      assert.equal(app.game.player.style, 'ship');
+      run(app, 2, { game: true });
+      assertFiniteInstances(planet.root, id);
+      app.game.stop();
+      const board = new RoadBoard(app, () => {});
+      board.render();
+      assert.match(board.list.innerHTML, /no ground/);
+      assert.ok(!board.list.innerHTML.includes('data-trip'));
+      planet.dispose();
+    }
+  });
+
+  it('Saturn’s ring ice: a chunk knocks you like a crash, and a clean pass through counts', async () => {
+    localStorage.clear();
+    const { app, planet } = await makeWorld({ world: 'saturn' }), rings = planet.rings, game = app.game;
+    assert.equal(rings.ice.length, 260);
+    assert.ok(rings.entities[0].name === 'The rings');
+    rings.group.updateMatrixWorld(true);
+    const chunk = rings.ice[7].p.clone().applyMatrix4(rings.iceGroup.matrixWorld);
+    assert.ok(chunk.length() > rings.inner && chunk.length() < 15.5, 'ice out of a ship’s reach');
+    assert.ok(rings.iceAt(chunk) && !rings.iceAt(chunk.clone().multiplyScalar(0.7)));
+    game.start({ mission: { ...(await import('../js/game/Missions.js')).MISSIONS.find((m) => m.id === 'ringrun') } });
+    const pl = game.player, health = pl.health;
+    pl.pos.copy(chunk);
+    pl.invuln = 0;
+    game.hazards.update(1 / 60);
+    assert.ok(pl.health < health && game.run.tally.ice === 1, 'went through the ice untouched');
+    game.update(1 / 60);
+    assert.ok(game.over);
+    assert.match(game.results.dom.result.innerHTML, /ring ice/);
+    game.stop();
+
+    game.start();
+    const ax = rings.axis, out = new THREE.Vector3().crossVectors(ax, new THREE.Vector3(1, 0, 0)).normalize();
+    rings.ice = [{ p: new THREE.Vector3(1000, 0, 0), s: 0.05 }]; // (a clear way through)
+    game.player.invuln = 0;
+    for (const h of [0.3, -0.3]) {
+      game.player.pos.copy(out).multiplyScalar(14).addScaledVector(ax, h);
+      game.feats.update(1 / 60);
+    }
+    assert.ok(app.unlocked.includes('ringrunner'));
+    game.stop();
+    planet.dispose();
+  });
+
+  it('a loop round the Great Red Spot completes Eye of the Storm; Neptune’s wind blows you west', async () => {
+    localStorage.clear();
+    const { MISSIONS } = await import('../js/game/Missions.js');
+    const jup = await makeWorld({ world: 'jupiter' }), game = jup.app.game;
+    game.start({ mission: MISSIONS.find((m) => m.id === 'storm') });
+    const spot = game.feats.storm, [u, v] = spot.basis, pl = game.player;
+    assert.equal(spot.name, 'The Great Red Spot');
+    game.update(1 / 60);
+    assert.match(game.hud.dom.goal.textContent, /Great Red Spot/);
+    for (let k = 0; k <= 40 && !game.over; k++) {
+      const a = (k / 36) * Math.PI * 2;
+      pl.up.copy(spot.d).addScaledVector(u, Math.cos(a) * 0.3).addScaledVector(v, Math.sin(a) * 0.3).normalize();
+      game.feats.update(1 / 60);
+      game.run.checkEnd();
+    }
+    assert.ok(jup.app.unlocked.includes('redspot'));
+    assert.ok(game.over && game.progress.missionDone('storm'));
+    game.stop();
+    jup.planet.dispose();
+
+    const nep = await makeWorld({ world: 'neptune' }), g = nep.app.game;
+    g.start({ free: true });
+    const before = g.player.up.clone(), ax = nep.app.sky.axis;
+    for (let i = 0; i < 60; i++) g.hazards.update(1 / 20);
+    const east = new THREE.Vector3().crossVectors(ax, before).normalize(), moved = g.player.up.clone().sub(before);
+    assert.ok(moved.dot(east) < -0.05, 'the wind didn’t blow west');
+    g.stop();
+    nep.planet.dispose();
+  });
+
+  it('a trip to Saturn: ring ice on the way in, then the ship and no car', async () => {
+    const app = await travelApp('jupiter');
+    assert.equal(app.trip.go('saturn'), true);
+    await fly(app, 60, () => app.trip.state === 'cruise');
+    const c = app.map.cruiser;
+    assert.ok(c.items.some((it) => it.ice && it.s > c.len * 0.7), 'no ring ice near Saturn');
+    assert.ok(!c.items.some((it) => it.ice && it.s < c.len * 0.7), 'ring ice far from Saturn');
+    await fly(app, 120, () => app.trip.state === 'idle' && app.planet.world.id === 'saturn');
+    assert.equal(app.planet.world.id, 'saturn');
+    const card = app.trip.card;
+    assert.ok(card.dom.drive.classList.contains('hidden'), 'a car on Saturn');
+    assert.match(card.dom.fly.textContent, /Ship courier/);
   });
 });

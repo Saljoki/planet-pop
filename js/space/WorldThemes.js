@@ -4,7 +4,19 @@
  * sea.none (no sea at all: no ocean, boats or whales), pal.mare (the dark plains), halo.strength (how much sky glow:
  * 0 is a black sky), `moons` (what hangs in the sky instead of our Moon: [] for none), `sun` (how big the Sun looks:
  * 1 from Earth), `wildlife: false` (no birds), `aurora: false` and `balloons: 'blimp'` (airships, not hot-air balloons).
+ * The giants' cloud seas have stripes and storms: sea.bands (the stripes' colour and how many) and sea.spots (oval
+ * storms, swirling: lat and lon of the middle, w and h across in degrees, colour and rim; hex: Saturn's six-sided
+ * jet stream round a pole). `rafts` sets the balloons their stations hang from (how many, how big, what colours).
  */
+const GIANT = { // what the four giants share: a cloud sea, stations on rafts, no trees or mountains, airships
+  wildlife: false, balloons: 'blimp',
+  pal: { seabed: '#6a6488', sand: '#d6d0ea', g1: '#e2def4', g2: '#d6d0ea', g3: '#c9c2e2', rock: '#a39bbd', snow: '#ffffff', city: '#efeaff' },
+  trees: { density: 0, trunk: '#8a5a3c', a: { shape: 'pine', colors: ['#2f9e5a'] }, b: { shape: 'pine', colors: ['#2f9e5a'] }, useA: () => true },
+  mountains: { colors: ['#c9c2e2', '#bdb6d4', '#d6d0ea'], cap: '#ffffff', snow: false, peaks: 0 },
+  buildings: ['#f4f1ff', '#ffd57a', '#9fd8ff', '#ff9fb1', '#d4b8ff', '#a8f0cf', '#ffbe8f'],
+  volcanoes: 0,
+};
+
 export const WORLD_THEMES = {
   moon: {
     id: 'moon', name: 'The Moon', icon: '🌕', air: 'none',
@@ -77,5 +89,60 @@ export const WORLD_THEMES = {
     volcanoes: 0,
     moons: [{ name: 'Charon', kind: 'rock', size: 5.5, dist: 36, color: '#b8ada4', speed: 0 }], // (always in the same spot in the sky)
     sun: 0.22,
+  },
+  jupiter: { // the cloud tops: no ground at all, so the stations hang from balloons
+    ...GIANT, id: 'jupiter', name: 'Jupiter', icon: '🟠',
+    sea: { color: '#f3e2c4', shallow: '#fff4de', glow: null, boats: false, bands: { color: '#c98f5a', count: 9 },
+      spots: [{ lat: -22, lon: 60, w: 26, h: 12, color: '#d0593f', rim: '#fbe8cf' }] }, // the Great Red Spot
+    clouds: { fair: '#fff6e6', fairGlow: '#c98f5a', dark: '#d8b48c', darkGlow: '#7a4a2c' },
+    storms: 3, precip: { kind: 'rain', color: '#fff3d6' }, // (ammonia rain, and lightning)
+    halo: { day: '#f2c79a', night: '#3a2a50', strength: 1.1 },
+    rafts: { n: 3, size: 0.36, colors: ['#ff9fb1', '#ffd57a', '#ffffff'] },
+    moons: [
+      { name: 'Io', kind: 'rock', size: 2.2, dist: 30, color: '#f0d25a', speed: 0.06 },
+      { name: 'Europa', kind: 'moon', size: 1.8, dist: 40, color: '#f2eee4', speed: 0.035 },
+      { name: 'Ganymede', kind: 'moon', size: 2.6, dist: 52, color: '#b9b0a6', speed: 0.02 },
+      { name: 'Callisto', kind: 'rock', size: 2.4, dist: 64, color: '#7d7268', speed: 0.01 },
+    ],
+    sun: 0.4,
+  },
+  saturn: {
+    ...GIANT, id: 'saturn', name: 'Saturn', icon: '🪐',
+    sea: { color: '#f2e2b0', shallow: '#fff6d8', glow: null, boats: false, bands: { color: '#dcbd7c', count: 11 },
+      spots: [{ lat: 78, lon: 0, w: 24, h: 24, color: '#9fb0c9', rim: '#f4ead0', hex: true }] }, // the hexagon round the north pole
+    clouds: { fair: '#fff8e2', fairGlow: '#c9a86a', dark: '#d9c08a', darkGlow: '#7a6034' },
+    storms: 2, precip: { kind: 'rain', color: '#fff6dc' },
+    halo: { day: '#f0d9a0', night: '#2e2a50', strength: 0.9 },
+    rafts: { n: 3, size: 0.34, colors: ['#9fd8ff', '#ffd57a', '#ffffff'] },
+    moons: [
+      { name: 'Titan', kind: 'rock', size: 3, dist: 56, color: '#e8a64a', speed: 0.015 },
+      { name: 'Enceladus', kind: 'moon', size: 1.1, dist: 34, color: '#ffffff', speed: 0.05 },
+      { name: 'Rhea', kind: 'moon', size: 1.4, dist: 44, color: '#d8d2c8', speed: 0.03 },
+    ],
+    sun: 0.32,
+  },
+  uranus: {
+    ...GIANT, id: 'uranus', name: 'Uranus', icon: '💠', aurora: false,
+    sea: { color: '#b4ecee', shallow: '#e2fbfb', glow: null, boats: false, bands: { color: '#9edde2', count: 5 } },
+    clouds: { fair: '#ffffff', fairGlow: '#7ac6cf', dark: '#a4d9de', darkGlow: '#3a6f80' },
+    storms: 1, precip: { kind: 'snow', color: '#ffffff' }, // (methane ice)
+    halo: { day: '#a8e6ea', night: '#1f3050', strength: 0.8 },
+    rafts: { n: 3, size: 0.32, colors: ['#ffffff', '#ff9fb1', '#d4b8ff'] },
+    moons: [
+      { name: 'Titania', kind: 'moon', size: 1.4, dist: 46, color: '#c9c2bc', speed: 0.02 },
+      { name: 'Miranda', kind: 'rock', size: 0.8, dist: 30, color: '#bdb6b0', speed: 0.06 },
+    ],
+    sun: 0.27,
+  },
+  neptune: {
+    ...GIANT, id: 'neptune', name: 'Neptune', icon: '🔵', aurora: false,
+    sea: { color: '#4a7ae6', shallow: '#9fc1ff', glow: null, boats: false, bands: { color: '#3a62cc', count: 6 },
+      spots: [{ lat: -20, lon: 30, w: 20, h: 10, color: '#24398a', rim: '#ffffff' }] }, // the Great Dark Spot, with white clouds round it
+    clouds: { fair: '#ffffff', fairGlow: '#5a7fd8', dark: '#8fa8e6', darkGlow: '#1f2f70' },
+    storms: 2, precip: { kind: 'snow', color: '#ffffff' },
+    halo: { day: '#5f8cf0', night: '#141c50', strength: 1 },
+    rafts: { n: 3, size: 0.32, colors: ['#ffffff', '#ffd57a', '#ff9fb1'] },
+    moons: [{ name: 'Triton', kind: 'moon', size: 2.2, dist: 44, color: '#f2d8d0', speed: -0.02 }], // (it goes round backwards)
+    sun: 0.24,
   },
 };
