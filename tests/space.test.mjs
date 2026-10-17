@@ -632,3 +632,18 @@ describe('the moons of the giants', () => {
     assert.match(app.trip.card.dom.drive.textContent, /rover/);
   });
 });
+
+describe('Earth’s real towns', () => {
+  it('the towns are real cities, where they really are', async () => {
+    const { planet } = await makeWorld({ world: 'earth' });
+    const names = planet.cities.sites.map((s) => s.name);
+    assert.deepEqual(names, WORLDS.earth.towns.map((t) => t[2]), 'a real city missing (or a made-up one in its place)');
+    for (const [lat, lon, name] of WORLDS.earth.towns) {
+      const site = planet.cities.sites.find((s) => s.name === name), want = new THREE.Vector3(...fromLatLon(lat, lon));
+      assert.ok(site.c.angleTo(want) < 0.001, `${name} moved`);
+    }
+    const sep = Math.min(...planet.cities.sites.flatMap((a, i) => planet.cities.sites.slice(i + 1).map((b) => a.c.angleTo(b.c))));
+    assert.ok(sep > 0.5, 'two towns overlap');
+    planet.dispose();
+  });
+});

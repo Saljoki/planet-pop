@@ -12,7 +12,8 @@ import { EARTH_LAND } from './EarthLand.js';
  * keeps ahead of the sunrise: world/RollingTown.js) and floating (towns on rafts held up by balloons: world/Rafts.js).
  * The giants (giant: true) have no ground at all: their towns are cloud stations on rafts, with no roads, so you get
  * about by ship; rings (world/Rings.js: inner and outer radius, in units) and wind (how hard it pushes a ship along,
- * in units a second) are theirs too, and towns (where each town goes, [lat, lon]). A landmark with pin: false is a
+ * in units a second) are theirs too, and towns (where each town goes, [lat, lon], and its name if it has a real one:
+ * Earth's are real cities). A landmark with pin: false is a
  * place in the clouds, with no flag; loop names the trophy for flying a loop round it (game/Feats.js).
  * volcanoes: where a world's volcanoes really are, with their names (Io's; Europa's plume of water), instead of
  * made-up ones on the highest ground.
@@ -49,7 +50,10 @@ const stations = (towns, pad) => ({
 
 export const WORLDS = {
   earth: {
-    id: 'earth', name: 'Earth', icon: '🌍', theme: 'classic', seed: 1969, cities: 8, gravity: 1, day: 150,
+    id: 'earth', name: 'Earth', icon: '🌍', theme: 'classic', seed: 1969, cities: 7, gravity: 1, day: 150,
+    // the towns are big (about 1,800 km across), so they're the great cities far enough inland to fit
+    towns: [[55.8, 37.6, 'Moscow'], [39.9, 116.4, 'Beijing'], [41.9, -87.6, 'Chicago'], [-15.8, -47.9, 'Brasília'],
+      [12, 8.5, 'Kano'], [-15.4, 28.3, 'Lusaka'], [-23.7, 133.9, 'Alice Springs']],
     welcome: 'Home sweet home.',
     shape: {
       land: EARTH_LAND,

@@ -7,6 +7,7 @@ import { ROAD_W, ROAD_N } from './Roads.js';
 import { fromLatLon } from '../core/WorldShape.js';
 
 export const CITY_A = 0.14; // angular radius of a city
+const LISTED_GAP = 0.55;    // how close a world's own towns may be (made-up ones keep 0.75 apart)
 export const GRID = 0.3; // building plot spacing
 export const STREET_W = 0.2; // the main streets: two, crossing in the middle of every town (a car is 0.09 wide)
 export const STREET_LIFT = 0.01; // how far the street surface sits above the ground
@@ -50,13 +51,13 @@ export class Cities {
     const names = [...NAMES];
     for (let i = names.length - 1; i > 0; i--) { const j = planet.rng.int(0, i); [names[i], names[j]] = [names[j], names[i]]; }
     this.sites.forEach((s, i) => {
-      s.name = names[i % names.length];
+      s.name ??= names[i % names.length]; // (a real world's towns can have real names)
       s.pos = s.c.clone().multiplyScalar(planet.surfR(s.c) + 0.05);
     });
     this.entities = this.sites.map((s) => new PointEntity(s.pos.clone().addScaledVector(s.c, 0.4), 'city', s.name, s.u));
   }
 
-  /** A world's set places first (a giant's stations), then sites on the highways, then fill up with inland cities. */
+  /** A world's own towns first (a giant's stations, Earth's real cities), then sites on the highways, then fill up with inland cities. */
   choose(count) {
     const p = this.planet, rng = p.rng;
     const okLand = (d) => { const h = p.heightAt(d); return h > 0.05 && h < 0.75; };
@@ -71,9 +72,22 @@ export class Cities {
     };
     const fits = (c, u, v) => okLand(c) && this.sites.every((o) => o.c.angleTo(c) >= 0.75) && !p.offLimits(c, CITY_A)
       && ring(c, CITY_A * 0.55, u, v) && ring(c, CITY_A, u, v);
-    for (const [lat, lon] of p.world?.towns || []) { // (a giant's stations: on their rafts)
+    const share = (c, a, u, v) => { // how much of a ring round c is land
+      const t = Math.tan(a);
+      let n = 0;
+      for (let k = 0; k < 24; k++) {
+        const ang = (k / 24) * TAU;
+        if (okLand(_d.copy(c).addScaledVector(u, Math.cos(ang) * t).addScaledVector(v, Math.sin(ang) * t).normalize())) n++;
+      }
+      return n / 24;
+    };
+    // a world's own towns first (a giant's stations on their rafts, Earth's real cities), where they really are: closer
+    // together than made-up ones may be, and a little sea at the edge is fine (the buildings keep to the land)
+    const listed = (c, u, v) => okLand(c) && this.sites.every((o) => o.c.angleTo(c) >= LISTED_GAP) && !p.offLimits(c, CITY_A)
+      && share(c, CITY_A * 0.55, u, v) >= 0.9 && share(c, CITY_A, u, v) >= 0.75;
+    for (const [lat, lon, name] of p.world?.towns || []) {
       const c = new THREE.Vector3(...fromLatLon(lat, lon)), [u, v] = tangentBasis(c);
-      if (this.sites.length < count && fits(c, u, v)) this.sites.push({ c, u, v });
+      if (this.sites.length < count && listed(c, u, v)) this.sites.push({ c, u, v, ...(name && { name }) });
     }
     for (const road of p.roads.list) {
       let placed = 0;
