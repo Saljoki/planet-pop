@@ -21,6 +21,7 @@ const FRAG = /* glsl */ `
   uniform vec4 uPeaks[${MAX.peaks}]; uniform int uPeakN;
   uniform vec3 uAirC[${MAX.airports}]; uniform vec3 uAirF[${MAX.airports}]; uniform int uAirN; uniform vec2 uAirSize;
   uniform vec4 uRail; uniform vec3 uRailCol; uniform float uRailW; // the railway: a small circle round uRail.xyz, uRail.w (radians) out
+  uniform vec3 uBand; uniform float uBandN; // a giant's cloud stripes (uBandN 0: none)
   uniform vec3 uMask; // the map's circle on screen: centre (device pixels) and radius
   uniform float uInkW; // ink line width, in radians
   varying vec3 vDir;
@@ -39,6 +40,7 @@ const FRAG = /* glsl */ `
     vec2 uv = equirect(d);
     float h = texture2D(uHeight, uv).r * 1.5 - 1.0;
     vec3 c = h < -0.2 ? uSea : h < 0.0 ? uShallow : h < 0.07 ? uSand : h < 0.22 ? uG1 : h < 0.4 ? uG2 : uG3;
+    if (uBandN > 0.0 && h < 0.0) c = mix(uSea, uBand, smoothstep(-0.1, 0.35, sin(asin(clamp(d.y, -1.0, 1.0)) * uBandN)) * 0.8);
     if (h > 0.0) c = mix(c, uFloor, texture2D(uForest, uv).r * 0.85);
     for (int i = 0; i < ${MAX.peaks}; i++) {
       if (i >= uPeakN) break;
@@ -67,13 +69,14 @@ const FRAG = /* glsl */ `
       c = line(c, abs(dot(d, uRoads[i])), uRoadW, uRoad);
     }
     float coast = fwidth(h) * 1.2; // ink round the coast
-    c = mix(uInk, c, 0.35 + 0.65 * smoothstep(0.0, coast, abs(h)));
+    if (uBandN == 0.0 || h > -0.3) c = mix(uInk, c, 0.35 + 0.65 * smoothstep(0.0, coast, abs(h))); // (not in a giant's deep cloud)
     gl_FragColor = vec4(c, 1.0);
     #include <colorspace_fragment>
   }`;
 
 /**
- * A flat cartoon map of a planet, for the mini-map: a sphere drawn with land and sea from the terrain's height map,
+ * A flat cartoon map of a planet, for the mini-map: a sphere drawn with land and sea from the terrain's height map
+ * (a giant's cloud sea in its stripes),
  * forests, mountains, towns and their main streets, airports, the railway and the highways, all worked out in its
  * shader (so it's crisp at any zoom and costs one draw call). The mini-map points an orthographic camera at it from
  * above the player.
@@ -112,6 +115,7 @@ export class MapGlobe {
         uRail: { value: rail ? new THREE.Vector4(rail.c.x, rail.c.y, rail.c.z, rail.A) : new THREE.Vector4() },
         uRailCol: { value: col('#8a5a3c') }, uRailW: { value: 0.04 / R },
         uMask: { value: this.mask }, uInkW: { value: 0.03 / R },
+        uBand: { value: col(planet.theme.sea.bands?.color ?? '#000000') }, uBandN: { value: planet.theme.sea.bands?.count ?? 0 },
       },
     });
     this.scene = new THREE.Scene();

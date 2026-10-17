@@ -6,15 +6,15 @@ import { PointEntity } from '../core/PointEntity.js';
 
 /** Saturn's rings, from the inner edge out (as shares of the way to the outer edge): colour, and how see-through. */
 const SATURN = [
-  [0, 0.18, '#a8987a', 0.55],    // the C ring: thin and dusky
-  [0.18, 0.55, '#f0ddae', 1],    // the B ring: the brightest
-  [0.61, 0.86, '#dcc796', 1],    // the A ring, past the Cassini division…
+  [0, 0.32, '#c4b48f', 0.25],    // the C ring: thin and dusky, so a ship can see through it (it's the part within reach)
+  [0.32, 0.6, '#f0ddae', 1],     // the B ring: the brightest
+  [0.65, 0.86, '#dcc796', 1],    // the A ring, past the Cassini division…
   [0.875, 0.93, '#dcc796', 1],   // …and the Encke gap
   [0.97, 1, '#f6ead0', 0.85],    // the F ring
 ];
 /** Uranus's: a few narrow dark rings. */
 const FAINT = [[0, 0.08, '#8aa3b5', 0.6], [0.42, 0.5, '#8aa3b5', 0.6], [0.88, 1, '#a9c4d4', 0.75]];
-const ICE = 260;            // chunks of ice where a ship can reach (Saturn)
+const ICE = 220;            // chunks of ice where a ship can reach (Saturn)
 const HIT = 0.2;            // how close to a chunk counts as hitting it
 const SPIN = 0.015;         // radians a second the ice goes round (the ring drawing just looks the same)
 const _q = new THREE.Quaternion(), _p = new THREE.Vector3(), _m = new THREE.Matrix4(), _s = new THREE.Vector3();
@@ -61,9 +61,10 @@ export class Rings {
     this.group.add(this.iceGroup);
     for (let i = 0; i < ICE; i++) {
       const a = rng.range(0, TAU), r = rng.range(this.inner + 0.05, top);
-      this.ice.push({ p: new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, rng.range(-0.035, 0.035)), s: rng.range(0.035, 0.09) });
+      this.ice.push({ p: new THREE.Vector3(Math.cos(a) * r, Math.sin(a) * r, rng.range(-0.05, 0.05)), s: rng.range(0.06, 0.15) });
     }
-    const mesh = addInstanced(this.iceGroup, new THREE.IcosahedronGeometry(1, 0), toon('#eaf6ff', { flatShading: true }), ICE, 0.004, { cast: false });
+    const ice = toon('#eaf6ff', { flatShading: true, emissive: '#9fd8ff', emissiveIntensity: 0.35 });
+    const mesh = addInstanced(this.iceGroup, new THREE.IcosahedronGeometry(1, 0), ice, ICE, 0.006, { cast: false });
     this.ice.forEach((c, i) => mesh.setMatrixAt(i, _m.compose(c.p, _q.setFromAxisAngle(_p.set(1, 0.3, 0.5).normalize(), i), _s.setScalar(c.s))));
     mesh.instanceMatrix.needsUpdate = true;
     this.angle = 0;

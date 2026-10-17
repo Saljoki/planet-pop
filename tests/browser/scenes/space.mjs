@@ -242,8 +242,8 @@ export default async function space({ page, frames, until, scene, open }) {
       const { MISSIONS } = await import('./js/game/Missions.js');
       app.game.start({ mission: MISSIONS.find((m) => m.id === 'ringrun') });
       const pl = app.game.player, ax = app.planet.rings.axis, d = new app.camera.position.constructor().crossVectors(ax, app.sky.su).normalize();
-      pl.place(d.clone().addScaledVector(ax, -0.06).normalize(), ax);
-      pl.alt = 14.2;
+      pl.place(d.clone().addScaledVector(ax, 0.16).normalize(), ax.clone().negate());
+      pl.alt = 14.4;
       pl.invuln = 99;
     });
     await until(() => app.rig.mode === 'game');

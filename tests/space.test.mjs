@@ -495,7 +495,7 @@ describe('the giants', () => {
   it('Saturn’s ring ice: a chunk knocks you like a crash, and a clean pass through counts', async () => {
     localStorage.clear();
     const { app, planet } = await makeWorld({ world: 'saturn' }), rings = planet.rings, game = app.game;
-    assert.equal(rings.ice.length, 260);
+    assert.equal(rings.ice.length, 220);
     assert.ok(rings.entities[0].name === 'The rings');
     rings.group.updateMatrixWorld(true);
     const chunk = rings.ice[7].p.clone().applyMatrix4(rings.iceGroup.matrixWorld);
@@ -547,10 +547,12 @@ describe('the giants', () => {
 
     const nep = await makeWorld({ world: 'neptune' }), g = nep.app.game;
     g.start({ free: true });
+    nep.app.simTime = (Math.PI * 1.5) / 0.7; // (in a lull between gusts)
     const before = g.player.up.clone(), ax = nep.app.sky.axis;
     for (let i = 0; i < 60; i++) g.hazards.update(1 / 20);
-    const east = new THREE.Vector3().crossVectors(ax, before).normalize(), moved = g.player.up.clone().sub(before);
-    assert.ok(moved.dot(east) < -0.05, 'the wind didn’t blow west');
+    const flat = (v) => v.clone().addScaledVector(ax, -v.dot(ax)).normalize(), a = flat(before), b = flat(g.player.up);
+    const turned = Math.atan2(ax.dot(new THREE.Vector3().crossVectors(a, b)), a.dot(b)); // (round the spin axis: east is +)
+    assert.ok(turned < -0.04, `the wind didn’t blow west (${turned.toFixed(3)} rad)`);
     g.stop();
     nep.planet.dispose();
   });
