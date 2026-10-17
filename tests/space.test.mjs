@@ -6,7 +6,7 @@ import { WORLDS, WORLD_IDS } from '../js/space/Worlds.js';
 import { styleFor } from '../js/game/vehicles/Plane.js';
 import { RoadBoard } from '../js/game/screens/RoadBoard.js';
 import { BODIES } from '../js/space/Bodies.js';
-import { position, moonAngle, mapPosition } from '../js/space/Orbits.js';
+import { position, moonAngle, orbitAngle, mapPosition } from '../js/space/Orbits.js';
 import { fromLatLon } from '../js/core/WorldShape.js';
 import { SystemMap } from '../js/space/SystemMap.js';
 import { Trip } from '../js/space/Trip.js';
@@ -693,5 +693,41 @@ describe('Rex in space', () => {
     assert.match(game.results.dom.result.innerHTML, /beat Rival Rex/);
     assert.ok(app.unlocked.includes('spacerace'));
     game.stop();
+  });
+});
+
+describe('four more moons', () => {
+  it('Ganymede, Enceladus, Triton and Charon: their planets, their looks, their geysers', async () => {
+    const want = { ganymede: 'jupiter', enceladus: 'saturn', triton: 'neptune', charon: 'pluto' };
+    for (const [id, host] of Object.entries(want)) assert.equal(BODIES.find((b) => b.id === id).parent, host);
+    const tri = BODIES.find((b) => b.id === 'triton');
+    const turn = orbitAngle(tri, Date.UTC(2026, 0, 2)) - orbitAngle(tri, Date.UTC(2026, 0, 1)), step = Math.atan2(Math.sin(turn), Math.cos(turn));
+    assert.ok(step < -0.9 && step > -1.3, `Triton should go round backwards, about 61° a day (${((step * 180) / Math.PI).toFixed(0)}°)`);
+
+    const gan = await makeWorld({ world: 'ganymede' });
+    assert.ok(gan.planet.aurora.lit.length > 0, 'no aurora on Ganymede');
+    assert.ok(gan.planet.space.entities.some((e) => e.name === 'Jupiter'));
+    gan.planet.dispose();
+    const enc = await makeWorld({ world: 'enceladus' });
+    assert.deepEqual(enc.planet.volcanoes.map((v) => v.name), ['Baghdad Sulcus', 'Damascus Sulcus']);
+    assert.ok(enc.planet.space.entities.some((e) => e.name === 'Saturn'));
+    run(enc.app, 2);
+    enc.planet.dispose();
+    const tr = await makeWorld({ world: 'triton' });
+    assert.deepEqual(tr.planet.volcanoes.map((v) => v.name), ['Hili', 'Mahilani']);
+    assert.equal(tr.planet.hf.shape.paint(...fromLatLon(-60, 100)), 'snow', 'no pink cap in the south');
+    tr.planet.dispose();
+    const ch = await makeWorld({ world: 'charon' });
+    assert.equal(ch.planet.hf.shape.paint(...fromLatLon(80, 0)), 'rust', 'Mordor Macula isn’t red');
+    assert.ok(ch.planet.space.entities.some((e) => e.name === 'Pluto'), 'no Pluto in Charon’s sky');
+    ch.planet.dispose();
+  });
+
+  it('a trip from Pluto to Charon is a short hop that lands', async () => {
+    const app = await travelApp('pluto');
+    assert.equal(app.trip.go('charon'), true);
+    await fly(app, 120, () => app.trip.state === 'idle' && app.planet.world.id === 'charon');
+    assert.equal(app.planet.world.id, 'charon');
+    assert.ok(app.spaceCourier.offer('pluto', 'charon', () => 0.1).pay <= 20, 'next door should pay little');
   });
 });

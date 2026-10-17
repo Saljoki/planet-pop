@@ -306,6 +306,31 @@ export default async function space({ page, frames, until, scene, open }) {
     await frames(6);
   });
 
+  await scene('real-ganymede', 'Ganymede: dark old plains, bright grooves, and an aurora of its own', async () => {
+    await open('world=ganymede');
+    await lookAt(page, 30, -140, 17);
+    await frames(4);
+  });
+
+  await scene('real-enceladus', 'Enceladus: dazzling white, with the tiger stripes round its south pole spraying water', async () => {
+    await open('world=enceladus');
+    await page.evaluate(() => app.planet.volcanoes.forEach((v) => { v.state = 'erupt'; v.timer = 60; }));
+    await lookAt(page, -70, -40, 16);
+    await frames(30);
+  });
+
+  await scene('real-triton', 'Triton: pink nitrogen frost, the cantaloupe terrain, dark geyser streaks, Neptune overhead', async () => {
+    await open('world=triton');
+    await lookAt(page, -10, -20, 17);
+    await frames(4);
+  });
+
+  await scene('real-charon', 'Charon: its red north pole, the canyons, and Pluto hanging in the sky', async () => {
+    await open('world=charon');
+    await lookAt(page, 40, -20, 17);
+    await frames(4);
+  });
+
   await scene('phone-map', 'The system map on a phone, with a world’s card', async () => {
     await page.evaluate(() => app.hud.info.hide());
     await page.evaluate(() => app.game.stop());

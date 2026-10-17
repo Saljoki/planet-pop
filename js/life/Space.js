@@ -36,7 +36,8 @@ export class Space {
 
   /**
    * What hangs in the sky: our Moon over a made-up planet or Earth, or whatever the world's theme says (`moons`):
-   * Earth in the Moon's sky, Phobos and Deimos over Mars, Jupiter over Io and Europa, Saturn and its rings over Titan.
+   * Earth in the Moon's sky, Phobos and Deimos over Mars, Jupiter over its moons, Saturn and its rings over Titan,
+   * Pluto over Charon.
    * Each is a body of its own on a tilted orbit.
    */
   buildMoon() {
@@ -44,7 +45,7 @@ export class Space {
     this.moons = list.map((def, i) => {
       const orbit = this.orbitGroup(0.4 - i * 0.3, 0.25 + i * 0.4), s = def.size;
       orbit.rotation.y = i * 2.1;
-      if (def.kind === 'gas') { // a giant planet: its stripes (and rings) as on the system map
+      if (def.kind === 'map') { // a planet (Jupiter, Saturn, Neptune, Pluto): drawn as on the system map, rings and all
         const look = bodyOf(def.body).look, body = addMesh(orbit, new THREE.SphereGeometry(s, 40, 28), toon('#ffffff', { map: BodyArt.texture(look, def.body) }), 0.05, NO_SHADOW);
         body.position.set(def.dist, 0, 0);
         body.rotation.z = 0.35;
