@@ -7,6 +7,8 @@
  * The giants' cloud seas have stripes and storms: sea.bands (the stripes' colour and how many) and sea.spots (oval
  * storms, swirling: lat and lon of the middle, w and h across in degrees, colour and rim; hex: Saturn's six-sided
  * jet stream round a pole). `rafts` sets the balloons their stations hang from (how many, how big, what colours).
+ * `volcano` recolours the volcanoes (cone, lava, glow, smoke, bombs: Io's sulphur, Europa's water); a moon in the
+ * sky of kind 'gas' is a giant planet, drawn as on the system map (body: its id in Bodies.js).
  */
 const GIANT = { // what the four giants share: a cloud sea, stations on rafts, no trees or mountains, airships
   wildlife: false, balloons: 'blimp',
@@ -133,6 +135,56 @@ export const WORLD_THEMES = {
       { name: 'Miranda', kind: 'rock', size: 0.8, dist: 30, color: '#bdb6b0', speed: 0.06 },
     ],
     sun: 0.27,
+  },
+  io: {
+    id: 'io', name: 'Io', icon: '🌋', air: 'none',
+    pal: { seabed: '#5a4636', sand: '#f6e7a0', g1: '#f0d25a', g2: '#e8c04a', g3: '#dcae3c', rock: '#a8763a', snow: '#f7f0c8', city: '#f4efe0', mare: '#3a2a20', rust: '#c8553d' },
+    sea: { none: true, color: '#000000', shallow: '#000000', glow: null, boats: false },
+    trees: { density: 0, trunk: '#a8763a', a: { shape: 'pine', colors: ['#e8c04a'] }, b: { shape: 'pine', colors: ['#e8c04a'] }, useA: () => true },
+    mountains: { colors: ['#b8864a', '#a8763a', '#c8964a'], cap: '#f7f0c8', snow: false, peaks: 2 },
+    buildings: ['#f4f1ff', '#9fd8ff', '#ff9fb1', '#d4b8ff', '#a8f0cf', '#ffffff'],
+    clouds: { fair: '#ffffff', fairGlow: '#5560b0', dark: '#8f88b8', darkGlow: '#2a2560' },
+    storms: 0, precip: { kind: 'none', color: '#ffffff' },
+    halo: { day: '#20183a', night: '#120c26', strength: 0 },
+    volcanoes: 3,
+    volcano: { cone: '#5a4636', lava: '#ff7a2e', glow: '#ff7a2e', smoke: '#f6ec9a', bombs: '#ffb21f' }, // (plumes of sulphur)
+    moons: [
+      { name: 'Jupiter', kind: 'gas', body: 'jupiter', size: 11, dist: 62, speed: 0 }, // (always in the same spot in the sky)
+      { name: 'Europa', kind: 'moon', size: 1.1, dist: 46, color: '#f2ece0', speed: 0.02 },
+    ],
+    sun: 0.4,
+  },
+  europa: {
+    id: 'europa', name: 'Europa', icon: '🧊', air: 'none',
+    pal: { seabed: '#8a8aa0', sand: '#f6f1e6', g1: '#f2ece0', g2: '#e8e0d0', g3: '#dcd2c0', rock: '#cfc4b0', snow: '#ffffff', city: '#eef4ff', mare: '#b5835a' },
+    sea: { none: true, color: '#000000', shallow: '#000000', glow: null, boats: false },
+    trees: { density: 0, trunk: '#cfc4b0', a: { shape: 'pine', colors: ['#e8e0d0'] }, b: { shape: 'pine', colors: ['#e8e0d0'] }, useA: () => true },
+    mountains: { colors: ['#e8e0d0', '#dcd2c0', '#f2ece0'], cap: '#ffffff', snow: false, peaks: 0 },
+    buildings: ['#f4f1ff', '#9fd8ff', '#ffd23f', '#ff9fb1', '#d4b8ff', '#bfe3ff'],
+    clouds: { fair: '#ffffff', fairGlow: '#5560b0', dark: '#8f88b8', darkGlow: '#2a2560' },
+    storms: 0, precip: { kind: 'none', color: '#ffffff' },
+    halo: { day: '#20183a', night: '#120c26', strength: 0 },
+    volcanoes: 1,
+    volcano: { cone: '#dfe9f2', lava: '#bfefff', glow: '#9fe6ff', smoke: '#ffffff', bombs: '#e8f8ff', low: true }, // (a plume of water from the ocean)
+    moons: [
+      { name: 'Jupiter', kind: 'gas', body: 'jupiter', size: 8, dist: 64, speed: 0 },
+      { name: 'Io', kind: 'rock', size: 1.3, dist: 44, color: '#f0d25a', speed: 0.03 },
+    ],
+    sun: 0.4,
+  },
+  titan: { // thick orange haze, methane rain and seas
+    id: 'titan', name: 'Titan', icon: '🟤', wildlife: false, aurora: false, balloons: 'blimp',
+    pal: { seabed: '#3a3040', sand: '#d9a05a', g1: '#c98a4a', g2: '#b77a40', g3: '#a56a38', rock: '#8a5a30', snow: '#f2d9a8', city: '#f4e6d0', mare: '#6a4a30' },
+    sea: { color: '#4a4058', shallow: '#7a6a7a', glow: null, boats: true },
+    trees: { density: 0, trunk: '#8a5a30', a: { shape: 'pine', colors: ['#b77a40'] }, b: { shape: 'pine', colors: ['#b77a40'] }, useA: () => true },
+    mountains: { colors: ['#a56a38', '#97603a', '#b8784a'], cap: '#f2d9a8', snow: false, peaks: 3 },
+    buildings: ['#f4f1ff', '#ffd57a', '#9fd8ff', '#ff9fb1', '#d4b8ff', '#a8f0cf'],
+    clouds: { fair: '#f6d6a6', fairGlow: '#c98a4a', dark: '#c99060', darkGlow: '#6a4020' },
+    storms: 2, precip: { kind: 'rain', color: '#ffe0b0' }, // (methane rain)
+    halo: { day: '#f0a848', night: '#3a2418', strength: 1.8 },
+    volcanoes: 0,
+    moons: [{ name: 'Saturn', kind: 'gas', body: 'saturn', size: 4, dist: 66, speed: 0 }],
+    sun: 0.18, // (dim through the haze)
   },
   neptune: {
     ...GIANT, id: 'neptune', name: 'Neptune', icon: '🔵', aurora: false,

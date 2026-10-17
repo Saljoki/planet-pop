@@ -58,7 +58,8 @@ export class ParcelBoard extends Overlay {
     list.innerHTML = job ? '<p class="note">One parcel at a time: deliver this one first.</p>'
       : `<p class="note">From ${here ? `${here.icon} ${here.name}` : '🪐 this planet'}${c.streak ? ` · 🔥 on-time streak x${c.streak}` : ''}</p>`
         + offers.map((o, i) => {
-          const to = worldOf(o.to), km = Math.round(o.au * 149.6), far = km >= 1 ? `${km.toLocaleString('en-GB')} million km` : '384,000 km';
+          const to = worldOf(o.to), km = o.au * 149.6e6;
+          const far = km >= 1e6 ? `${Math.round(km / 1e6).toLocaleString('en-GB')} million km` : `${(Math.round(km / 1000) * 1000).toLocaleString('en-GB')} km`;
           return `<div class="mission"><span class="icon">${o.cargo.icon}</span><div class="info"><span data-what="${i}"></span> → ${to.icon} ${to.name}
             <small>${o.cargo.name} (${o.cargo.tip.toLowerCase()}) · ${far} · ⏱ ${clock(o.limit)}</small></div>
             <button data-act="take" data-i="${i}" class="big">🚀 🪙 ${o.pay}</button></div>`;

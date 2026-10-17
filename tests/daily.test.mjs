@@ -24,9 +24,9 @@ test('about every other day is a world of the day, and every world gets its turn
   const worlds = days.filter((p) => p.world);
   assert.ok(worlds.length > 140 && worlds.length < 220, `${worlds.length} world days in a year`);
   for (const id of WORLD_IDS) assert.ok(worlds.some((p) => p.world === id), `no ${id} day`);
-  const pluto = dailyParams('2026-10-14');
-  assert.deepEqual(pluto, { seed: worldOf('pluto').seed, land: 0.45, cities: worldOf('pluto').cities, theme: 'pluto', world: 'pluto' });
-  assert.equal(dailyPlace('2026-10-14'), '🤍 Pluto');
+  const day = (i) => new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10), plutoDay = day(days.findIndex((p) => p.world === 'pluto'));
+  assert.deepEqual(dailyParams(plutoDay), { seed: worldOf('pluto').seed, land: 0.45, cities: worldOf('pluto').cities, theme: 'pluto', world: 'pluto' });
+  assert.equal(dailyPlace(plutoDay), '🤍 Pluto');
   assert.equal(dailyPlace('2026-10-15'), '❄️ an ice world');
 });
 

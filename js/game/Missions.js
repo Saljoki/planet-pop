@@ -51,6 +51,12 @@ export const MISSIONS = [
     planet: { world: 'uranus' }, goal: { stat: 'fragile', target: 2 }, failIf: 'broken', reward: 350, cargo: { fragile: 4 } },
   { id: 'gale', icon: '💨', name: 'Gale Force', brief: 'Deliver 3 parcels on Neptune, where the wind blows you west all the time.',
     planet: { world: 'neptune' }, goal: { stat: 'deliveries', target: 3 }, reward: 400 },
+  { id: 'sulphur', icon: '🌋', name: 'Sulphur Run', brief: 'Deliver 3 parcels on Io while its volcanoes erupt. Fly into a plume and it’s over.',
+    planet: { world: 'io' }, goal: { stat: 'deliveries', target: 3 }, failIf: 'ash', reward: 400, eruptions: true },
+  { id: 'sample', icon: '🧪', name: 'Ocean Sample', brief: 'Fly a sample of Europa’s hidden ocean to the scientists at Conamara Chaos. It’s fragile.',
+    planet: { world: 'europa' }, goal: { stat: 'landmark', target: 1 }, failIf: 'broken', reward: 350, landmark: 'Conamara Chaos', carry: 'fragile', item: '🧪 Ocean sample' },
+  { id: 'huygens', icon: '📡', name: 'Battery for Huygens', brief: 'Take a new battery to the Huygens probe, which landed on Titan in 2005.',
+    planet: { world: 'titan' }, goal: { stat: 'landmark', target: 1 }, reward: 300, landmark: 'The Huygens landing site', item: '🔋 A battery' },
 ];
 
 /** Where a mission is flown, for the board and the briefing: a real world, or a kind of made-up planet ({ icon, name }). */

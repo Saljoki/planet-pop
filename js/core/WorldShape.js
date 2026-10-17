@@ -153,6 +153,10 @@ export class WorldShape {
     let key = null;
     for (const f of this.features) {
       if (!f.pal) continue;
+      if (f.legs) { // a line: Europa's cracks
+        if (this.lineDistance(f, x, y, z) < f.width) key = f.pal;
+        continue;
+      }
       if (f.kind === 'cap') {
         const lat = Math.asin(y) / DEG;
         if (f.lat > 0 ? lat > f.lat : lat < f.lat) key = f.pal;

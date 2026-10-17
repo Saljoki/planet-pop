@@ -14,7 +14,23 @@ import { EARTH_LAND } from './EarthLand.js';
  * about by ship; rings (world/Rings.js: inner and outer radius, in units) and wind (how hard it pushes a ship along,
  * in units a second) are theirs too, and towns (where each town goes, [lat, lon]). A landmark with pin: false is a
  * place in the clouds, with no flag; loop names the trophy for flying a loop round it (game/Feats.js).
+ * volcanoes: where a world's volcanoes really are, with their names (Io's; Europa's plume of water), instead of
+ * made-up ones on the highest ground.
  */
+
+/** Europa's long cracks (lineae), stained reddish-brown: ridges of ice criss-crossing the whole moon. */
+const LINEAE = [
+  [[-55, -175], [-25, -140], [5, -105], [35, -60], [55, -10]],
+  [[60, -150], [30, -110], [0, -70], [-30, -25], [-50, 30]],
+  [[-40, 60], [-10, 95], [20, 130], [45, 175]],
+  [[50, 40], [20, 75], [-15, 115], [-45, 160]],
+  [[10, -180], [15, -150], [12, -120], [5, -90]],
+  [[-20, 0], [-5, 30], [8, 60], [25, 100]],
+  [[70, -60], [45, -30], [25, 10], [5, 40]],
+  [[-65, -100], [-35, -60], [-15, -20], [0, 15]],
+  [[35, -175], [40, -140], [30, -100]],
+  [[-30, -175], [-50, -130], [-60, -80]],
+];
 
 /**
  * A giant's cloud sea, with a raft for each station and a smaller one for the spaceport: towns (where the stations go,
@@ -225,6 +241,74 @@ export const WORLDS = {
     ...stations([[30, -110], [-22, 30], [18, 150]], { lat: -5, lon: -40 }),
     rings: { inner: 14, outer: 15.4, faint: true },
     landmarks: [],
+  },
+  io: {
+    id: 'io', name: 'Io', icon: '🌋', theme: 'io', seed: 1979, cities: 3, gravity: 0.18, day: 178,
+    welcome: 'Over 400 volcanoes, and Jupiter hanging huge overhead. Keep clear of the sulphur plumes!',
+    pad: { lat: 20, lon: -20 },
+    volcanoes: [{ name: 'Pele', lat: -18.7, lon: 104.7 }, { name: 'Prometheus', lat: -1.6, lon: -153 }, { name: 'Tvashtar', lat: 63, lon: -124 }],
+    shape: {
+      lift: 0.35, relief: 0.25, floor: 0.04,
+      features: [
+        { kind: 'bowl', lat: 13, lon: 51, r: 3, depth: 0.25, pal: 'mare' }, // Loki Patera: a lake of lava
+        { kind: 'paint', lat: -18.7, lon: 104.7, r: 10, pal: 'rust' }, // Pele's red ring of fallen sulphur
+        { kind: 'paint', lat: -1.6, lon: -153, r: 6, pal: 'snow' }, // Prometheus's white frost
+        { kind: 'paint', lat: 63, lon: -124, r: 7, pal: 'rust' }, // Tvashtar's
+        { kind: 'dome', lat: -5, lon: 90, r: 4, height: 0.55 }, // Boösaule Montes
+        ...[[30, -60], [-40, -20], [-30, 170], [40, 140], [-60, 60]].map(([lat, lon]) => ({ kind: 'paint', lat, lon, r: 4, pal: 'mare' })), // more dark lava
+      ],
+    },
+    peaks: [{ lat: -5, lon: 90, s: 0.5, hgt: 0.9 }],
+    landmarks: [
+      { name: 'Loki Patera', lat: 13, lon: 51, note: 'A lake of lava 200 km across: the most powerful volcano in the solar system' },
+      { name: 'Boösaule Montes', lat: -5, lon: 90, note: 'Io’s highest mountain, 17.5 km: twice as high as Everest' },
+    ],
+  },
+  europa: {
+    id: 'europa', name: 'Europa', icon: '🧊', theme: 'europa', seed: 1995, cities: 3, gravity: 0.13, day: 219,
+    welcome: 'Under this ice is an ocean with more water than all of Earth’s. Jupiter fills the sky.',
+    pad: { lat: 10, lon: 20 },
+    volcanoes: [{ name: 'The south plume', lat: -62, lon: -175 }],
+    shape: {
+      lift: 0.25, relief: 0.12, floor: 0.05,
+      craters: { count: 10, min: 0.01, max: 0.03, depth: 0.12 }, // (very few: the ice is young)
+      features: [
+        ...LINEAE.map((points) => ({ kind: 'ridge', width: 0.55, height: 0.06, pal: 'mare', points })),
+        { kind: 'paint', lat: 9.7, lon: 86.7, r: 4, pal: 'mare' }, // Conamara Chaos: rafts of jumbled ice
+        { kind: 'crater', lat: -25.2, lon: 88.6, r: 1.5, depth: 0.2 }, // Pwyll…
+        { kind: 'paint', lat: -25.2, lon: 88.6, r: 6, pal: 'snow' }, // …and its bright rays
+        { kind: 'bowl', lat: -47, lon: 179, r: 3, depth: 0.12, pal: 'mare' }, // Thera Macula, where the ice is melting through
+      ],
+    },
+    landmarks: [
+      { name: 'Conamara Chaos', lat: 9.7, lon: 86.7, note: 'Rafts of ice that broke up and froze again: the ocean below may come close to the top here' },
+      { name: 'Pwyll', lat: -25.2, lon: 88.6, note: 'A young crater 26 km across, splashed with bright rays of fresh ice' },
+      { name: 'Thera Macula', lat: -47, lon: 179, note: 'A dark patch where a lake of water may lie just under the ice' },
+    ],
+  },
+  titan: {
+    id: 'titan', name: 'Titan', icon: '🟤', theme: 'titan', seed: 2005, cities: 5, gravity: 0.14, day: 344,
+    welcome: 'Thick orange air and low gravity: perfect for flying. The lakes are liquid methane, at −179°C.',
+    pad: { lat: -5, lon: -150 },
+    shape: {
+      lift: 0.3, relief: 0.25,
+      features: [
+        { kind: 'bowl', lat: 68, lon: -50, r: 13, depth: 0.75 }, // Kraken Mare, the biggest sea
+        { kind: 'bowl', lat: 79, lon: -112, r: 7, depth: 0.7 }, // Ligeia Mare
+        { kind: 'bowl', lat: 85, lon: 21, r: 4, depth: 0.6 }, // Punga Mare
+        { kind: 'bowl', lat: -72, lon: -177, r: 4, depth: 0.6 }, // Ontario Lacus, in the south
+        { kind: 'paint', lat: -10, lon: -165, r: 22, pal: 'mare' }, // Shangri-La: dark dunes
+        { kind: 'paint', lat: -8, lon: 105, r: 20, pal: 'mare' }, // Belet: more dunes
+        { kind: 'dome', lat: -10, lon: -100, r: 20, height: 0.2 }, // Xanadu: bright, rugged highlands…
+        { kind: 'paint', lat: -10, lon: -100, r: 20, pal: 'snow' }, // …the colour of washed-out ice
+      ],
+    },
+    landmarks: [
+      { name: 'The Huygens landing site', lat: -10.6, lon: -167.6, model: 'lander', note: 'Where ESA’s Huygens probe landed in 2005: the furthest landing ever, on pebbles of ice' },
+      { name: 'Kraken Mare', lat: 68, lon: -50, note: 'A sea of liquid methane bigger than the Caspian Sea, and hundreds of metres deep' },
+      { name: 'Ligeia Mare', lat: 79, lon: -112, note: 'A methane sea so calm that radar sees it like a mirror' },
+      { name: 'Xanadu', lat: -10, lon: -100, note: 'Bright highlands the size of Australia, criss-crossed by methane rivers' },
+    ],
   },
   neptune: {
     id: 'neptune', name: 'Neptune', icon: '🔵', theme: 'neptune', seed: 1846, cities: 3, gravity: 1.12, day: 133, floating: true, giant: true,

@@ -3,12 +3,12 @@ import { LAYER_FX, canvasTexture } from '../core/Geo.js';
 import { toon } from '../render/Toon.js';
 import { mulberry32 } from '../core/Noise.js';
 import { BODIES } from './Bodies.js';
-import { position, moonAngle, mapPosition } from './Orbits.js';
+import { position, moonAngle, orbitAngle, mapPosition } from './Orbits.js';
 import { BodyArt } from './BodyArt.js';
 
 const DEG = Math.PI / 180;
 const EARTH_W = 12756;
-const MOON_GAP = 4.2;       // the Moon's distance from Earth on the map (times Earth's drawn size)
+const MOON_GAP = 4.2;       // the Moon's distance from Earth on the map (times Earth's drawn size; other moons say their own gap)
 const MIN_SIZE = 0.009;     // nothing is drawn smaller than this much of its distance from the camera (times √size)
 const AWAY = new THREE.Vector3(620, 160, 560); // where a made-up planet "beyond the solar system" shows
 const _v = new THREE.Vector3(), _a = [0, 0, 0];
@@ -124,11 +124,14 @@ export class SystemScene {
   place(ms, camera) {
     for (const b of this.bodies) if (b.def.orbit) b.pos.set(...mapPosition(position(b.def.orbit, ms), _a));
     this.away.pos.copy(AWAY);
-    const earth = this.byId.earth, moon = this.byId.moon;
     for (const b of [...this.bodies, this.away]) this.scaleFor(b, camera);
-    const a = moonAngle(ms), gap = MOON_GAP * earth.size * earth.scale;
-    moon.pos.set(earth.pos.x + Math.cos(a) * gap, earth.pos.y, earth.pos.z - Math.sin(a) * gap);
-    moon.mesh.rotation.y = Math.atan2(-(earth.pos.z - moon.pos.z), earth.pos.x - moon.pos.x); // the near side faces Earth
+    for (const moon of this.bodies) { // each moon round its planet, near side towards it
+      if (!moon.def.parent) continue;
+      const host = this.byId[moon.def.parent], a = moon.def.days ? orbitAngle(moon.def, ms) : moonAngle(ms);
+      const gap = (moon.def.gap ?? MOON_GAP) * host.size * host.scale;
+      moon.pos.set(host.pos.x + Math.cos(a) * gap, host.pos.y, host.pos.z - Math.sin(a) * gap);
+      moon.mesh.rotation.y = Math.atan2(-(host.pos.z - moon.pos.z), host.pos.x - moon.pos.x);
+    }
     const days = (ms - Date.now()) / 86400000;
     for (const belt of this.belts) belt.pts.rotation.y = (days / belt.period) * Math.PI * 2;
   }
@@ -142,7 +145,7 @@ export class SystemScene {
   /** Each globe turns: faster for a shorter day (squeezed, so even Venus moves a little); dt in seconds. */
   update(dt) {
     for (const b of this.bodies) {
-      if (!b.def.hours || b.def.id === 'moon') continue;
+      if (!b.def.hours || b.def.parent) continue; // (a moon keeps one face to its planet)
       b.mesh.rotation.y += dt * 0.6 * Math.sqrt(24 / b.def.hours);
     }
     this.away.mesh.rotation.y += dt * 0.4;

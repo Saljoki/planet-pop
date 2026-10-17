@@ -5,13 +5,21 @@ import { addMesh, addInstanced } from '../render/Outline.js';
 import { PointEntity } from '../core/PointEntity.js';
 import { Trails } from '../life/Trails.js';
 import { CITY_A } from './Cities.js';
+import { fromLatLon } from '../core/WorldShape.js';
 
 const S = 1.2, H = 1.6, RIM = 0.4, BOMBS = 24, GRAVITY = 0.9;
 const NAMES = ['Mt. Kaboom', 'Mt. Grumble', 'Mt. Fizzle', 'Mt. Sizzle'];
 const ERUPTION = 6, RUMBLE = 5;
 const _p = new THREE.Vector3(), _v = new THREE.Vector3(), _w = new THREE.Vector3(), _m = new THREE.Matrix4();
 
-/** A volcano that smokes all day and erupts every minute or so, throwing glowing lava bombs. */
+/** The usual look: a purple-grey cone, orange lava and grey smoke (a theme's `volcano` changes it). */
+const LOOK = { cone: '#7a668f', lava: '#ff7a2e', glow: '#ff7a2e', smoke: '#8a7f9e', bombs: '#ffb21f' };
+
+/**
+ * A volcano that smokes all day and erupts every minute or so, throwing glowing lava bombs. A real world can say
+ * where its volcanoes are and what they're called (world.volcanoes: Io's), and its theme what they're made of
+ * (Io's sulphur plumes; on Europa a low cone of ice that throws up water).
+ */
 export class Volcano {
   /** empty: a stand-in that never erupts, for worlds without volcanoes. */
   constructor(planet, index = 0, empty = false) {
@@ -19,14 +27,16 @@ export class Volcano {
     this.entities = [];
     this.state = 'calm';
     this.timer = 30 + index * 17 + Math.random() * 20; // several volcanoes take turns
-    const d = !empty && this.find();
+    const real = !empty && planet.world?.volcanoes?.[index];
+    const d = real ? new THREE.Vector3(...fromLatLon(real.lat, real.lon)) : !empty && this.find();
     if (!d) return;
+    this.look = { ...LOOK, ...planet.theme.volcano };
     this.d = d;
     this.fwd = tangentBasis(d)[0];
     this.base = planet.surfR(d) - 0.3;
-    this.hgt = Math.min(H, R + 2.3 - this.base);
+    this.hgt = Math.min(H * (this.look.low ? 0.45 : 1), R + 2.3 - this.base);
     this.top = d.clone().multiplyScalar(this.base + this.hgt - 0.12);
-    this.name = NAMES[(index + planet.rng.int(0, NAMES.length - 1)) % NAMES.length];
+    this.name = real ? real.name : NAMES[(index + planet.rng.int(0, NAMES.length - 1)) % NAMES.length];
     planet.reserve(d, (S + 0.2) / R);
     this.cone = { d, s: S, base: this.base, hgt: this.hgt, volcano: true }; // for collision (Planet.groundR)
     this.build();
@@ -58,20 +68,21 @@ export class Volcano {
     root.add(g);
     // a broad cone with concave flanks and a wide, shallow crater (a narrow top reads as a chimney)
     const profile = [[S, 0], [S * 0.72, h * 0.3], [S * 0.5, h * 0.62], [RIM * 1.15, h * 0.9], [RIM, h], [RIM * 0.8, h - 0.08], [RIM * 0.55, h - 0.17], [0, h - 0.19]];
-    addMesh(g, new THREE.LatheGeometry(profile.map(([x, y]) => new THREE.Vector2(x, y)), 11), toon('#7a668f', { flatShading: true }), 0.04);
-    const lava = new THREE.Mesh(new THREE.CircleGeometry(RIM * 0.62, 11).rotateX(-Math.PI / 2).translate(0, h - 0.16, 0), new THREE.MeshBasicMaterial({ color: '#ff7a2e' }));
+    const look = this.look;
+    addMesh(g, new THREE.LatheGeometry(profile.map(([x, y]) => new THREE.Vector2(x, y)), 11), toon(look.cone, { flatShading: true }), 0.04);
+    const lava = new THREE.Mesh(new THREE.CircleGeometry(RIM * 0.62, 11).rotateX(-Math.PI / 2).translate(0, h - 0.16, 0), new THREE.MeshBasicMaterial({ color: look.lava }));
     g.add(lava);
 
-    this.glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: '#ff7a2e', blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 }));
+    this.glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTexture(), color: look.glow, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 }));
     this.glow.position.copy(this.d).multiplyScalar(this.base + h + 0.25);
     this.glow.scale.setScalar(2.2);
     this.glow.layers.set(LAYER_FX);
     root.add(this.glow);
 
-    this.smoke = new Trails(root, { max: 220, color: '#8a7f9e', life: 4.5, grow: 3.5, drag: 0.25 });
+    this.smoke = new Trails(root, { max: 220, color: look.smoke, life: 4.5, grow: 3.5, drag: 0.25 });
     this.smokeT = 0;
     this.bombs = Array.from({ length: BOMBS }, () => ({ live: false, p: new THREE.Vector3(), v: new THREE.Vector3() }));
-    this.bombMesh = addInstanced(root, new THREE.IcosahedronGeometry(0.06, 0), new THREE.MeshBasicMaterial({ color: '#ffb21f' }), BOMBS, 0.006, { cast: false });
+    this.bombMesh = addInstanced(root, new THREE.IcosahedronGeometry(0.06, 0), new THREE.MeshBasicMaterial({ color: look.bombs }), BOMBS, 0.006, { cast: false });
     this.bombT = 0;
     this.entity = new PointEntity(this.top.clone().addScaledVector(this.d, 0.3), 'volcano', this.name, this.fwd);
     this.entities.push(this.entity);

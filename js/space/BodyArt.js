@@ -15,6 +15,7 @@ export class BodyArt {
   static texture(look, id) {
     const draw = {
       earth: BodyArt.earth, moon: BodyArt.moon, rock: BodyArt.rock, cloud: BodyArt.bands, gas: BodyArt.bands,
+      ice: BodyArt.ice, sulphur: BodyArt.sulphur,
     }[look.kind];
     if (!draw) return null;
     const w = look.kind === 'earth' ? 1024 : 256, h = w / 2;
@@ -93,6 +94,36 @@ export class BodyArt {
     ctx.fillStyle = '#4a4560';
     for (let i = 0; i < n; i++) BodyArt.spot(ctx, w, h, rng() * 160 - 80, rng() * 360 - 180, 1 + rng() * 3);
     ctx.globalAlpha = 1;
+  }
+
+  /** Europa: smooth ice criss-crossed by long reddish-brown cracks. */
+  static ice(ctx, w, h, look, rng) {
+    ctx.fillStyle = look.color;
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = look.cracks;
+    for (let i = 0; i < 22; i++) {
+      let x = rng() * w, y = h * (0.15 + rng() * 0.7), a = rng() * TAU;
+      ctx.lineWidth = 0.6 + rng() * 1.6;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      for (let k = 0; k < 14; k++) {
+        a += (rng() - 0.5) * 0.4;
+        x += Math.cos(a) * 9;
+        y += Math.sin(a) * 4;
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  }
+
+  /** Io: sulphur yellow, blotched with red, orange and the black of fresh lava, and no craters (it's always being resurfaced). */
+  static sulphur(ctx, w, h, look, rng) {
+    ctx.fillStyle = look.color;
+    ctx.fillRect(0, 0, w, h);
+    for (let i = 0; i < 40; i++) {
+      ctx.fillStyle = i % 4 === 0 ? look.dark : i % 2 ? look.spots : '#f7f0c8';
+      BodyArt.spot(ctx, w, h, (rng() - 0.5) * 150, (rng() - 0.5) * 360, i % 4 === 0 ? 2 + rng() * 3 : 4 + rng() * 9);
+    }
   }
 
   /** Cloud bands: soft wavy stripes, and Jupiter's Great Red Spot or Neptune's dark one. */

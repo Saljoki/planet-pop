@@ -571,3 +571,64 @@ describe('the giants', () => {
     assert.match(card.dom.fly.textContent, /Ship courier/);
   });
 });
+
+describe('the moons of the giants', () => {
+  it('Io, Europa and Titan go round their planets on the map, and their cards say so', async () => {
+    const { app } = await makeWorld({ world: 'mars' });
+    const map = (app.map = new SystemMap(app));
+    map.show();
+    for (let i = 0; i < 60 && map.state !== 'open'; i++) map.update(0.05);
+    const at = (id) => map.scene.byId[id].pos;
+    for (const [id, host] of [['io', 'jupiter'], ['europa', 'jupiter'], ['titan', 'saturn']]) {
+      const d = at(id).distanceTo(at(host)), h = map.scene.byId[host], size = h.size * h.scale; // (drawn bigger from far away)
+      assert.ok(d > size * 4 && d < size * 7, `${id} ${d.toFixed(1)} from ${host}`);
+    }
+    assert.ok(at('europa').distanceTo(at('jupiter')) > at('io').distanceTo(at('jupiter')), 'Europa inside Io');
+    map.select(map.scene.byId.io);
+    assert.equal(map.card.goal().text, '🚀 Travel to Io');
+    assert.match(map.card.dom.kind.textContent, /Jupiter’s moon/);
+  });
+
+  it('Io’s named volcanoes, Europa’s cracks and plume, Titan’s seas and boats', async () => {
+    const io = await makeWorld({ world: 'io' });
+    assert.deepEqual(io.planet.volcanoes.map((v) => v.name), ['Pele', 'Prometheus', 'Tvashtar']);
+    const pele = io.planet.volcanoes[0], [x, y, z] = fromLatLon(-18.7, 104.7);
+    assert.ok(pele.d.x * x + pele.d.y * y + pele.d.z * z > 0.999, 'Pele where it really is');
+    assert.equal(io.planet.theme.air, 'none');
+    assert.ok(io.planet.space.entities.some((e) => e.name === 'Jupiter'), 'no Jupiter in Io’s sky');
+    run(io.app, 3);
+    io.planet.dispose();
+
+    const eu = await makeWorld({ world: 'europa' });
+    assert.equal(eu.planet.volcanoes[0].name, 'The south plume');
+    assert.ok(eu.planet.volcanoes[0].hgt < 1, 'a tall cone of ice');
+    const crack = WORLDS.europa.shape.features.find((f) => f.points).points[1];
+    assert.equal(eu.planet.hf.shape.paint(...fromLatLon(crack[0], crack[1])), 'mare', 'no crack painted');
+    eu.planet.dispose();
+
+    const ti = await makeWorld({ world: 'titan' });
+    const sea = (lat, lon) => ti.planet.heightAt(new THREE.Vector3(...fromLatLon(lat, lon)));
+    assert.ok(sea(68, -50) < -0.1 && sea(79, -112) < -0.1, 'Kraken and Ligeia Mare are dry');
+    assert.ok(sea(-10, -165) > 0, 'the dunes are under the sea');
+    assert.ok(ti.planet.boats.boats.length >= 1, 'no boats on the methane seas');
+    assert.equal(styleFor(ti.planet), 'plane');
+    ti.planet.dispose();
+  });
+
+  it('a parcel from Jupiter to Io is a short hop that pays little; Jupiter to Titan pays well', () => {
+    const courier = new SpaceCourier({ planet: null });
+    const io = courier.offer('jupiter', 'io', () => 0.1), titan = courier.offer('jupiter', 'titan', () => 0.1);
+    assert.ok(io.au < 0.01 && io.pay <= 20, `Io pays ${io.pay}`);
+    assert.ok(titan.au > 3 && titan.pay > io.pay * 3);
+    assert.ok(courier.offer('europa', 'io', () => 0.1).au < 0.01, 'two of Jupiter’s moons are near each other');
+  });
+
+  it('a trip from Jupiter to Europa lands by the pad, with Jupiter in the sky', async () => {
+    const app = await travelApp('jupiter');
+    assert.equal(app.trip.go('europa'), true);
+    await fly(app, 150, () => app.trip.state === 'idle' && app.planet.world.id === 'europa');
+    assert.equal(app.planet.world.id, 'europa');
+    assert.ok(!app.trip.card.dom.drive.classList.contains('hidden'), 'no rover on Europa');
+    assert.match(app.trip.card.dom.drive.textContent, /rover/);
+  });
+});

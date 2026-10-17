@@ -263,6 +263,37 @@ export default async function space({ page, frames, until, scene, open }) {
     await frames(4);
   });
 
+  await scene('real-io', 'Io: sulphur yellow, dark lava, Pele’s red ring, and Jupiter filling the sky', async () => {
+    await open('world=io');
+    await lookAt(page, -10, 100, 16);
+    await frames(4);
+  });
+
+  await scene('io-volcano', 'Pele erupting a plume of sulphur', async () => {
+    await page.evaluate(() => { const v = app.planet.volcanoes[0]; v.state = 'erupt'; v.timer = 60; });
+    await visit('volcano', 'Pele');
+    await until(() => app.rig.mode === 'local');
+    await frames(30);
+  });
+
+  await scene('real-europa', 'Europa: ice criss-crossed by reddish cracks, with Jupiter hanging overhead', async () => {
+    await open('world=europa');
+    await lookAt(page, 10, 80, 16);
+    await frames(4);
+  });
+
+  await scene('real-titan', 'Titan: thick orange haze, dark dunes, and methane seas in the north', async () => {
+    await open('world=titan');
+    await lookAt(page, 50, -60, 16);
+    await frames(4);
+  });
+
+  await scene('titan-huygens', 'Where Huygens landed on Titan, on the dark dunes', async () => {
+    await visit('landmark', 'The Huygens landing site');
+    await until(() => app.rig.mode === 'local');
+    await frames(6);
+  });
+
   await scene('phone-map', 'The system map on a phone, with a world’s card', async () => {
     await page.evaluate(() => app.hud.info.hide());
     await page.evaluate(() => app.game.stop());
