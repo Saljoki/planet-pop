@@ -7,6 +7,7 @@ import { shared } from '../render/Toon.js';
 export class Sky {
   constructor(scene) {
     this.dayLength = 150;            // seconds per full day at 1x
+    this.decl = 0;                   // how far (radians) the Sun stands off the equator, towards the axis (Uranus: near its pole)
     this.sunDir = shared.uSun.value; // same vector every shader reads
     this.axis = new THREE.Vector3(0.25, 1, 0.1).normalize();
     [this.su, this.sv] = tangentBasis(this.axis);
@@ -42,7 +43,8 @@ export class Sky {
 
   update(dt) {
     this.angle += (dt / this.dayLength) * TAU;
-    this.sunDir.copy(this.su).multiplyScalar(Math.cos(this.angle)).addScaledVector(this.sv, Math.sin(this.angle));
+    this.sunDir.copy(this.su).multiplyScalar(Math.cos(this.angle)).addScaledVector(this.sv, Math.sin(this.angle))
+      .multiplyScalar(Math.cos(this.decl)).addScaledVector(this.axis, Math.sin(this.decl));
     this.light.position.copy(this.sunDir).multiplyScalar(60);
     this.sun.position.copy(this.sunDir).multiplyScalar(450);
   }

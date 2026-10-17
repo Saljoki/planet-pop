@@ -16,7 +16,7 @@ import { EARTH_LAND } from './EarthLand.js';
  * Earth's are real cities). A landmark with pin: false is a
  * place in the clouds, with no flag; loop names the trophy for flying a loop round it (game/Feats.js).
  * volcanoes: where a world's volcanoes really are, with their names (Io's; Europa's plume of water), instead of
- * made-up ones on the highest ground.
+ * made-up ones on the highest ground. sunLat: the latitude the Sun stands over (Uranus, on its side: near its pole).
  */
 
 /** Europa's long cracks (lineae), stained reddish-brown: ridges of ice criss-crossing the whole moon. */
@@ -198,7 +198,7 @@ export const WORLDS = {
   },
   pluto: {
     id: 'pluto', name: 'Pluto', icon: '🤍', theme: 'pluto', seed: 2015, cities: 3, gravity: 0.063, day: -280,
-    welcome: 'Gravity here is a sixteenth of Earth’s: the longest jumps in the solar system.',
+    welcome: 'Gravity here is a sixteenth of Earth’s: a rover jumps sixteen times as far as at home.',
     pad: { lat: 30, lon: -175 },
     shape: {
       lift: 0.4, relief: 0.45, floor: 0.04,
@@ -241,8 +241,9 @@ export const WORLDS = {
   },
   uranus: {
     id: 'uranus', name: 'Uranus', icon: '💠', theme: 'uranus', seed: 1781, cities: 3, gravity: 0.89, day: -136, floating: true, giant: true,
-    welcome: 'Uranus rolls round the Sun on its side, and it’s −195°C up here. Wrap up warm.',
-    ...stations([[30, -110], [-22, 30], [18, 150]], { lat: -5, lon: -40 }),
+    welcome: 'Uranus rolls round the Sun on its side: just now the Sun circles the north pole, and the south has a night 21 years long.',
+    sunLat: 75, // (its northern summer: the Sun nearly overhead at the pole, in 2028)
+    ...stations([[30, -110], [-22, 30], [18, 150]], { lat: 20, lon: -40 }),
     rings: { inner: 14, outer: 15.4, faint: true },
     landmarks: [],
   },

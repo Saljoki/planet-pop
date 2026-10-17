@@ -129,9 +129,10 @@ card (`js/ui/AboutCard.js`) shows it, with the credits.
 
 ## Add a trophy
 
-1. Add `[id, icon, title, description]` to `DEFS` in `js/ui/Achievements.js`.
+1. Add `[id, icon, title, description]` to `DEFS` in `js/ui/Achievements.js`, and its id to a group in `GROUPS` there
+   (the trophy list shows them in groups; one in no group is "on the planet").
 2. Unlock it where it's earned: `app.achievements.unlock(id)`. For "follow a … " trophies, add a rule to
-   `js/ui/TrophyWatch.js` instead.
+   `js/ui/TrophyWatch.js` instead; for a move in a vehicle (a loop round a storm, a long jump), `js/game/Feats.js`.
 
 ## Add a sound
 
@@ -168,7 +169,12 @@ planets pick it up from there. Add its id to the list of worlds `tests/themes.te
 - **A moon of another planet** is a body with a `parent` (and `days`, `L0`, `gap`, `au`, `around`: see Bodies.js); the
   map puts it round its planet, and the space courier prices it by its real distance. A world's `volcanoes` puts
   named volcanoes where they really are (Io's), and its theme's `volcano` recolours them (sulphur, or Europa's water).
-  A theme's sky `moons` can include a giant planet: `{ kind: 'gas', body: 'jupiter', size, dist }`.
+  A theme's sky `moons` can include a planet drawn as on the map: `{ kind: 'map', body: 'jupiter', size, dist }`.
+- **Real towns:** a world's `towns` can give each town a real name (`[lat, lon, name]`, as on Earth); they're placed
+  before any others, a little closer together than made-up ones may be. `sunLat` stands the Sun over a latitude
+  (Uranus, on its side), through `Sky.decl`.
+- **Rex in space:** `SpaceCourier.offer` marks some parcels `rex`; `Cruise` races his rocket and leaves his lead on
+  `job.rex.lead`; `SpaceDropRun.spawnRex` puts him in the last stretch with it.
 - **A body on the map** (`js/space/Bodies.js`): NASA's numbers for the card, how it's drawn (`look`: picked up by
   `BodyArt`), and `orbit`, its name in `ORBITS` (`js/space/Orbits.js`, JPL's elements). The map squeezes sizes and
   distances with a square root (`mapSize`, `mapPosition`).

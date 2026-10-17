@@ -104,6 +104,9 @@ export class Sfx {
       case 'ding': T(1568, 0, 0.3, 'triangle', 0.07); T(1568, 0, 0.4, 'triangle', 0.07, 0.22); break;
       case 'whup': [0, 0.12, 0.24, 0.36, 0.48].forEach((d) => N(0.07, 0.3, 320, 140, d)); break;
       case 'rumble': N(1.6, 0.35, 160, 60); break;
+      case 'liftoff': N(2.6, 0.45, 120, 900); T(55, 140, 2.4, 'sawtooth', 0.06); break;
+      case 'thrust': N(0.5, 0.2, 400, 2400); break;
+      case 'crunch': N(0.3, 0.4, 4000, 700); T(1300, 450, 0.16, 'square', 0.03); break;
       case 'ufo': T(300, 1300, 0.5, 'sine', 0.06); T(1300, 250, 0.7, 'sine', 0.06, 0.5); break;
       case 'chirp': T(700, 1100, 0.08, 'triangle', 0.05); T(900, 1300, 0.08, 'triangle', 0.05, 0.1); break;
       case 'squawk': T(1100, 600, 0.1, 'sawtooth', 0.035); T(1100, 600, 0.1, 'sawtooth', 0.035, 0.14); break;

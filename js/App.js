@@ -193,6 +193,7 @@ export class App {
     if (planet.world) Object.assign(this.params, { seed: planet.params.seed, theme: planet.params.theme, cities: planet.params.cities });
     this.sky.setTheme(planet.theme);
     this.sky.dayLength = planet.world?.day ?? 150;
+    this.sky.decl = ((planet.world?.sunLat ?? 0) * Math.PI) / 180; // (Uranus, on its side: the Sun over its north pole)
     this.hud.setTheme(planet.world ?? planet.theme);
     if (!initial) this.achievements.unlock('newworld');
     if (!planet.world || planet.world.id === 'earth') this.achievements.visitTheme(planet.theme.id); // (the kinds of made-up world)

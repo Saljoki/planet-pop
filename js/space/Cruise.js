@@ -153,6 +153,8 @@ export class Cruise {
     this.y = clamp(this.y + this.vy * dt, -1, 1);
 
     const boost = this.boosting && this.fuel > 0 && !this.arrived;
+    if (boost && !this.wasBoosting) this.app.sfx.play('thrust'); // (a roar each time the boost kicks in)
+    this.wasBoosting = boost;
     if (boost) this.fuel = Math.max(0, this.fuel - dt * 0.25);
     this.slow = Math.max(0, this.slow - dt);
     this.s += (this.arrived ? 0 : this.speed * (boost ? 2 : 1) * (this.slow > 0 ? 0.35 : 1)) * dt;
@@ -188,7 +190,7 @@ export class Cruise {
       this.rocks++;
       this.slow = 0.9;
       this.shake = 0.5;
-      app.sfx.pop(null, it.ice ? 'CRUNCH!' : 'BONK!', it.ice ? '#cfeaff' : '#ff4d4d', 'crash');
+      app.sfx.pop(null, it.ice ? 'CRUNCH!' : 'BONK!', it.ice ? '#cfeaff' : '#ff4d4d', it.ice ? 'crunch' : 'crash');
       app.haptics?.buzz('crash');
     }
   }

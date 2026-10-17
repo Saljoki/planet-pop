@@ -339,7 +339,9 @@ describe('Venus, Mercury and Pluto', () => {
     assert.equal(planet.space.moons.length, 1, 'Charon');
     assert.ok(planet.landmarks.entities.some((e) => e.name === 'The Ice Hotel'));
     assert.ok(planet.padSite.d.angleTo(new planet.padSite.d.constructor(...fromLatLon(30, -175))) < 1e-6, 'the spaceport where Pluto says');
-    assert.ok(Math.min(...Object.values(WORLDS).map((w) => w.gravity)) === WORLDS.pluto.gravity);
+    assert.ok(Object.values(WORLDS).filter((w) => w.gravity < WORLDS.pluto.gravity).every((w) => BODIES.find((b) => b.id === w.id).parent),
+      'only moons should have less gravity than Pluto');
+    assert.equal(Math.min(...Object.values(WORLDS).map((w) => w.gravity)), WORLDS.enceladus.gravity, 'Enceladus has the lightest gravity');
     run(app, 10);
     assertFiniteInstances(planet.root, 'pluto');
   });
@@ -729,5 +731,45 @@ describe('four more moons', () => {
     await fly(app, 120, () => app.trip.state === 'idle' && app.planet.world.id === 'charon');
     assert.equal(app.planet.world.id, 'charon');
     assert.ok(app.spaceCourier.offer('pluto', 'charon', () => 0.1).pay <= 20, 'next door should pay little');
+  });
+});
+
+describe('polish', () => {
+  it('on Uranus the Sun circles the north pole: endless day up there, endless night in the far south', async () => {
+    const app = await travelApp('uranus');
+    app.swapIn(app.planet);
+    assert.ok(app.sky.decl > 1.2, 'the Sun should stand near the pole');
+    const north = new THREE.Vector3(...fromLatLon(80, 0)), south = new THREE.Vector3(...fromLatLon(-40, 0));
+    for (let k = 0; k < 8; k++) {
+      app.sky.angle = (k / 8) * Math.PI * 2;
+      app.sky.update(0);
+      assert.ok(app.planet.nightAt(north) < 0.5, 'night at Uranus’s north pole in its summer');
+      assert.ok(app.planet.nightAt(south) > 0.5, 'day in the far south of Uranus in its winter');
+    }
+    const earth = await travelApp('earth');
+    earth.swapIn(earth.planet);
+    assert.equal(earth.sky.decl, 0, 'the Sun should be back over the equator');
+  });
+
+  it('every trophy is in one group of the list, and every group’s trophies exist', async () => {
+    const { GROUPS } = await import('../js/ui/Achievements.js');
+    const { app } = await makeWorld({ world: 'moon' }), list = app.achievements.list(), ids = new Set(list.map((t) => t.id));
+    for (const g of GROUPS) for (const id of g.ids ?? []) assert.ok(ids.has(id), `${g.id} lists a trophy that doesn’t exist: ${id}`);
+    for (const t of list) assert.ok(GROUPS.some((g) => g.id === t.group), `${t.id} has no group`);
+    assert.ok(list.filter((t) => t.group === 'space').length >= 12);
+  });
+
+  it('every sound the game asks for is one Sfx can make', async () => {
+    const { readFileSync, readdirSync, statSync } = await import('node:fs');
+    const files = (dir) => readdirSync(dir).flatMap((f) => (statSync(`${dir}/${f}`).isDirectory() ? files(`${dir}/${f}`) : f.endsWith('.js') ? [`${dir}/${f}`] : []));
+    const sfx = readFileSync('js/ui/Sfx.js', 'utf8'), known = new Set([...[...sfx.matchAll(/case '([a-z]+)'/g)].map((m) => m[1]), 'none']); // ('none': a silent bubble)
+    for (const f of files('js')) {
+      const src = readFileSync(f, 'utf8');
+      for (const m of src.matchAll(/sfx\??\.(?:play\('([a-z]+)'\)|pop\([^;]*?, '([a-z]+)'\))/g)) {
+        const name = m[1] ?? m[2];
+        assert.ok(known.has(name), `${f} asks for a sound Sfx can’t make: ${name}`);
+      }
+    }
+    for (const name of ['liftoff', 'thrust', 'crunch']) assert.ok(known.has(name));
   });
 });

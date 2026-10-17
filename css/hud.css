@@ -49,6 +49,9 @@
 .trophy { display: flex; gap: 10px; align-items: center; text-align: left; font-size: 18px; padding: 4px 0; }
 .trophy small { display: block; font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.7; }
 .trophy.locked { opacity: 0.45; }
+#trophyList h3 { margin: 14px 0 4px; font-weight: normal; font-size: 20px; text-align: left; }
+#trophyList h3:first-child { margin-top: 0; }
+#trophyList h3 small { font-size: 14px; opacity: 0.7; }
 
 @keyframes pop {
   0%   { transform: translate(-50%, -50%) scale(0.2) rotate(-12deg); opacity: 0; }

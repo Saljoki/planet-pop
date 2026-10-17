@@ -5,15 +5,16 @@ strolling the streets, trams and traffic with signals, airports where planes lan
 with ferries, sightseeing helicopters, whales, a train with a tunnel, balloons, bird flocks, weather with
 rainbows, an erupting volcano, midnight fireworks, meteor showers, auroras over the poles, the odd UFO,
 a rocket pad, satellites, a space station, a moon and an ambient soundscape. Planets come in five kinds:
-classic, ice, desert, candy and lava, and there are thirteen real worlds to visit: **Earth** with its real continents,
+classic, ice, desert, candy and lava, and there are seventeen real worlds to visit: **Earth** with its real continents and cities,
 **the Moon** and **Mars** mapped from real data, the cloud cities of **Venus**, **Mercury** with its rolling town,
 **Pluto** with its ice hotel, the giants **Jupiter**, **Saturn** (rings and all), **Uranus** and **Neptune** with their
-cloud stations, and the moons **Io**, **Europa** and **Titan**, on a 🪐 **map of the solar system** with every planet
+cloud stations, and the moons **Io**, **Europa**, **Ganymede**, **Titan**, **Enceladus**, **Triton** and **Charon**, on a 🪐
+**map of the solar system** with every planet
 where it really is today, and **rocket trips** between them, with a 🚀 **space courier** taking parcels from world to
 world. Plus the **Sky Courier** mini-game with twenty-two missions (twelve on the real worlds), a daily challenge (on a
 real world about every other day) and free flight, **road trips** (drive any car or steer any boat, taxi, van courier and a race round
 the world) with a 🗺️ mini-map, 👥 playing with friends on the same planet, a 📍 Find menu, a hands-free 📺 tour, a
-photo mode and 54 trophies. It's built for
+photo mode and 55 trophies (in groups). It's built for
 phones as much as laptops (touch gestures, a thumbstick, tilt steering), installs as an app and works offline.
 
 Every planet is generated from a seed. The address bar always holds the current planet
@@ -90,7 +91,9 @@ service worker picks up the new version (the tests check this).
   width, day, year, gravity and temperature (NASA's figures), and how far away it is on the date shown. A made-up
   planet shows up out beyond Pluto. **⬇️ Back** (or pinching in on your world) returns to it.
 - **The real worlds:** Earth has its real continents (from Natural Earth's public-domain map), with the Himalaya,
-  Andes, Rockies and Alps, the ice caps and the great deserts where they are. The Moon has its dark seas, Tycho and
+  Andes, Rockies and Alps, the ice caps and the great deserts where they are, and its towns are real cities where they
+  really are: Moscow, Beijing, Chicago, Brasília, Kano, Lusaka and Alice Springs (a town here is about 1,800 km across,
+  so they're the great cities far enough inland to fit; coastal ones like London or Sydney can't). The Moon has its dark seas, Tycho and
   Copernicus, and the Apollo 11 lander at Tranquility Base, with Earth hanging in a black sky. Mars has Olympus Mons and
   the Tharsis volcanoes, Valles Marineris, Hellas, its ice caps, Gale and Jezero craters, and Phobos and Deimos
   overhead, and dust storms sweeping across it (no lightning). Landmarks show up in 📍 Find with a card about each. No
@@ -107,13 +110,18 @@ service worker picks up the new version (the tests check this).
   and you get about by ship (there's nothing to drive on). **Jupiter** is striped, with the Great Red Spot swirling
   (fly a loop round it) and Io, Europa, Ganymede and Callisto in the sky; **Saturn** has its hexagon round the north
   pole and its rings across the sky, whose inner edge comes down within reach: chunks of ice to weave through (or
-  crunch into), and ring ice to dodge in the cruise on the way in; **Uranus** is pale blue-green with faint dark rings;
+  crunch into), and ring ice to dodge in the cruise on the way in; **Uranus** is pale blue-green with faint dark rings,
+  and lies on its side: just now the Sun circles its north pole, and the south has a night 21 years long;
   **Neptune** has the Great Dark Spot and the fastest winds in the solar system, which carry your ship west.
 - **The moons:** **Io** has over 400 volcanoes; Pele, Prometheus and Tvashtar erupt where they really are, throwing up
   sulphur, round Loki Patera's lava lake, with Jupiter huge overhead. **Europa** is ice criss-crossed by reddish cracks
   over a hidden ocean, with Conamara Chaos, Pwyll and a plume of water from the south. **Titan** has thick orange air
   and low gravity (planes fly beautifully), methane rain, dark dunes, bright Xanadu, boats on the methane seas round
-  the north pole, Saturn in its sky, and the Huygens probe where it landed in 2005.
+  the north pole, Saturn in its sky, and the Huygens probe where it landed in 2005. **Ganymede**, the biggest moon,
+  has dark Galileo Regio, bright grooves and an aurora of its own; **Enceladus** is dazzling white, with geysers of
+  water spraying from the tiger stripes round its south pole and Saturn huge overhead; **Triton** goes round Neptune
+  backwards, with pink nitrogen frost, the cantaloupe terrain and geysers streaking it dark; **Charon** has its red
+  north pole, deep canyons and Pluto hanging still in its sky.
 - **🚀 Trips:** a world's card has **Travel to …**: board the rocket on your spaceport's pad, 3-2-1, lift off, then
   cruise across the map: steer (drag, arrow keys or WASD) to catch ⭐ fuel stars (a coin each) and miss the rocks
   (thickest in the asteroid belt), and boost (Space, or **🔥 Boost**) with the fuel. The next world is built while you
@@ -123,10 +131,13 @@ service worker picks up the new version (the tests check this).
   rocket leaves at once; the parcel's clock runs through the trip and the last stretch, from the spaceport to its town
   by rover or by hopper, glider or plane. On time pays in full and builds a streak (up to +50%), late pays half, and a
   fragile parcel broken on the way pays nothing. One parcel at a time; drop it from the board if you change your mind.
+  😈 Rival Rex is after about a third of the parcels too, and they pay half as much again: his purple rocket races
+  yours through the cruise (boost and miss the rocks to stay ahead), he carries his lead into the last stretch, and if
+  he gets to the town first he takes the parcel and your streak.
 - **Getting about:** with no air to speak of, cars on the Moon, Mars, Mercury and Pluto are six-wheeled rovers
   (traffic too), Sky Courier flies a rocket hopper where there's no air and a long-winged glider on Mars, and everything
-  falls with the world's real gravity: a crest on the Moon sends a rover six times as far as on Earth, and on Pluto
-  further still.
+  falls with the world's real gravity: a crest on the Moon sends a rover six times as far as on Earth, on Pluto
+  further still, and on Enceladus (a hundredth of Earth's gravity) furthest of all.
 - **👥 Friends** on a real world show up as "on Mars" (say), and **Go there** flies you there by rocket.
 - **On a phone** the control panel and Find slide up from the bottom (drag the bar down to close them), or in
   from the right with the phone on its side. Buttons are finger-sized and keep clear of notches. The screen

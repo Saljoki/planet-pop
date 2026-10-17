@@ -262,10 +262,11 @@ export default async function space({ page, frames, until, scene, open }) {
     await frames(16);
   });
 
-  await scene('real-uranus', 'Uranus: pale blue-green cloud and faint rings', async () => {
+  await scene('real-uranus', 'Uranus on its side: the Sun over the north pole, the south in a long night, and faint rings', async () => {
     await page.evaluate(() => app.game.stop());
     await open('world=uranus');
-    await lookAt(page, 20, -60, 15);
+    await lookAt(page, 20, -60, 18);
+    await page.evaluate(() => { app.sky.angle = 0.6; app.sky.update(0); });
     await frames(4);
   });
 
@@ -329,6 +330,15 @@ export default async function space({ page, frames, until, scene, open }) {
     await open('world=charon');
     await lookAt(page, 40, -20, 17);
     await frames(4);
+  });
+
+  await scene('trophy-groups', 'The trophy list in its groups: on the planet, Sky Courier and road trips, out in space', async () => {
+    await page.evaluate(() => {
+      for (const id of ['rocketman', 'earthrise', 'grandtour', 'courier', 'birdwatcher']) app.achievements.unlock(id);
+      app.hud.showTrophies(app.achievements.list());
+      document.querySelector('#trophyList h3:nth-of-type(3)')?.scrollIntoView();
+    });
+    await frames(3);
   });
 
   await scene('phone-map', 'The system map on a phone, with a world’s card', async () => {

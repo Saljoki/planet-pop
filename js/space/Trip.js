@@ -46,7 +46,7 @@ export class Trip {
       this.t += dt;
       const c = Math.ceil(COUNT - 0.6 - this.t);
       if (c >= 1 && c <= 3 && c < this.count) { this.count = c; this.app.sfx.pop(space.rocket.position.clone(), `${c}!`, '#ffd23f'); }
-      if (this.t >= COUNT) { space.launch(); this.state = 'climb'; this.t = 0; }
+      if (this.t >= COUNT) { space.launch(); this.app.sfx.play('liftoff'); this.state = 'climb'; this.t = 0; }
     } else if (this.state === 'climb') {
       this.t += dt;
       if (this.t >= CLIMB) this.cruise();
@@ -89,6 +89,7 @@ export class Trip {
       Object.assign(rig.orbit, { yaw: Math.atan2(d.x, d.z), pitch: Math.asin(d.y), alt: 30, heading: 0, tilt: 0 });
       rig.apply(rig.orbit.pose(rig.pose));
     }
+    app.sfx.play('rumble'); // (the rocket's engines, coming down)
     space?.land(() => this.done(planet.world, stars));
     if (space?.rocketEntity) this.watch(space);
     else this.done(planet.world, stars);
