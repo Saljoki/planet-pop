@@ -1,6 +1,7 @@
 import { InfoCard } from './InfoCard.js';
 import { ControlPanel } from './ControlPanel.js';
 import { AboutCard } from './AboutCard.js';
+import { GROUPS } from './Achievements.js';
 
 /**
  * The planet view's screen furniture: the title, hint and world tag, the buttons along the top, the ☰ Controls
@@ -153,9 +154,13 @@ export class Hud {
 
   hideLabel() { this.$('hoverLabel')?.classList.add('hidden'); }
 
+  /** The trophy list, in its groups (Achievements GROUPS), each with how many are won. */
   showTrophies(list) {
-    this.$('trophyList').innerHTML = list.map((t) =>
-      `<div class="trophy ${t.unlocked ? '' : 'locked'}"><span>${t.unlocked ? t.icon : '🔒'}</span><div>${t.title}<small>${t.desc}</small></div></div>`).join('');
+    const row = (t) => `<div class="trophy ${t.unlocked ? '' : 'locked'}"><span>${t.unlocked ? t.icon : '🔒'}</span><div>${t.title}<small>${t.desc}</small></div></div>`;
+    this.$('trophyList').innerHTML = GROUPS.map((g) => {
+      const mine = list.filter((t) => t.group === g.id);
+      return mine.length ? `<h3>${g.name} <small>${mine.filter((t) => t.unlocked).length} / ${mine.length}</small></h3>${mine.map(row).join('')}` : '';
+    }).join('');
     this.$('trophyBox').classList.remove('hidden');
   }
 }

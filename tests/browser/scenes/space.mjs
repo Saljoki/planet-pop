@@ -206,6 +206,18 @@ export default async function space({ page, frames, until, scene, open }) {
     await frames(8);
   });
 
+  await scene('space-race', 'Racing Rival Rex through space for a parcel', async () => {
+    await page.evaluate(() => {
+      app.hud.info.hide();
+      const c = app.spaceCourier, o = { ...c.offer('mars', 'earth'), rex: true };
+      c.take(o);
+      app.timeScale = 4;
+    });
+    await until(() => app.trip.state === 'cruise', 240000);
+    await page.evaluate(() => { app.timeScale = 1; const c = app.map.cruiser; c.s = c.len * 0.3; c.rex.s = c.len * 0.33; c.x = -0.35; });
+    await frames(6);
+  });
+
   await scene('real-jupiter', 'Jupiter: striped cloud, the Great Red Spot swirling, stations hanging from balloons', async () => {
     await page.evaluate(() => app.hud.info.hide());
     await open('world=jupiter');
@@ -250,10 +262,11 @@ export default async function space({ page, frames, until, scene, open }) {
     await frames(16);
   });
 
-  await scene('real-uranus', 'Uranus: pale blue-green cloud and faint rings', async () => {
+  await scene('real-uranus', 'Uranus on its side: the Sun over the north pole, the south in a long night, and faint rings', async () => {
     await page.evaluate(() => app.game.stop());
     await open('world=uranus');
-    await lookAt(page, 20, -60, 15);
+    await lookAt(page, 20, -60, 18);
+    await page.evaluate(() => { app.sky.angle = 0.6; app.sky.update(0); });
     await frames(4);
   });
 
@@ -292,6 +305,40 @@ export default async function space({ page, frames, until, scene, open }) {
     await visit('landmark', 'The Huygens landing site');
     await until(() => app.rig.mode === 'local');
     await frames(6);
+  });
+
+  await scene('real-ganymede', 'Ganymede: dark old plains, bright grooves, and an aurora of its own', async () => {
+    await open('world=ganymede');
+    await lookAt(page, 30, -140, 17);
+    await frames(4);
+  });
+
+  await scene('real-enceladus', 'Enceladus: dazzling white, with the tiger stripes round its south pole spraying water', async () => {
+    await open('world=enceladus');
+    await page.evaluate(() => app.planet.volcanoes.forEach((v) => { v.state = 'erupt'; v.timer = 60; }));
+    await lookAt(page, -70, -40, 16);
+    await frames(30);
+  });
+
+  await scene('real-triton', 'Triton: pink nitrogen frost, the cantaloupe terrain, dark geyser streaks, Neptune overhead', async () => {
+    await open('world=triton');
+    await lookAt(page, -10, -20, 17);
+    await frames(4);
+  });
+
+  await scene('real-charon', 'Charon: its red north pole, the canyons, and Pluto hanging in the sky', async () => {
+    await open('world=charon');
+    await lookAt(page, 40, -20, 17);
+    await frames(4);
+  });
+
+  await scene('trophy-groups', 'The trophy list in its groups: on the planet, Sky Courier and road trips, out in space', async () => {
+    await page.evaluate(() => {
+      for (const id of ['rocketman', 'earthrise', 'grandtour', 'courier', 'birdwatcher']) app.achievements.unlock(id);
+      app.hud.showTrophies(app.achievements.list());
+      document.querySelector('#trophyList h3:nth-of-type(3)')?.scrollIntoView();
+    });
+    await frames(3);
   });
 
   await scene('phone-map', 'The system map on a phone, with a world’s card', async () => {

@@ -68,7 +68,7 @@ export class BodyArt {
     BodyArt.craters(ctx, w, h, rng, 40);
   }
 
-  /** Bare rock with darker patches; Mars's dark areas and ice caps, Pluto's pale heart. */
+  /** Bare rock with darker patches; Mars's dark areas and ice caps, Pluto's pale heart, Charon's red pole. */
   static rock(ctx, w, h, look, rng) {
     ctx.fillStyle = look.color;
     ctx.fillRect(0, 0, w, h);
@@ -81,6 +81,10 @@ export class BodyArt {
       ctx.fillStyle = look.caps;
       ctx.fillRect(0, 0, w, h * (9 / 180));
       ctx.fillRect(0, h * (172 / 180), w, h * (8 / 180));
+    }
+    if (look.pole) { // Charon's red north pole
+      ctx.fillStyle = look.pole;
+      ctx.fillRect(0, 0, w, h * (22 / 180));
     }
     if (look.heart) { // Tombaugh Regio, the heart, faces Charon's way round from longitude 180
       ctx.fillStyle = look.heart;

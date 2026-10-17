@@ -14,7 +14,8 @@ export class Aurora {
     this.planet = planet;
     this.poles = [1, -1].map((s) => planet.app.sky.axis.clone().multiplyScalar(s));
     const rng = planet.rng, pos = [], uv = [], out = [], idx = [];
-    this.lit = planet.theme.air || planet.theme.aurora === false ? [] : this.poles; // (an aurora needs an atmosphere to glow in)
+    const t = planet.theme; // (an aurora needs an atmosphere to glow in, or a magnetic field of its own: Ganymede's)
+    this.lit = t.aurora === true || (!t.air && t.aurora !== false) ? this.poles : [];
     for (const pole of this.lit) {
       const [u, v] = tangentBasis(pole);
       for (let c = 0; c < CURTAINS; c++) {

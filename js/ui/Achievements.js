@@ -51,12 +51,23 @@ const DEFS = [
   ['terminus', '🚉', 'All Aboard', 'Visit Terminus, the town on rails'],
   ['icehotel', '🛎️', 'Check In', 'Visit the Ice Hotel on Pluto'],
   ['spacecourier', '📦', 'Interplanetary', 'Deliver a parcel to another world'],
+  ['spacerace', '🥇', 'Space Race', 'Beat Rival Rex to a parcel on another world'],
   ['spacemissions', '🛰️', 'Mission Control', 'Complete every mission on the real worlds'],
   ['redspot', '🌀', 'Eye of the Storm', 'Fly a loop round Jupiter’s Great Red Spot'],
   ['ringrunner', '💫', 'Ring Runner', 'Fly through Saturn’s ring ice without touching any'],
   ['windrider', '💨', 'Gone with the Wind', 'Let Neptune’s winds carry you a quarter of the way round'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
+/** The trophy list's groups, in order: everything not named here is out on the planet. */
+export const GROUPS = [
+  { id: 'planet', name: '🌍 On the planet' },
+  { id: 'game', name: '✈️ Sky Courier and road trips', ids: ['courier', 'combo', 'ace', 'mechanic', 'lightningrod', 'outrun', 'daily', 'missions',
+    'sightseer', 'totalled', 'joyrider', 'sailor', 'cabbie', 'vanman', 'racer'] },
+  { id: 'space', name: '🚀 Out in space', ids: ['rocketman', 'fuelup', 'grandtour', 'earthrise', 'longjump', 'terminus', 'icehotel', 'spacecourier',
+    'spacerace', 'spacemissions', 'redspot', 'ringrunner', 'windrider'] },
+];
+const groupOf = (id) => GROUPS.find((g) => g.ids?.includes(id))?.id ?? 'planet';
+
 const KEY = 'planetpop.trophies', WORLDS_KEY = 'planetpop.worlds', WORLD_KINDS = 5;
 const VISITED_KEY = 'planetpop.visited'; // (the real worlds visited: ids)
 
@@ -100,5 +111,6 @@ export class Achievements {
     if (this.cities.size >= 3) this.unlock('tourist');
   }
 
-  list() { return DEFS.map(([id, icon, title, desc]) => ({ id, icon, title, desc, unlocked: this.done.has(id) })); }
+  /** Every trophy, with its group (GROUPS) and whether it's won. */
+  list() { return DEFS.map(([id, icon, title, desc]) => ({ id, icon, title, desc, group: groupOf(id), unlocked: this.done.has(id) })); }
 }

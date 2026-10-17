@@ -6,7 +6,7 @@ import { WORLDS, WORLD_IDS } from '../js/space/Worlds.js';
 import { styleFor } from '../js/game/vehicles/Plane.js';
 import { RoadBoard } from '../js/game/screens/RoadBoard.js';
 import { BODIES } from '../js/space/Bodies.js';
-import { position, moonAngle, mapPosition } from '../js/space/Orbits.js';
+import { position, moonAngle, orbitAngle, mapPosition } from '../js/space/Orbits.js';
 import { fromLatLon } from '../js/core/WorldShape.js';
 import { SystemMap } from '../js/space/SystemMap.js';
 import { Trip } from '../js/space/Trip.js';
@@ -339,7 +339,9 @@ describe('Venus, Mercury and Pluto', () => {
     assert.equal(planet.space.moons.length, 1, 'Charon');
     assert.ok(planet.landmarks.entities.some((e) => e.name === 'The Ice Hotel'));
     assert.ok(planet.padSite.d.angleTo(new planet.padSite.d.constructor(...fromLatLon(30, -175))) < 1e-6, 'the spaceport where Pluto says');
-    assert.ok(Math.min(...Object.values(WORLDS).map((w) => w.gravity)) === WORLDS.pluto.gravity);
+    assert.ok(Object.values(WORLDS).filter((w) => w.gravity < WORLDS.pluto.gravity).every((w) => BODIES.find((b) => b.id === w.id).parent),
+      'only moons should have less gravity than Pluto');
+    assert.equal(Math.min(...Object.values(WORLDS).map((w) => w.gravity)), WORLDS.enceladus.gravity, 'Enceladus has the lightest gravity');
     run(app, 10);
     assertFiniteInstances(planet.root, 'pluto');
   });
@@ -630,5 +632,144 @@ describe('the moons of the giants', () => {
     assert.equal(app.planet.world.id, 'europa');
     assert.ok(!app.trip.card.dom.drive.classList.contains('hidden'), 'no rover on Europa');
     assert.match(app.trip.card.dom.drive.textContent, /rover/);
+  });
+});
+
+describe('Earth’s real towns', () => {
+  it('the towns are real cities, where they really are', async () => {
+    const { planet } = await makeWorld({ world: 'earth' });
+    const names = planet.cities.sites.map((s) => s.name);
+    assert.deepEqual(names, WORLDS.earth.towns.map((t) => t[2]), 'a real city missing (or a made-up one in its place)');
+    for (const [lat, lon, name] of WORLDS.earth.towns) {
+      const site = planet.cities.sites.find((s) => s.name === name), want = new THREE.Vector3(...fromLatLon(lat, lon));
+      assert.ok(site.c.angleTo(want) < 0.001, `${name} moved`);
+    }
+    const sep = Math.min(...planet.cities.sites.flatMap((a, i) => planet.cities.sites.slice(i + 1).map((b) => a.c.angleTo(b.c))));
+    assert.ok(sep > 0.5, 'two towns overlap');
+    planet.dispose();
+  });
+});
+
+describe('Rex in space', () => {
+  const seq = (...v) => { let i = 0; return () => v[i++ % v.length]; };
+
+  it('races you through the cruise, and takes the parcel if he reaches the town first', async () => {
+    localStorage.clear();
+    const app = await travelApp('earth'), courier = app.spaceCourier, game = app.game;
+    const plain = courier.offer('earth', 'mars', seq(0.1, 0.5, 0.1)), raced = courier.offer('earth', 'mars', seq(0.1, 0.5, 0.9));
+    assert.ok(!plain.rex && raced.rex, 'Rex should want the second one');
+    assert.equal(raced.pay, Math.round((plain.pay * 1.5) / 5) * 5, 'a parcel Rex is after pays half as much again');
+    courier.take(raced);
+    await fly(app, 60, () => app.trip.state === 'cruise');
+    const c = app.map.cruiser;
+    assert.ok(c.rex && c.rexShip.visible, 'no Rex rocket in the cruise');
+    await fly(app, 4);
+    assert.ok(c.rexGap > 0, 'Rex should pull ahead of a ship that never boosts');
+    await fly(app, 120, () => app.trip.state === 'idle' && app.planet.world.id === 'mars');
+    assert.ok(courier.job.rex.lead > 0, 'Rex’s lead from the cruise was lost');
+    assert.match(app.trip.card.dom.note.textContent, /Rex is \d+ s ahead/);
+    game.start({ space: true });
+    assert.ok(game.run.rival, 'no Rex in the last stretch');
+    const pl = game.player;
+    for (let i = 0; i < 20 * 90 && !game.over; i++) { pl.up.copy(game.run.from?.c ?? pl.up); game.update(1 / 20); } // (you dawdle at the spaceport)
+    assert.ok(game.over, 'Rex never got there');
+    assert.match(game.results.dom.title.textContent, /got there first/);
+    assert.equal(courier.job, null);
+    assert.equal(courier.streak, 0);
+    game.stop();
+  });
+
+  it('beat him and it pays its extra, with a trophy', async () => {
+    localStorage.clear();
+    const app = await travelApp('mars'), courier = app.spaceCourier, game = app.game;
+    const offer = courier.offer('earth', 'mars', seq(0.1, 0.5, 0.9));
+    courier.job = { ...offer, left: 80, broken: false, rex: { lead: -30 } };
+    const coins = game.progress.coins;
+    game.start({ space: true });
+    const run = game.run, pl = game.player;
+    assert.ok(run.rival.rest > 25, 'Rex should be waiting his turn');
+    pl.up.copy(run.town.c);
+    pl.alt = app.planet.surfR(run.town.c) + 1;
+    game.update(1 / 60);
+    assert.ok(game.over && game.progress.coins >= coins + offer.pay);
+    assert.match(game.results.dom.result.innerHTML, /beat Rival Rex/);
+    assert.ok(app.unlocked.includes('spacerace'));
+    game.stop();
+  });
+});
+
+describe('four more moons', () => {
+  it('Ganymede, Enceladus, Triton and Charon: their planets, their looks, their geysers', async () => {
+    const want = { ganymede: 'jupiter', enceladus: 'saturn', triton: 'neptune', charon: 'pluto' };
+    for (const [id, host] of Object.entries(want)) assert.equal(BODIES.find((b) => b.id === id).parent, host);
+    const tri = BODIES.find((b) => b.id === 'triton');
+    const turn = orbitAngle(tri, Date.UTC(2026, 0, 2)) - orbitAngle(tri, Date.UTC(2026, 0, 1)), step = Math.atan2(Math.sin(turn), Math.cos(turn));
+    assert.ok(step < -0.9 && step > -1.3, `Triton should go round backwards, about 61° a day (${((step * 180) / Math.PI).toFixed(0)}°)`);
+
+    const gan = await makeWorld({ world: 'ganymede' });
+    assert.ok(gan.planet.aurora.lit.length > 0, 'no aurora on Ganymede');
+    assert.ok(gan.planet.space.entities.some((e) => e.name === 'Jupiter'));
+    gan.planet.dispose();
+    const enc = await makeWorld({ world: 'enceladus' });
+    assert.deepEqual(enc.planet.volcanoes.map((v) => v.name), ['Baghdad Sulcus', 'Damascus Sulcus']);
+    assert.ok(enc.planet.space.entities.some((e) => e.name === 'Saturn'));
+    run(enc.app, 2);
+    enc.planet.dispose();
+    const tr = await makeWorld({ world: 'triton' });
+    assert.deepEqual(tr.planet.volcanoes.map((v) => v.name), ['Hili', 'Mahilani']);
+    assert.equal(tr.planet.hf.shape.paint(...fromLatLon(-60, 100)), 'snow', 'no pink cap in the south');
+    tr.planet.dispose();
+    const ch = await makeWorld({ world: 'charon' });
+    assert.equal(ch.planet.hf.shape.paint(...fromLatLon(80, 0)), 'rust', 'Mordor Macula isn’t red');
+    assert.ok(ch.planet.space.entities.some((e) => e.name === 'Pluto'), 'no Pluto in Charon’s sky');
+    ch.planet.dispose();
+  });
+
+  it('a trip from Pluto to Charon is a short hop that lands', async () => {
+    const app = await travelApp('pluto');
+    assert.equal(app.trip.go('charon'), true);
+    await fly(app, 120, () => app.trip.state === 'idle' && app.planet.world.id === 'charon');
+    assert.equal(app.planet.world.id, 'charon');
+    assert.ok(app.spaceCourier.offer('pluto', 'charon', () => 0.1).pay <= 20, 'next door should pay little');
+  });
+});
+
+describe('polish', () => {
+  it('on Uranus the Sun circles the north pole: endless day up there, endless night in the far south', async () => {
+    const app = await travelApp('uranus');
+    app.swapIn(app.planet);
+    assert.ok(app.sky.decl > 1.2, 'the Sun should stand near the pole');
+    const north = new THREE.Vector3(...fromLatLon(80, 0)), south = new THREE.Vector3(...fromLatLon(-40, 0));
+    for (let k = 0; k < 8; k++) {
+      app.sky.angle = (k / 8) * Math.PI * 2;
+      app.sky.update(0);
+      assert.ok(app.planet.nightAt(north) < 0.5, 'night at Uranus’s north pole in its summer');
+      assert.ok(app.planet.nightAt(south) > 0.5, 'day in the far south of Uranus in its winter');
+    }
+    const earth = await travelApp('earth');
+    earth.swapIn(earth.planet);
+    assert.equal(earth.sky.decl, 0, 'the Sun should be back over the equator');
+  });
+
+  it('every trophy is in one group of the list, and every group’s trophies exist', async () => {
+    const { GROUPS } = await import('../js/ui/Achievements.js');
+    const { app } = await makeWorld({ world: 'moon' }), list = app.achievements.list(), ids = new Set(list.map((t) => t.id));
+    for (const g of GROUPS) for (const id of g.ids ?? []) assert.ok(ids.has(id), `${g.id} lists a trophy that doesn’t exist: ${id}`);
+    for (const t of list) assert.ok(GROUPS.some((g) => g.id === t.group), `${t.id} has no group`);
+    assert.ok(list.filter((t) => t.group === 'space').length >= 12);
+  });
+
+  it('every sound the game asks for is one Sfx can make', async () => {
+    const { readFileSync, readdirSync, statSync } = await import('node:fs');
+    const files = (dir) => readdirSync(dir).flatMap((f) => (statSync(`${dir}/${f}`).isDirectory() ? files(`${dir}/${f}`) : f.endsWith('.js') ? [`${dir}/${f}`] : []));
+    const sfx = readFileSync('js/ui/Sfx.js', 'utf8'), known = new Set([...[...sfx.matchAll(/case '([a-z]+)'/g)].map((m) => m[1]), 'none']); // ('none': a silent bubble)
+    for (const f of files('js')) {
+      const src = readFileSync(f, 'utf8');
+      for (const m of src.matchAll(/sfx\??\.(?:play\('([a-z]+)'\)|pop\([^;]*?, '([a-z]+)'\))/g)) {
+        const name = m[1] ?? m[2];
+        assert.ok(known.has(name), `${f} asks for a sound Sfx can’t make: ${name}`);
+      }
+    }
+    for (const name of ['liftoff', 'thrust', 'crunch']) assert.ok(known.has(name));
   });
 });

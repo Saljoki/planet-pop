@@ -12,10 +12,11 @@ import { EARTH_LAND } from './EarthLand.js';
  * keeps ahead of the sunrise: world/RollingTown.js) and floating (towns on rafts held up by balloons: world/Rafts.js).
  * The giants (giant: true) have no ground at all: their towns are cloud stations on rafts, with no roads, so you get
  * about by ship; rings (world/Rings.js: inner and outer radius, in units) and wind (how hard it pushes a ship along,
- * in units a second) are theirs too, and towns (where each town goes, [lat, lon]). A landmark with pin: false is a
+ * in units a second) are theirs too, and towns (where each town goes, [lat, lon], and its name if it has a real one:
+ * Earth's are real cities). A landmark with pin: false is a
  * place in the clouds, with no flag; loop names the trophy for flying a loop round it (game/Feats.js).
  * volcanoes: where a world's volcanoes really are, with their names (Io's; Europa's plume of water), instead of
- * made-up ones on the highest ground.
+ * made-up ones on the highest ground. sunLat: the latitude the Sun stands over (Uranus, on its side: near its pole).
  */
 
 /** Europa's long cracks (lineae), stained reddish-brown: ridges of ice criss-crossing the whole moon. */
@@ -49,7 +50,10 @@ const stations = (towns, pad) => ({
 
 export const WORLDS = {
   earth: {
-    id: 'earth', name: 'Earth', icon: '🌍', theme: 'classic', seed: 1969, cities: 8, gravity: 1, day: 150,
+    id: 'earth', name: 'Earth', icon: '🌍', theme: 'classic', seed: 1969, cities: 7, gravity: 1, day: 150,
+    // the towns are big (about 1,800 km across), so they're the great cities far enough inland to fit
+    towns: [[55.8, 37.6, 'Moscow'], [39.9, 116.4, 'Beijing'], [41.9, -87.6, 'Chicago'], [-15.8, -47.9, 'Brasília'],
+      [12, 8.5, 'Kano'], [-15.4, 28.3, 'Lusaka'], [-23.7, 133.9, 'Alice Springs']],
     welcome: 'Home sweet home.',
     shape: {
       land: EARTH_LAND,
@@ -194,7 +198,7 @@ export const WORLDS = {
   },
   pluto: {
     id: 'pluto', name: 'Pluto', icon: '🤍', theme: 'pluto', seed: 2015, cities: 3, gravity: 0.063, day: -280,
-    welcome: 'Gravity here is a sixteenth of Earth’s: the longest jumps in the solar system.',
+    welcome: 'Gravity here is a sixteenth of Earth’s: a rover jumps sixteen times as far as at home.',
     pad: { lat: 30, lon: -175 },
     shape: {
       lift: 0.4, relief: 0.45, floor: 0.04,
@@ -237,8 +241,9 @@ export const WORLDS = {
   },
   uranus: {
     id: 'uranus', name: 'Uranus', icon: '💠', theme: 'uranus', seed: 1781, cities: 3, gravity: 0.89, day: -136, floating: true, giant: true,
-    welcome: 'Uranus rolls round the Sun on its side, and it’s −195°C up here. Wrap up warm.',
-    ...stations([[30, -110], [-22, 30], [18, 150]], { lat: -5, lon: -40 }),
+    welcome: 'Uranus rolls round the Sun on its side: just now the Sun circles the north pole, and the south has a night 21 years long.',
+    sunLat: 75, // (its northern summer: the Sun nearly overhead at the pole, in 2028)
+    ...stations([[30, -110], [-22, 30], [18, 150]], { lat: 20, lon: -40 }),
     rings: { inner: 14, outer: 15.4, faint: true },
     landmarks: [],
   },
@@ -308,6 +313,85 @@ export const WORLDS = {
       { name: 'Kraken Mare', lat: 68, lon: -50, note: 'A sea of liquid methane bigger than the Caspian Sea, and hundreds of metres deep' },
       { name: 'Ligeia Mare', lat: 79, lon: -112, note: 'A methane sea so calm that radar sees it like a mirror' },
       { name: 'Xanadu', lat: -10, lon: -100, note: 'Bright highlands the size of Australia, criss-crossed by methane rivers' },
+    ],
+  },
+  ganymede: {
+    id: 'ganymede', name: 'Ganymede', icon: '🌑', theme: 'ganymede', seed: 1996, cities: 4, gravity: 0.15, day: 271,
+    welcome: 'The biggest moon of all, wider than Mercury. Look to the poles: it has an aurora of its own.',
+    pad: { lat: 10, lon: 60 },
+    shape: {
+      lift: 0.3, relief: 0.3, floor: 0.04,
+      craters: { count: 40, min: 0.01, max: 0.04, depth: 0.15 },
+      features: [
+        { kind: 'paint', lat: 35, lon: -145, r: 22, pal: 'mare' }, // Galileo Regio: old, dark and cratered
+        { kind: 'paint', lat: -10, lon: 160, r: 20, pal: 'mare' }, // Marius Regio
+        ...[[[10, -175], [0, -150], [-15, -120]], [[25, -110], [10, -95], [-5, -75]], [[-30, 120], [-15, 100], [5, 80]], [[40, 40], [25, 20], [5, 0]]]
+          .map((points) => ({ kind: 'ridge', width: 1.6, height: 0.1, pal: 'snow', points })), // the bright grooved lands (sulci)
+        { kind: 'crater', lat: 11, lon: -27, r: 1.5, depth: 0.2 }, // Tros…
+        { kind: 'paint', lat: 11, lon: -27, r: 6, pal: 'snow' }, // …and its rays
+      ],
+    },
+    landmarks: [
+      { name: 'Galileo Regio', lat: 35, lon: -145, note: 'A dark plain 3,200 km across, some of the oldest ground on Ganymede, covered in craters' },
+      { name: 'Uruk Sulcus', lat: 0, lon: -150, note: 'Bright grooved ground: the ice cracked and was pushed into long ridges and valleys' },
+      { name: 'Tros', lat: 11, lon: -27, note: 'A young crater splashed with bright rays of clean ice' },
+    ],
+  },
+  enceladus: {
+    id: 'enceladus', name: 'Enceladus', icon: '❄️', theme: 'enceladus', seed: 1789, cities: 2, gravity: 0.012, day: 165,
+    welcome: 'The whitest place in the solar system, and the lightest gravity yet. Down south, water sprays into space.',
+    pad: { lat: 20, lon: 0 },
+    volcanoes: [{ name: 'Baghdad Sulcus', lat: -82, lon: -30 }, { name: 'Damascus Sulcus', lat: -76, lon: 60 }],
+    shape: {
+      lift: 0.3, relief: 0.15, floor: 0.05,
+      craters: { count: 24, min: 0.01, max: 0.04, depth: 0.15 }, // (the north is old and cratered; the south is new)
+      features: [0, 1, 2, 3].map((k) => ({ kind: 'valley', width: 1.2, depth: 0.12, pal: 'mare', // the tiger stripes
+        points: [[-62, -150 + k * 22], [-74, -110 + k * 22], [-84, -40 + k * 22]] })),
+    },
+    landmarks: [
+      { name: 'The tiger stripes', lat: -78, lon: -60, note: 'Four long cracks round the south pole, warmer than the ice round them, spraying water from the ocean underneath' },
+    ],
+  },
+  triton: {
+    id: 'triton', name: 'Triton', icon: '⚪', theme: 'triton', seed: 1989, cities: 3, gravity: 0.08, day: 254,
+    welcome: 'Triton goes round Neptune the wrong way. The dark streaks are from geysers of nitrogen.',
+    pad: { lat: 20, lon: -100 },
+    volcanoes: [{ name: 'Hili', lat: -56, lon: 31 }, { name: 'Mahilani', lat: -49, lon: 2 }],
+    shape: {
+      lift: 0.3, relief: 0.2, floor: 0.04,
+      craters: { count: 10, min: 0.01, max: 0.03, depth: 0.1 },
+      features: [
+        { kind: 'cap', lat: -15, height: 0.05, pal: 'snow' }, // the south polar cap: pink nitrogen frost
+        { kind: 'paint', lat: 25, lon: -60, r: 26, pal: 'mare' }, // the cantaloupe terrain…
+        ...[[15, -80], [35, -40], [20, -30], [40, -85], [5, -55], [30, -10]].map(([lat, lon]) => ({ kind: 'dome', lat, lon, r: 5, height: 0.15 })), // …dimpled like a melon
+        ...[[-40, 20], [-45, 45], [-35, -10], [-50, 70], [-30, 60]].map(([lat, lon]) => ({ kind: 'paint', lat, lon, r: 2.5, pal: 'streak' })), // dark streaks from the geysers
+      ],
+    },
+    landmarks: [
+      { name: 'The cantaloupe terrain', lat: 25, lon: -60, note: 'Ground dimpled like the skin of a melon: found nowhere else in the solar system' },
+      { name: 'The south polar cap', lat: -60, lon: 0, note: 'Pink frost of frozen nitrogen and methane, streaked dark by geysers' },
+    ],
+  },
+  charon: {
+    id: 'charon', name: 'Charon', icon: '🌘', theme: 'charon', seed: 1978, cities: 2, gravity: 0.03, day: 261,
+    welcome: 'Pluto hangs in the same spot in the sky, always: the two keep the same faces to each other.',
+    pad: { lat: -10, lon: 40 },
+    shape: {
+      lift: 0.3, relief: 0.25, floor: 0.04,
+      craters: { count: 30, min: 0.01, max: 0.04, depth: 0.15 },
+      features: [
+        { kind: 'cap', lat: 62, height: 0.05, pal: 'rust' }, // Mordor Macula, stained red by gas escaping from Pluto
+        { kind: 'valley', width: 3, depth: 0.35, points: [[-2, -80], [4, -30], [8, 20], [5, 70]] }, // Serenity Chasma and the canyons
+        { kind: 'basin', lat: -25, lon: 0, r: 30, level: 0.2 }, // Vulcan Planitia, the smooth southern plain
+        { kind: 'dome', lat: -2, lon: -2, r: 3, height: 0.45 }, // Kubrick Mons, a mountain in a moat…
+        { kind: 'bowl', lat: -2, lon: -2, r: 6, depth: 0.15 },
+      ],
+    },
+    peaks: [{ lat: -2, lon: -2, s: 0.4, hgt: 0.7 }],
+    landmarks: [
+      { name: 'Mordor Macula', lat: 80, lon: 0, note: 'Charon’s red north pole: gas escaping from Pluto freezes onto it and turns red in sunlight' },
+      { name: 'Serenity Chasma', lat: 4, lon: -30, note: 'One of the canyons that run right round Charon: up to 7 km deep' },
+      { name: 'Kubrick Mons', lat: -2, lon: -2, note: 'A mountain sitting in a moat, as if it sank into the plain round it' },
     ],
   },
   neptune: {

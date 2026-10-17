@@ -43,7 +43,7 @@ export class FlightHazards {
     pl.invuln = 1;
     pl.shake = 1;
     g.app.haptics?.buzz('crash');
-    g.app.sfx.pop(pl.pos.clone(), 'CRUNCH!', '#cfeaff', 'crash');
+    g.app.sfx.pop(pl.pos.clone(), 'CRUNCH!', '#cfeaff', 'crunch');
     g.run.iced();
     if (!this.warnedIce) {
       this.warnedIce = true;

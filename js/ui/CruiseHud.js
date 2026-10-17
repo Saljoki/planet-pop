@@ -2,13 +2,13 @@ import { Widget } from './Widget.js';
 import { clock } from '../space/SpaceCourier.js';
 
 /**
- * The screen during a trip's cruise: where from and to, how far along, the fuel stars caught, the boost tank, a BOOST
- * button for fingers, a hint, and a message line (waiting to land).
+ * The screen during a trip's cruise: where from and to, how far along, the fuel stars caught, a parcel's clock and how
+ * the race with Rex is going, the boost tank, a BOOST button for fingers, a hint, and a message line (waiting to land).
  */
 export class CruiseHud extends Widget {
   constructor(cruise, touch) {
     super({ id: 'cruiseUi', html: `
-      <div id="cBar" class="badge"><span id="cRoute"></span><div class="cMeter"><i id="cDone"></i></div><span id="cStars">⭐ 0</span><span id="cParcel" class="hidden"></span></div>
+      <div id="cBar" class="badge"><span id="cRoute"></span><div class="cMeter"><i id="cDone"></i></div><span id="cStars">⭐ 0</span><span id="cParcel" class="hidden"></span><span id="cRex" class="hidden"></span></div>
       <div id="cFuel" class="badge">🔥<div class="cMeter"><i id="cTank"></i></div></div>
       <button id="cBoost" class="big">🔥 Boost</button>
       <div id="cMsg" class="badge hidden"></div>
@@ -17,7 +17,7 @@ export class CruiseHud extends Widget {
     const boost = (on) => (e) => { e.preventDefault?.(); cruise.boosting = on; };
     this.on('cBoost', 'pointerdown', boost(true));
     for (const t of ['pointerup', 'pointerleave', 'pointercancel']) this.on('cBoost', t, boost(false));
-    this.dom = { route: this.$('cRoute'), done: this.$('cDone'), stars: this.$('cStars'), tank: this.$('cTank'), msg: this.$('cMsg'), hint: this.$('cHint'), parcel: this.$('cParcel') };
+    this.dom = { route: this.$('cRoute'), done: this.$('cDone'), stars: this.$('cStars'), tank: this.$('cTank'), msg: this.$('cMsg'), hint: this.$('cHint'), parcel: this.$('cParcel'), rex: this.$('cRex') };
   }
 
   begin(from, to) {
@@ -41,5 +41,8 @@ export class CruiseHud extends Widget {
     const job = c.app.spaceCourier?.job; // (a parcel aboard: its clock)
     d.parcel.classList.toggle('hidden', !job);
     if (job) d.parcel.textContent = `${job.cargo.icon} ${job.left > 0 ? clock(job.left) : 'late'}`;
+    const gap = c.rexGap; // (racing Rex: how far ahead he is)
+    d.rex.classList.toggle('hidden', gap === null);
+    if (gap !== null) d.rex.textContent = Math.abs(gap) < 0.5 ? '😈 neck and neck' : `😈 Rex ${gap > 0 ? 'ahead' : 'behind'} ${Math.abs(gap).toFixed(0)}s`;
   }
 }

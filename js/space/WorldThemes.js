@@ -7,8 +7,9 @@
  * The giants' cloud seas have stripes and storms: sea.bands (the stripes' colour and how many) and sea.spots (oval
  * storms, swirling: lat and lon of the middle, w and h across in degrees, colour and rim; hex: Saturn's six-sided
  * jet stream round a pole). `rafts` sets the balloons their stations hang from (how many, how big, what colours).
- * `volcano` recolours the volcanoes (cone, lava, glow, smoke, bombs: Io's sulphur, Europa's water); a moon in the
- * sky of kind 'gas' is a giant planet, drawn as on the system map (body: its id in Bodies.js).
+ * `volcano` recolours the volcanoes (cone, lava, glow, smoke, bombs: Io's sulphur, Europa's water, Triton's dark
+ * geysers); a moon in the sky of kind 'map' is a planet drawn as on the system map (body: its id in Bodies.js), and
+ * `aurora: true` lights the aurora even with no air (Ganymede's own magnetic field).
  */
 const GIANT = { // what the four giants share: a cloud sea, stations on rafts, no trees or mountains, airships
   wildlife: false, balloons: 'blimp',
@@ -149,7 +150,7 @@ export const WORLD_THEMES = {
     volcanoes: 3,
     volcano: { cone: '#5a4636', lava: '#ff7a2e', glow: '#ff7a2e', smoke: '#f6ec9a', bombs: '#ffb21f' }, // (plumes of sulphur)
     moons: [
-      { name: 'Jupiter', kind: 'gas', body: 'jupiter', size: 11, dist: 62, speed: 0 }, // (always in the same spot in the sky)
+      { name: 'Jupiter', kind: 'map', body: 'jupiter', size: 11, dist: 62, speed: 0 }, // (always in the same spot in the sky)
       { name: 'Europa', kind: 'moon', size: 1.1, dist: 46, color: '#f2ece0', speed: 0.02 },
     ],
     sun: 0.4,
@@ -167,7 +168,7 @@ export const WORLD_THEMES = {
     volcanoes: 1,
     volcano: { cone: '#dfe9f2', lava: '#bfefff', glow: '#9fe6ff', smoke: '#ffffff', bombs: '#e8f8ff', low: true }, // (a plume of water from the ocean)
     moons: [
-      { name: 'Jupiter', kind: 'gas', body: 'jupiter', size: 8, dist: 64, speed: 0 },
+      { name: 'Jupiter', kind: 'map', body: 'jupiter', size: 8, dist: 64, speed: 0 },
       { name: 'Io', kind: 'rock', size: 1.3, dist: 44, color: '#f0d25a', speed: 0.03 },
     ],
     sun: 0.4,
@@ -183,8 +184,69 @@ export const WORLD_THEMES = {
     storms: 2, precip: { kind: 'rain', color: '#ffe0b0' }, // (methane rain)
     halo: { day: '#f0a848', night: '#3a2418', strength: 1.8 },
     volcanoes: 0,
-    moons: [{ name: 'Saturn', kind: 'gas', body: 'saturn', size: 4, dist: 66, speed: 0 }],
+    moons: [{ name: 'Saturn', kind: 'map', body: 'saturn', size: 4, dist: 66, speed: 0 }],
     sun: 0.18, // (dim through the haze)
+  },
+  ganymede: {
+    id: 'ganymede', name: 'Ganymede', icon: '🌑', air: 'none', aurora: true,
+    pal: { seabed: '#6f6158', sand: '#c9c0b4', g1: '#b9b0a6', g2: '#a9a094', g3: '#9a9086', rock: '#7d7268', snow: '#eeeae2', city: '#efeaff', mare: '#5f5248' },
+    sea: { none: true, color: '#000000', shallow: '#000000', glow: null, boats: false },
+    trees: { density: 0, trunk: '#7d7268', a: { shape: 'pine', colors: ['#a9a094'] }, b: { shape: 'pine', colors: ['#a9a094'] }, useA: () => true },
+    mountains: { colors: ['#9a9086', '#8d8378', '#a9a094'], cap: '#eeeae2', snow: false, peaks: 0 },
+    buildings: ['#f4f1ff', '#ffd23f', '#9fd8ff', '#ff9fb1', '#d4b8ff', '#a8f0cf'],
+    clouds: { fair: '#ffffff', fairGlow: '#5560b0', dark: '#8f88b8', darkGlow: '#2a2560' },
+    storms: 0, precip: { kind: 'none', color: '#ffffff' },
+    halo: { day: '#20183a', night: '#120c26', strength: 0 },
+    volcanoes: 0,
+    moons: [
+      { name: 'Jupiter', kind: 'map', body: 'jupiter', size: 5, dist: 64, speed: 0 },
+      { name: 'Europa', kind: 'moon', size: 1.4, dist: 46, color: '#f2ece0', speed: 0.03 },
+    ],
+    sun: 0.4,
+  },
+  enceladus: {
+    id: 'enceladus', name: 'Enceladus', icon: '❄️', air: 'none',
+    pal: { seabed: '#9fb8d0', sand: '#ffffff', g1: '#ffffff', g2: '#f2f6fa', g3: '#e6eef6', rock: '#d8e2ec', snow: '#ffffff', city: '#eef4ff', mare: '#7fb8e0' },
+    sea: { none: true, color: '#000000', shallow: '#000000', glow: null, boats: false },
+    trees: { density: 0, trunk: '#d8e2ec', a: { shape: 'pine', colors: ['#f2f6fa'] }, b: { shape: 'pine', colors: ['#f2f6fa'] }, useA: () => true },
+    mountains: { colors: ['#e6eef6', '#d8e2ec', '#f2f6fa'], cap: '#ffffff', snow: false, peaks: 0 },
+    buildings: ['#ff9fb1', '#ffd23f', '#9fd8ff', '#d4b8ff', '#a8f0cf', '#ffbe8f'],
+    clouds: { fair: '#ffffff', fairGlow: '#5560b0', dark: '#8f88b8', darkGlow: '#2a2560' },
+    storms: 0, precip: { kind: 'none', color: '#ffffff' },
+    halo: { day: '#20183a', night: '#120c26', strength: 0 },
+    volcanoes: 2,
+    volcano: { cone: '#e6eef6', lava: '#bfefff', glow: '#9fe6ff', smoke: '#ffffff', bombs: '#e8f8ff', low: true }, // (geysers of water)
+    moons: [{ name: 'Saturn', kind: 'map', body: 'saturn', size: 9, dist: 60, speed: 0 }], // (huge: it's only 238,000 km away)
+    sun: 0.32,
+  },
+  triton: {
+    id: 'triton', name: 'Triton', icon: '⚪', air: 'none',
+    pal: { seabed: '#8a7a78', sand: '#f0dcd2', g1: '#ecd6cc', g2: '#e2c8be', g3: '#d6bab0', rock: '#b89a90', snow: '#f8e2dc', city: '#f4ece8', mare: '#c4a090', streak: '#4a3a3a' },
+    sea: { none: true, color: '#000000', shallow: '#000000', glow: null, boats: false },
+    trees: { density: 0, trunk: '#b89a90', a: { shape: 'pine', colors: ['#e2c8be'] }, b: { shape: 'pine', colors: ['#e2c8be'] }, useA: () => true },
+    mountains: { colors: ['#d6bab0', '#c8aca2', '#e2c8be'], cap: '#f8e2dc', snow: false, peaks: 0 },
+    buildings: ['#f4f1ff', '#9fd8ff', '#ffd23f', '#d4b8ff', '#a8f0cf', '#ffffff'],
+    clouds: { fair: '#ffffff', fairGlow: '#5560b0', dark: '#8f88b8', darkGlow: '#2a2560' },
+    storms: 0, precip: { kind: 'none', color: '#ffffff' },
+    halo: { day: '#3a3a70', night: '#141c50', strength: 0.25 }, // (a wisp of nitrogen haze)
+    volcanoes: 2,
+    volcano: { cone: '#e2c8be', lava: '#4a3a3a', glow: '#6a5a5a', smoke: '#3a3030', bombs: '#4a3a3a', low: true }, // (geysers of nitrogen and dark dust)
+    moons: [{ name: 'Neptune', kind: 'map', body: 'neptune', size: 9, dist: 62, speed: 0 }],
+    sun: 0.24,
+  },
+  charon: {
+    id: 'charon', name: 'Charon', icon: '🌘', air: 'none',
+    pal: { seabed: '#6a5a50', sand: '#c8bdb4', g1: '#b8ada4', g2: '#aaa096', g3: '#9c9288', rock: '#857a70', snow: '#e6e0d8', city: '#efeaf4', mare: '#8a7a70', rust: '#8a4a3a' },
+    sea: { none: true, color: '#000000', shallow: '#000000', glow: null, boats: false },
+    trees: { density: 0, trunk: '#857a70', a: { shape: 'pine', colors: ['#aaa096'] }, b: { shape: 'pine', colors: ['#aaa096'] }, useA: () => true },
+    mountains: { colors: ['#9c9288', '#8f857b', '#aaa096'], cap: '#e6e0d8', snow: false, peaks: 1 },
+    buildings: ['#f4f1ff', '#ffd23f', '#9fd8ff', '#ff9fb1', '#d4b8ff', '#a8f0cf'],
+    clouds: { fair: '#ffffff', fairGlow: '#5560b0', dark: '#8f88b8', darkGlow: '#2a2560' },
+    storms: 0, precip: { kind: 'none', color: '#ffffff' },
+    halo: { day: '#20183a', night: '#120c26', strength: 0 },
+    volcanoes: 0,
+    moons: [{ name: 'Pluto', kind: 'map', body: 'pluto', size: 12, dist: 60, speed: 0 }], // (always in the same spot in the sky)
+    sun: 0.22,
   },
   neptune: {
     ...GIANT, id: 'neptune', name: 'Neptune', icon: '🔵', aurora: false,
