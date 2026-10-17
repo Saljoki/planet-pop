@@ -107,3 +107,9 @@ export function pickTheme(seed) {
 
 /** A theme by id: a surprise world's, or a real world's (space/WorldThemes.js). */
 export const themeOf = (id) => THEMES[id] || WORLD_THEMES[id] || THEMES.classic;
+
+/** A kind of made-up planet in words: 'a classic planet', 'an ice world'. */
+export function aKindOf(theme) {
+  const n = theme.name.toLowerCase(), noun = n.endsWith('world') ? n : `${n} planet`;
+  return `${/^[aeiou]/.test(noun) ? 'an' : 'a'} ${noun}`;
+}

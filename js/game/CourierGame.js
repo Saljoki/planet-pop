@@ -19,6 +19,7 @@ import { MissionBoard } from './screens/MissionBoard.js';
 import { RoadBoard } from './screens/RoadBoard.js';
 
 const RESPAWN = 1.8; // seconds of smoke after a wreck before a fresh vehicle turns up (free modes)
+const LONG_JUMP = 5;  // seconds a rover must stay off the ground for the Giant Leap trophy
 
 /**
  * Sky Courier: fly a little plane (or drive a car, or sail a boat) around the planet. This runs the show: it starts
@@ -55,7 +56,8 @@ export class CourierGame {
     this.roads = new RoadBoard(app, (opts) => this.launch(opts));
     this.hangar = new Hangar(app, this.progress, {
       onFly: () => this.launch(), onFree: () => this.launch({ free: true }), onDaily: () => this.startDaily(),
-      onMissions: () => this.board.show(), onRoads: () => this.roads.show(), onOptions: () => this.options.show(() => this.hangar.show()),
+      onMissions: () => this.board.show(), onRoads: () => this.roads.show(), onSpace: () => app.spaceCourier?.openBoard(),
+      onOptions: () => this.options.show(() => this.hangar.show()),
     });
   }
 
@@ -64,11 +66,16 @@ export class CourierGame {
     const app = this.app, p = app.params;
     if (this.active) return;
     if (app.building) { app.hud.toast('🌍 The planet is still being built. Try again in a moment.'); return; }
-    if (!app.planet || p.seed !== want.seed || p.land !== want.land || p.cities !== want.cities || p.theme !== want.theme) {
-      Object.assign(app.params, want);
-      app.hud.panel.syncParams(app.params);
+    const there = want.world ? p.world === want.world
+      : !p.world && p.seed === want.seed && p.land === want.land && p.cities === want.cities && p.theme === want.theme;
+    if (!app.planet || !there) {
       app.hud.toast(note);
-      await app.newPlanet(want.seed, false, want.theme);
+      if (want.world) await app.newPlanet(p.seed, false, null, want.world); // (a real world: its own seed and look)
+      else {
+        Object.assign(app.params, want);
+        app.hud.panel.syncParams(app.params);
+        await app.newPlanet(want.seed, false, want.theme);
+      }
     }
     this.launch(opts);
   }
@@ -117,6 +124,7 @@ export class CourierGame {
     this.player.setCargo(run.cargo);
     this.props = new CourierProps(p, run.rings);
     this.hazards.reset();
+    this.airT = 0; // seconds a rover's been off the ground (for the Giant Leap trophy)
     app.rig.setGame(this.player);
     app.hud.setGameMode(true);
     this.layer.show();
@@ -167,6 +175,8 @@ export class CourierGame {
     }
     this.controls.update();
     pl.update(dt);
+    this.airT = pl.kind === 'car' && pl.airborne && this.planet.theme.air ? this.airT + dt : 0; // (a rover: where the air's thin or gone)
+    if (this.airT > LONG_JUMP) app.achievements.unlock('longjump');
     if (pl.crashed) {
       app.haptics?.buzz('crash');
       pl.damage(pl.impact ?? HARM.crash);

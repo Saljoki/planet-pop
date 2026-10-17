@@ -29,6 +29,7 @@ import { THEME_IDS, pickTheme } from './world/Themes.js';
 import { WORLD_IDS, worldOf } from './space/Worlds.js';
 import { SystemMap } from './space/SystemMap.js';
 import { Trip } from './space/Trip.js';
+import { SpaceCourier } from './space/SpaceCourier.js';
 
 /**
  * Planet settings from the address bar (?seed=…&land=…&cities=…&theme=…), with defaults for anything missing.
@@ -94,6 +95,7 @@ export class App {
     this.rig = new CameraRig(this);
     this.map = new SystemMap(this);
     this.trip = new Trip(this);
+    this.spaceCourier = new SpaceCourier(this);
     this.game = new CourierGame(this);
     this.quality = new Quality(this);
     this.debug = new DebugStats(this);
@@ -194,6 +196,7 @@ export class App {
     this.hud.setTheme(planet.world ?? planet.theme);
     if (!initial) this.achievements.unlock('newworld');
     if (!planet.world || planet.world.id === 'earth') this.achievements.visitTheme(planet.theme.id); // (the kinds of made-up world)
+    if (planet.world) this.achievements.visitWorld(planet.world.id);
     this.updateUrl();
   }
 
@@ -244,6 +247,7 @@ export class App {
     this.gamepad.update();
     if (this.game.active) this.game.update(dt, real);
     if (this.trip.active) this.trip.update(dt);
+    this.spaceCourier.update(real);
     this.friends.update(real);
     this.tour.update(real);
     if (map) this.map.update(real);

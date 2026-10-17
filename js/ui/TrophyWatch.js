@@ -4,8 +4,10 @@
  * WHILE_FOLLOWING: checked every frame while following something of that kind; `when(e, planet, seconds)` says
  * whether it's earned yet (seconds = how long it has been followed).
  */
-const ON_ARRIVE = { bird: 'birdwatcher', station: 'astronaut', person: 'peoplewatcher', ufo: 'ufo', moon: 'moonwalker' };
+const ON_ARRIVE = { bird: 'birdwatcher', station: 'astronaut', person: 'peoplewatcher', ufo: 'ufo', moon: 'moonwalker', rolling: 'terminus' };
 const WHILE_FOLLOWING = [
+  { id: 'earthrise', kind: 'moon', when: (e, p) => p.world?.id === 'moon' && e.name === 'Earth' },
+  { id: 'icehotel', kind: 'landmark', when: (e) => e.name === 'The Ice Hotel' },
   { id: 'copilot', kind: 'plane', when: (e, p, t) => t > 10 },
   { id: 'chopper', kind: 'helicopter', when: (e, p, t) => t > 10 },
   { id: 'tramride', kind: 'tram', when: (e, p, t) => t > 3 && p.trams.atEnd(p.trams.entities.indexOf(e)) },

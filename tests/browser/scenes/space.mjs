@@ -144,6 +144,68 @@ export default async function space({ page, frames, until, scene, open }) {
     await frames(2);
   });
 
+  await scene('space-parcels', 'The space courier’s board on Pluto: three parcels to other worlds, paid by today’s distance', async () => {
+    await page.evaluate(() => { app.hud.info.hide(); app.spaceCourier.openBoard(); });
+    await frames(4);
+  });
+
+  await scene('space-landed', 'A parcel landed on the Moon: the way to its town, with its clock', async () => {
+    await open('world=moon');
+    await page.evaluate(async () => {
+      const c = app.spaceCourier, { LandedCard } = await import('./js/ui/LandedCard.js'), { worldOf } = await import('./js/space/Worlds.js');
+      c.job = { ...c.offer('earth', 'moon', () => 0.1), what: '🍕 Pizza', left: 64, broken: false };
+      const d = app.planet.space.site.d, sky = app.sky;
+      sky.angle = Math.atan2(d.dot(sky.sv), d.dot(sky.su)) - 0.5;
+      sky.update(0);
+      (app.trip.card ??= new LandedCard(app)).show(worldOf('moon'));
+    });
+    await frames(4);
+  });
+
+  await scene('space-drop', 'The last stretch by rover: the parcel’s clock, and the arrow to the town', async () => {
+    await page.evaluate(() => { app.trip.card.hide(); app.game.start({ space: true, drive: 'car' }); });
+    await until(() => app.rig.mode === 'game');
+    await frames(20);
+  });
+
+  await scene('space-delivered', 'Handed over on time: paid, with the next parcel a tap away', async () => {
+    await page.evaluate(() => {
+      const pl = app.game.player, run = app.game.run;
+      pl.place(run.stop.at, pl.fwd);
+      pl.v = 0;
+    });
+    await until(() => app.game.over);
+    await frames(10);
+  });
+
+  await scene('mission-flag', 'One Small Step: a flag for Tranquility Base, by hopper', async () => {
+    await page.evaluate(async () => {
+      const { MISSIONS } = await import('./js/game/Missions.js');
+      app.game.stop();
+      app.game.start({ mission: MISSIONS.find((m) => m.id === 'flag') });
+    });
+    await until(() => app.rig.mode === 'game');
+    await frames(20);
+  });
+
+  await scene('space-missions', 'The missions board: the real worlds’ missions, a list of their own', async () => {
+    await page.evaluate(() => {
+      app.game.stop();
+      app.game.board.show();
+      app.game.board.el.querySelector('h3').scrollIntoView();
+    });
+    await frames(4);
+  });
+
+  await scene('mars-dust', 'A dust storm on Mars (no lightning), with its card', async () => {
+    await page.evaluate(() => app.game.board.hide());
+    await open('world=mars');
+    await visit('storm');
+    await until(() => app.rig.mode === 'local');
+    await page.evaluate(() => app.hud.info.show(app.planet.entities.find((e) => e.kind === 'storm')));
+    await frames(8);
+  });
+
   await scene('phone-map', 'The system map on a phone, with a world’s card', async () => {
     await page.evaluate(() => app.hud.info.hide());
     await page.evaluate(() => app.game.stop());

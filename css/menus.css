@@ -98,21 +98,26 @@
 .hrow { display: flex; gap: 10px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
 button.daily { background: #3fa7ff; }
 button.missions { background: #2ee59d; }
+button.space { background: #8f5cff; }
 button.roads { background: #ff8c42; }
 #hangar .hrow .big { font-size: 18px; }
 button.free { background: var(--blue); }
 
 /* ---------- Mission board ---------- */
-#missions .panel, #roads .panel { width: 520px; text-align: left; position: relative; }
-#missions h2, #missions .coins, #roads h2, #roads .note { text-align: center; }
-#roads .note { margin: 0 0 6px; font-family: system-ui, sans-serif; font-size: 13px; letter-spacing: 0; opacity: 0.75; }
-#missions .close, #roads .close, #hangar .close { position: absolute; top: 12px; right: 12px; background: #fff; font-size: 15px; padding: 3px 8px 0; }
+#missions .panel, #roads .panel, #parcels .panel { width: 520px; text-align: left; position: relative; }
+#missions h3 { margin: 16px 0 6px; font-weight: normal; font-size: 20px; text-align: center; }
+#missions h2, #missions .coins, #roads h2, #roads .note, #parcels h2, #parcels .note { text-align: center; }
+#roads .note, #parcels .note { margin: 0 0 6px; font-family: system-ui, sans-serif; font-size: 13px; letter-spacing: 0; opacity: 0.75; }
+#missions .close, #roads .close, #hangar .close, #parcels .close { position: absolute; top: 12px; right: 12px; background: #fff; font-size: 15px; padding: 3px 8px 0; }
 .mission { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 2px dashed rgba(27, 21, 48, 0.2); font-size: 19px; }
 .mission .icon { font-size: 26px; width: 34px; text-align: center; }
 .mission .info { flex: 1; }
 .mission small { display: block; font-family: system-ui, sans-serif; font-size: 12px; letter-spacing: 0; opacity: 0.75; }
 .mission button { min-width: 84px; font-size: 16px; }
 .mission.locked { opacity: 0.5; }
+.mission.job { background: rgba(255, 217, 61, 0.35); border-radius: 8px; padding: 7px 6px; }
+.mission.job .drive { background: #ff8c42; }
+#parcels .mission button { min-width: 0; }
 /* the take-off buttons stay in view while the upgrade list scrolls */
 .hfoot { position: sticky; bottom: 0; margin: 14px -26px 0; padding: 0 26px 14px; background: #fff; border-top: 3px solid var(--ink); }
 #hangar .note { margin: 8px 0 0; text-align: center; font-family: system-ui, sans-serif; font-size: 13px; letter-spacing: 0; opacity: 0.75; }

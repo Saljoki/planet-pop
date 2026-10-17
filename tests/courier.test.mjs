@@ -2,7 +2,7 @@ import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import { makeWorld, run } from './helpers/world.mjs';
-import { todayKey, dailySeed } from '../js/game/Daily.js';
+import { todayKey, dailySeed, dailyParams } from '../js/game/Daily.js';
 import { HALF } from '../js/world/Airports.js';
 
 // The tests run in order and share one run: the first starts it, the next ones poke at it.
@@ -193,10 +193,11 @@ for (const params of PLANETS) {
     it("Daily challenge: builds today's planet first when another one is loaded", async () => {
       const game = app.game;
       let built = null;
-      app.newPlanet = async (seed) => { built = seed; };
+      app.newPlanet = async (seed, initial, theme, world) => { built = world ?? seed; };
       await game.startDaily();
-      assert.equal(built, dailySeed());
-      assert.equal(app.params.seed, dailySeed());
+      const want = dailyParams();
+      assert.equal(built, want.world ?? dailySeed(), 'built the wrong planet (or none)');
+      if (!want.world) assert.equal(app.params.seed, dailySeed());
       assert.ok(game.briefing.open && !game.active, 'the briefing should come first');
       game.briefing.start();
       assert.ok(game.active && game.run.opts.daily);

@@ -3,9 +3,10 @@ import { HALF } from '../world/Airports.js';
 import { HARM } from './vehicles/Vehicle.js';
 
 const REFUEL = 0.9, REPAIR = 0.3, ASH_ENGINE = 0.55, HEAT = 1 / 45; // (a full tank of health lasts 45 s in Mercury's sunshine)
+const DUST = 1 / 30; // (and 30 s in a Martian dust storm)
 
 /**
- * What the planet does to the plane in any run: thunderstorms buffet and zap it, runways refuel it, volcanic ash
+ * What the planet does to the plane in any run: thunderstorms buffet and zap it (dust storms buffet and sandblast it), runways refuel it, volcanic ash
  * chokes the engine, and on Mercury (world.heat) the sunshine slowly cooks whatever you're in. The effects on the plane happen here; the run hears about them (zapped, refuelled, inAsh) to
  * score them its own way.
  */
@@ -32,6 +33,7 @@ export class FlightHazards {
     const g = this.game, pl = g.player, app = g.app, weather = g.planet.weather, storm = weather.stormAt(pl.pos);
     pl.turbulence = storm ? 1 : 0;
     if (!storm) { this.stormT = 1.2; return; } // a short grace period after flying in
+    if (weather.dusty) { this.dust(dt); return; }
     if (!this.warnedStorm) {
       this.warnedStorm = true;
       app.hud.toast('⛈️ Thunderstorm! Get out before lightning strikes.');
@@ -54,6 +56,17 @@ export class FlightHazards {
     app.sfx.pop(pl.pos.clone(), 'ZAP!', '#ffd23f', 'crash');
     app.haptics?.buzz('zap');
     app.achievements.unlock('lightningrod');
+  }
+
+  /** In a dust storm there's no lightning, but the grit slowly wears the plane down. */
+  dust(dt) {
+    const g = this.game, pl = g.player;
+    pl.wear(DUST * dt);
+    if (!this.warnedStorm) {
+      this.warnedStorm = true;
+      g.app.hud.toast('🌪️ Dust storm! The grit is wearing you down: get out of it.');
+    }
+    if ((this.stormT -= dt) <= 0) { this.stormT = 3; g.app.sfx.pop(pl.pos.clone(), 'GRIT!', '#e8a36c', 'screech'); }
   }
 
   /** Skimming low along a runway tops up the boost tank, and the ground crew patch up any damage. */

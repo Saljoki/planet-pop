@@ -8,10 +8,11 @@ a rocket pad, satellites, a space station, a moon and an ambient soundscape. Pla
 classic, ice, desert, candy and lava, and there are six real worlds to land on: **Earth** with its real continents,
 **the Moon** and **Mars** mapped from real data, the cloud cities of **Venus**, **Mercury** with its rolling town and
 **Pluto** with its ice hotel, on a 🪐 **map of the solar system** with every planet where it really is today, and
-**rocket trips** between them. Plus the **Sky Courier** mini-game with ten missions, a daily
-challenge and free flight, **road trips** (drive any car or steer any boat, taxi, van courier and a race round
+**rocket trips** between them, with a 🚀 **space courier** taking parcels from world to world. Plus the **Sky Courier**
+mini-game with fifteen missions (five on the real worlds), a daily challenge (on a real world about every other day) and
+free flight, **road trips** (drive any car or steer any boat, taxi, van courier and a race round
 the world) with a 🗺️ mini-map, 👥 playing with friends on the same planet, a 📍 Find menu, a hands-free 📺 tour, a
-photo mode and 42 trophies. It's built for
+photo mode and 51 trophies. It's built for
 phones as much as laptops (touch gestures, a thumbstick, tilt steering), installs as an app and works offline.
 
 Every planet is generated from a seed. The address bar always holds the current planet
@@ -91,8 +92,8 @@ service worker picks up the new version (the tests check this).
   Andes, Rockies and Alps, the ice caps and the great deserts where they are. The Moon has its dark seas, Tycho and
   Copernicus, and the Apollo 11 lander at Tranquility Base, with Earth hanging in a black sky. Mars has Olympus Mons and
   the Tharsis volcanoes, Valles Marineris, Hellas, its ice caps, Gale and Jezero craters, and Phobos and Deimos
-  overhead. Landmarks show up in 📍 Find with a card about each. No air means no clouds, birds, planes or wind farms,
-  and there's no sea to sail on either; a Moon day lasts seven minutes.
+  overhead, and dust storms sweeping across it (no lightning). Landmarks show up in 📍 Find with a card about each. No
+  air means no clouds, birds, planes or wind farms, and there's no sea to sail on either; a Moon day lasts seven minutes.
 - **Venus** can't be landed on (it's 464°C down there), so you visit its cloud tops, 50 km up: a sea of yellow cloud
   with six towns on rafts held up by balloons, joined by highway bridges, with airships, acid thunderstorms and the
   Sun rising in the west. **Mercury** has Caloris and the other great basins where they really are, a Sun two and a
@@ -105,6 +106,11 @@ service worker picks up the new version (the tests check this).
   cruise across the map: steer (drag, arrow keys or WASD) to catch ⭐ fuel stars (a coin each) and miss the rocks
   (thickest in the asteroid belt), and boost (Space, or **🔥 Boost**) with the fuel. The next world is built while you
   cruise, and the rocket lands on its pad, where you can drive off or start a courier run.
+- **🚀 Space courier** (📦 on the system map, or **🚀 Space courier** in the hangar): three parcels from the world you're
+  on to other worlds, paid by how far apart they are today (fragile, urgent and heavy ones pay more). Take one and the
+  rocket leaves at once; the parcel's clock runs through the trip and the last stretch, from the spaceport to its town
+  by rover or by hopper, glider or plane. On time pays in full and builds a streak (up to +50%), late pays half, and a
+  fragile parcel broken on the way pays nothing. One parcel at a time; drop it from the board if you change your mind.
 - **Getting about:** with no air to speak of, cars on the Moon, Mars, Mercury and Pluto are six-wheeled rovers
   (traffic too), Sky Courier flies a rocket hopper where there's no air and a long-winged glider on Mars, and everything
   falls with the world's real gravity: a crest on the Moon sends a rover six times as far as on Earth, and on Pluto
@@ -162,8 +168,10 @@ the hangar), A / B answer the end-of-run screen.
   in Options moves it to another one.
 - **🎯 Missions** (in the hangar): ten goals played in order, each on its own planet: First Flight, Rush
   Hour, Ring Master, Handle With Care, Pit Stop, Heavy Lifter, Outrun Rex, Night Shift, Close Encounter
-  and Ash Dodger. The arrow points where a mission needs you (a runway, the next ring, the UFO), and
-  each pays coins the first time you complete it.
+  and Ash Dodger. Five more on the real worlds open up in their own order: One Small Step (a flag to Tranquility
+  Base), Dust Storm Medicine on Mars, Acid Rain on Venus (one lightning strike and it's over), Keep to the Shade on
+  Mercury and Room Service at Pluto's ice hotel. The arrow points where a mission needs you (a runway, the next ring,
+  the UFO, a landmark), and each pays coins the first time you complete it.
 - **🚗 Road trips** (in the hangar), in a car on the ground: ↑ / W to go, ↓ / S to brake and reverse (on phones,
   drag up and down on the left). Highways and town streets are quickest (two main streets cross in the middle of
   every town); grass, sand and snow are slower and hills slow you going up, and you get a little air over crests.
@@ -177,7 +185,8 @@ the hangar), A / B answer the end-of-run screen.
   - **🏁 Round the world:** race Rex once round the planet on a highway through 8 checkpoints, after a 3-2-1-GO.
     He keeps left, overtakes traffic and runs red lights. Your fastest win is kept.
 - **📅 Daily challenge** (in the hangar): today's planet and parcel route, the same for everyone and
-  changing at midnight UTC, flown in the stock plane so upgrades don't count. Your best daily score is
+  changing at midnight UTC, flown in the stock plane so upgrades don't count. About every other day the planet is
+  one of the real worlds; the hangar says which. Your best daily score is
   kept separately, and **Share result** copies your score with a `?daily` link that opens the challenge.
 
 ## Structure
@@ -196,7 +205,7 @@ planet-pop/
 │  ├─ render/                 Toon (halftone shading), Outline (ink hulls), PostFX (edge ink), Quality (adaptive
 │  │                          resolution), Detail (skips sub-pixel things from high up), InstanceFade (trees that
 │  │                          shrink away with distance), MapGlobe (the mini-map's planet)
-│  ├─ sky/                    Sky (sun, shadows, atmosphere, stars), Weather (clouds, rain, lightning, snow), Aurora,
+│  ├─ sky/                    Sky (sun, shadows, atmosphere, stars), Weather (clouds, rain, lightning, snow, dust), Aurora,
 │  │                          Sparks (pooled glowing particles), Fireworks, Meteors, Rainbows
 │  ├─ world/                  Planet (the module list), Themes, Terrain + TerrainCompute + terrain.worker,
 │  │                          SurfaceIndex (exact ground height), Roads, Cities, Nature, TreeShapes, Railway, Airports,
@@ -209,7 +218,8 @@ planet-pop/
 │  │                          tap), Gestures (touch and mouse)
 │  ├─ space/                  Worlds (Earth, the Moon, Mars: shapes, peaks, landmarks), WorldThemes, EarthLand (the
 │  │                          land map), Bodies (NASA's numbers), Orbits (JPL elements: where everything is on a date),
-│  │                          SystemMap + SystemScene + MapView + BodyArt (the 🪐 map), Trip + Cruise (rocket trips)
+│  │                          SystemMap + SystemScene + MapView + BodyArt (the 🪐 map), Trip + Cruise (rocket trips),
+│  │                          SpaceCourier (parcels between worlds)
 │  ├─ net/                    Friends (rooms, who's where), Ghost (a friend's vehicle and name tag), Wire (the messages,
 │  │                          checked), TrysteroLink (over the internet), TabLink (between tabs, ?net=tabs)
 │  ├─ ui/                     Widget + Overlay (UI building blocks), Hud, ControlPanel (☰), AboutCard, FriendsMenu,
@@ -218,14 +228,15 @@ planet-pop/
 │  │                          WakeLock, DebugStats (?debug), SystemBar, MapLabels, WorldCard, CruiseHud, LandedCard
 │  │                          (the system map and trips)
 │  └─ game/                   CourierGame (runs the show), Rival + RoadRival (Rex in the air and on the road), Cargo,
-│     │                       CourierProps (beacon, rings, pads, race arches), FlightHazards (storms, runways, ash),
+│     │                       CourierProps (beacon, rings, pads, race arches), FlightHazards (storms, runways, ash, heat),
 │     │                       Progress, Settings, Daily, Missions
 │     ├─ vehicles/            Vehicle (health, boost, smoke), Plane, GroundVehicle, Car, Boat, Ground (what's under a
 │     │                       car or boat: roads, water, buildings, mountains, where to start and stop)
 │     ├─ runs/                Run (the hooks), modes.js (which run for which options), DeliveryRun (courier run),
-│     │                       DailyRun, MissionRun, FreeFlight, FreeDrive, TaxiRun, VanRun, RaceRun
+│     │                       DailyRun, MissionRun, FreeFlight, FreeDrive, TaxiRun, VanRun, RaceRun, SpaceDropRun (the
+│     │                       space courier's last stretch)
 │     ├─ screens/             CourierHud, MiniMap, ResultsScreen, Briefing, OptionsMenu, SaveBox, PauseMenu, Hangar,
-│     │                       MissionBoard, RoadBoard
+│     │                       MissionBoard, RoadBoard, ParcelBoard (the space courier's)
 │     └─ input/               FlightControls (keys, stick, tilt, boost), TouchStick, TiltSteer, Gamepad
 ├─ vendor/, fonts/            three.js, Trystero (bundled into one file) and the Bangers font, with their licences
 ├─ icons/                     app icons (drawn by scripts/icons.mjs)

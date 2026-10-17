@@ -1,7 +1,7 @@
 import { loadText, saveText } from './Store.js';
 
 /** What a save carries: progress, trophies and options (not this device's quality, tilt or volume settings). */
-export const SAVED_KEYS = ['planetpop.courier', 'planetpop.best', 'planetpop.trophies', 'planetpop.worlds', 'planetpop.settings'];
+export const SAVED_KEYS = ['planetpop.courier', 'planetpop.best', 'planetpop.trophies', 'planetpop.worlds', 'planetpop.settings', 'planetpop.visited'];
 const PACKED = 'PLANETPOP1-', PLAIN = 'PLANETPOP0-'; // compressed, and plain for browsers without CompressionStream
 const MAX = 200000; // characters: far more than any real save
 

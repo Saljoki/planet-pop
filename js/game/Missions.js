@@ -1,9 +1,15 @@
+import { themeOf } from '../world/Themes.js';
+import { worldOf } from '../space/Worlds.js';
+
 /**
- * Sky Courier missions, played in order. Each is flown on a fixed planet so the things it needs are there
- * (an airport for Pit Stop, volcanoes for Ash Dodger…). `goal.stat` names a counter the game keeps during a run;
- * `failIf` names one that ends the mission the moment it goes above zero.
+ * Sky Courier missions, played in order: first the made-up planets', then the real worlds' (planet.world), each list
+ * opening up one at a time. Each is flown on a fixed planet so the things it needs are there (an airport for Pit Stop,
+ * volcanoes for Ash Dodger, Mars's dust storms…). `goal.stat` names a counter the game keeps during a run; `failIf`
+ * names one that ends the mission the moment it goes above zero.
  * Setup flags: cargo (weight multipliers), rival (Rex from the start), night (the sun stands still with the start city in
- * darkness, and parcels go to dark cities), ufoIn (seconds until the UFO drops in; it lingers), eruptions (volcanoes start early).
+ * darkness, and parcels go to dark cities), dark (parcels go to dark cities, and the sun keeps moving), ufoIn (seconds
+ * until the UFO drops in; it lingers), eruptions (volcanoes start early), landmark (the one parcel goes to this landmark
+ * instead of a town), carry (that parcel's kind), item (what it's called on the goal line).
  */
 export const MISSIONS = [
   { id: 'first', icon: '📦', name: 'First Flight', brief: 'Deliver 3 parcels.',
@@ -26,12 +32,26 @@ export const MISSIONS = [
     planet: { seed: 12345, land: 0.3, cities: 8, theme: 'candy' }, goal: { stat: 'ufo', target: 1 }, reward: 300, ufoIn: 12 },
   { id: 'ash', icon: '🌋', name: 'Ash Dodger', brief: 'Deliver 4 parcels while the volcanoes erupt. Touch the ash and it’s over.',
     planet: { seed: 20261014, land: 0.45, cities: 5, theme: 'lava' }, goal: { stat: 'deliveries', target: 4 }, failIf: 'ash', reward: 400, eruptions: true },
+  // on the real worlds
+  { id: 'flag', icon: '🚩', name: 'One Small Step', brief: 'Fly a flag to Tranquility Base, where Apollo 11 landed.',
+    planet: { world: 'moon' }, goal: { stat: 'landmark', target: 1 }, reward: 150, landmark: 'Tranquility Base', item: '🚩 Flag' },
+  { id: 'dust', icon: '🌪️', name: 'Dust Storm Medicine', brief: 'Deliver 3 urgent parcels of medicine while dust storms sweep Mars.',
+    planet: { world: 'mars' }, goal: { stat: 'urgent', target: 3 }, reward: 250, cargo: { urgent: 4 } },
+  { id: 'acid', icon: '⚡', name: 'Acid Rain', brief: 'Deliver 3 parcels between the cloud towns of Venus. Get struck by lightning and it’s over.',
+    planet: { world: 'venus' }, goal: { stat: 'deliveries', target: 3 }, failIf: 'zaps', reward: 300 },
+  { id: 'shade', icon: '🌗', name: 'Keep to the Shade', brief: 'Deliver 3 parcels to towns on Mercury’s night side. The sunshine cooks you.',
+    planet: { world: 'mercury' }, goal: { stat: 'night', target: 3 }, reward: 350, dark: true },
+  { id: 'hotel', icon: '🛎️', name: 'Room Service', brief: 'Fly a birthday cake to the Ice Hotel on Pluto’s heart. Crash and it’s over.',
+    planet: { world: 'pluto' }, goal: { stat: 'landmark', target: 1 }, failIf: 'broken', reward: 400, landmark: 'The Ice Hotel', carry: 'fragile', item: '🎂 Birthday cake' },
 ];
+
+/** Where a mission is flown, for the board and the briefing: a real world, or a kind of made-up planet ({ icon, name }). */
+export const placeOf = (m) => (m.planet.world ? worldOf(m.planet.world) : themeOf(m.planet.theme));
 
 /** Readable names for the counters, for the HUD and the board. */
 export const STAT_LABEL = {
   deliveries: 'parcels', urgent: 'urgent', fragile: 'fragile', heavy: 'heavy', rings: 'rings', refuels: 'refuels',
-  rexStreak: 'in a row', night: 'at night', ufo: 'UFO',
+  rexStreak: 'in a row', night: 'at night', ufo: 'UFO', landmark: 'delivered',
 };
 
 export const missionIndex = (id) => MISSIONS.findIndex((m) => m.id === id);

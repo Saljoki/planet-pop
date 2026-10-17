@@ -50,7 +50,7 @@ export class DeliveryRun extends Run {
     const sites = this.planet.cities.sites;
     Object.assign(this, { score: 0, combo: 1, time: this.stats.startTime, deliveries: 0, coins: 0, stolen: 0, rivalStreak: 0 });
     // counters missions are judged on
-    this.tally = { deliveries: 0, standard: 0, urgent: 0, fragile: 0, heavy: 0, broken: 0, rings: 0, refuels: 0, rexStreak: 0, ufo: 0, ash: 0, night: 0 };
+    this.tally = { deliveries: 0, standard: 0, urgent: 0, fragile: 0, heavy: 0, broken: 0, rings: 0, refuels: 0, rexStreak: 0, ufo: 0, ash: 0, night: 0, zaps: 0, landmark: 0 };
     this.from = sites[Math.floor(this.rand() * sites.length)];
     this.pickDest(true);
     const heading = new THREE.Vector3().copy(this.dest.c).addScaledVector(this.from.c, -this.dest.c.dot(this.from.c));
@@ -68,6 +68,9 @@ export class DeliveryRun extends Run {
 
   /** What the goal line says once the destination is close. */
   get arriveHint() { return `swoop down over ${this.dest.name}!`; }
+
+  /** What's being carried, for the goal line. */
+  get what() { return `${this.cargo.icon} ${this.cargo.name}`; }
 
   /** Show where the parcel goes: the beacon over its town. */
   markDest() { this.game.props.placeBeacon(this.dest); }
@@ -252,7 +255,7 @@ export class DeliveryRun extends Run {
     h.pointAt(c);
     const km = Math.round(pl.up.angleTo(c) * R * 100);
     const comboLeft = Math.max(0, Math.ceil(this.par - this.elapsed));
-    const what = `${this.cargo.icon} ${this.cargo.name}${this.broken ? ' (broken!)' : ''}`;
+    const what = `${this.what}${this.broken ? ' (broken!)' : ''}`;
     const rex = this.rival ? ` · 😈 ${this.rival.kmTo(c)} km` : '';
     d.goal.textContent = aim ? `${aim.text} · ${km} km` : km < 90
       ? `${what}: ${this.arriveHint}${rex}`

@@ -12,6 +12,7 @@ const PRECIP = {
   snow: { geo: () => new THREE.IcosahedronGeometry(0.022, 0), speed: [0.55, 0.85] },
   sprinkles: { geo: () => new THREE.CapsuleGeometry(0.008, 0.04, 2, 4), speed: [1.4, 1.9] },
   ash: { geo: () => new THREE.IcosahedronGeometry(0.018, 0), speed: [0.7, 1.1] },
+  dust: { geo: () => new THREE.IcosahedronGeometry(0.014, 0), speed: [0.9, 1.4] }, // (Mars: a dust storm, no lightning)
 };
 const Y = new THREE.Vector3(0, 1, 0);
 const _m = new THREE.Matrix4(), _p = new THREE.Vector3(), _a = new THREE.Vector3(), _b = new THREE.Vector3(), _d = new THREE.Vector3();
@@ -27,7 +28,10 @@ function puffCluster(rng, d, alt, s, out) {
   }
 }
 
-/** Drifting clouds that cast shadows, thunderstorms with rain (or snow, ash, sprinkles) and lightning, snow over the peaks. */
+/**
+ * Drifting clouds that cast shadows, thunderstorms with rain (or snow, ash, sprinkles) and lightning, snow over the peaks.
+ * Where the storms are dust (Mars), there's no lightning.
+ */
 export class Weather {
   constructor(planet) {
     this.planet = planet;
@@ -40,7 +44,7 @@ export class Weather {
     this.buildSnow();
     const g = this.group;
     this.entities = this.storms.map((s, i) => ({
-      kind: 'storm', name: `Thunder Cloud ${i + 1}`, moving: true, storm: s,
+      kind: 'storm', name: `${this.dusty ? 'Dust Storm' : 'Thunder Cloud'} ${i + 1}`, moving: true, storm: s, dust: this.dusty,
       getPos: (out) => this.stormCenter(s, out),
       getFwd: (out) => out.copy(s.u).applyQuaternion(g.quaternion),
     }));
@@ -81,6 +85,7 @@ export class Weather {
       }
     }
     this.precip = precip.kind;
+    this.dusty = precip.kind === 'dust';
     this.rain = addInstanced(this.group, kind.geo(), new THREE.MeshBasicMaterial({ color: precip.color }),
       this.drops.length, 0, { cast: false, receive: false });
     if (precip.kind === 'sprinkles') this.drops.forEach((_, i) => this.rain.setColorAt(i, new THREE.Color(SPRINKLES[i % SPRINKLES.length])));
@@ -163,7 +168,7 @@ export class Weather {
     });
     this.rain.instanceMatrix.needsUpdate = true;
 
-    for (const s of this.storms) {
+    for (const s of this.dusty ? [] : this.storms) {
       if ((s.timer -= dt) <= 0) { s.timer = 4 + Math.random() * 6; this.strike(s); }
     }
     if (this.boltT > 0) {

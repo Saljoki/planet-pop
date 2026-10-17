@@ -21,7 +21,12 @@ export class ResultsScreen extends Overlay {
       title: this.$('gTitle'), result: this.$('gResult'), next: this.$('gNext'), again: this.$('gAgain'),
       share: this.$('gShare'), board: this.$('gBoard'), who: this.$('gWho'),
     };
-    this.on('gAgain', 'click', () => game.again());
+    this.on('gAgain', 'click', () => {
+      const fn = this.againFn;
+      if (!fn) { game.again(); return; }
+      game.stop();
+      fn();
+    });
     this.on('gNext', 'click', () => { const next = this.nextMission; game.stop(); game.startMission(next); });
     this.on('gBoard', 'click', () => { game.stop(); game.board.show(); });
     this.on('gShare', 'click', () => game.run?.share());
@@ -31,9 +36,11 @@ export class ResultsScreen extends Overlay {
 
   /**
    * title, html: what to say · again: the Fly again button's label, bigAgain: whether it's the main button ·
-   * next: a mission to offer next · board: offer the mission board · share: offer 🔗 Share.
+   * next: a mission to offer next · board: offer the mission board · share: offer 🔗 Share · againFn: what the again
+   * button does instead of the same run again (the space courier's Next parcel).
    */
-  show({ title, html, again = '✈️ Fly again', bigAgain = true, next = null, board = false, share = false }) {
+  show({ title, html, again = '✈️ Fly again', bigAgain = true, next = null, board = false, share = false, againFn = null }) {
+    this.againFn = againFn;
     const d = this.dom;
     const name = this.game.app.settings.playerName;
     d.who.textContent = name ? `${this.game.player?.kind === 'plane' ? '🧑‍✈️' : '🧑'} ${name}` : '';

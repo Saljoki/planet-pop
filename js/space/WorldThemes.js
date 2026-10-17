@@ -27,7 +27,7 @@ export const WORLD_THEMES = {
     mountains: { colors: ['#b65f3b', '#a5553a', '#c76a44'], cap: '#f2c9a8', snow: false, peaks: 6 },
     buildings: ['#f4f1ff', '#ffd57a', '#9fd8ff', '#ffbe8f', '#a8f0cf', '#ff9fb1'],
     clouds: { fair: '#f3d6bd', fairGlow: '#b07a55', dark: '#c9a88f', darkGlow: '#5a3a30' },
-    storms: 0, precip: { kind: 'none', color: '#e8a36c' },
+    storms: 2, precip: { kind: 'dust', color: '#e8a36c' }, // (dust storms: no lightning)
     halo: { day: '#e8b583', night: '#4a5aa8', strength: 0.7 }, // butterscotch by day; Martian sunsets are blue
     volcanoes: 0,
     moons: [

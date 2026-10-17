@@ -1,6 +1,6 @@
 import { mulberry32 } from '../../core/Noise.js';
 import { BASE_STATS } from '../Progress.js';
-import { todayKey, dailySeed } from '../Daily.js';
+import { todayKey, dailySeed, dailyPlace } from '../Daily.js';
 import { DeliveryRun, COURIER_TIPS } from './DeliveryRun.js';
 
 /**
@@ -24,7 +24,7 @@ export class DailyRun extends DeliveryRun {
 
   get intro() { return '📅 Daily challenge: stock plane, same route as everyone today. Good luck!'; }
 
-  get resultHead() { return `📅 Daily ${this.date}<br>`; }
+  get resultHead() { return `📅 Daily ${this.date} · ${dailyPlace(this.date)}<br>`; }
 
   get shareable() { return true; }
 
@@ -39,7 +39,7 @@ export class DailyRun extends DeliveryRun {
   async share() {
     const url = `${location.origin}${location.pathname}?daily`;
     const name = this.app.settings.playerName;
-    const text = `📅 Planet Pop daily ${this.date}: ${name ? `${name} scored ` : ''}⭐ ${this.score} with ${this.deliveries} deliveries. Can you beat it? ${url}`;
+    const text = `📅 Planet Pop daily ${this.date} (${dailyPlace(this.date)}): ${name ? `${name} scored ` : ''}⭐ ${this.score} with ${this.deliveries} deliveries. Can you beat it? ${url}`;
     try {
       await navigator.clipboard.writeText(text);
       this.app.hud.toast('🔗 Result copied! Paste it to challenge a friend.');
