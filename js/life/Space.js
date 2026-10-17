@@ -6,6 +6,8 @@ import { addMesh, addInstanced, shareMatrices } from '../render/Outline.js';
 import { InstanceEntity } from '../core/InstanceEntity.js';
 import { ObjectEntity } from '../core/ObjectEntity.js';
 import { Trails } from './Trails.js';
+import { bodyOf } from '../space/Bodies.js';
+import { BodyArt } from '../space/BodyArt.js';
 
 const NO_SHADOW = { cast: false, receive: false };
 const LAND_FROM = 9, LAND_TIME = 5.5; // a landing: from how high (units above the pad) and how long it takes (s)
@@ -34,13 +36,26 @@ export class Space {
 
   /**
    * What hangs in the sky: our Moon over a made-up planet or Earth, or whatever the world's theme says (`moons`):
-   * Earth in the Moon's sky, Phobos and Deimos over Mars. Each is a body of its own on a tilted orbit.
+   * Earth in the Moon's sky, Phobos and Deimos over Mars, Jupiter over Io and Europa, Saturn and its rings over Titan.
+   * Each is a body of its own on a tilted orbit.
    */
   buildMoon() {
     const rng = this.planet.rng, list = this.planet.theme.moons ?? [{ name: 'The Moon', kind: 'moon', size: 1.6, dist: 28, color: '#efeaff' }];
     this.moons = list.map((def, i) => {
       const orbit = this.orbitGroup(0.4 - i * 0.3, 0.25 + i * 0.4), s = def.size;
       orbit.rotation.y = i * 2.1;
+      if (def.kind === 'gas') { // a giant planet: its stripes (and rings) as on the system map
+        const look = bodyOf(def.body).look, body = addMesh(orbit, new THREE.SphereGeometry(s, 40, 28), toon('#ffffff', { map: BodyArt.texture(look, def.body) }), 0.05, NO_SHADOW);
+        body.position.set(def.dist, 0, 0);
+        body.rotation.z = 0.35;
+        if (look.rings) {
+          const ring = new THREE.Mesh(new THREE.RingGeometry(s * 1.35, s * 2.25, 64, 1), new THREE.MeshBasicMaterial({ color: look.rings, side: THREE.DoubleSide, transparent: true, opacity: 0.85 }));
+          ring.rotation.x = -Math.PI / 2;
+          body.add(ring);
+        }
+        this.entities.push(new ObjectEntity(body, 'moon', def.name));
+        return { orbit, speed: def.speed ?? 0 };
+      }
       const body = addMesh(orbit, new THREE.SphereGeometry(s, 32, 24), toon(def.color), 0.05, NO_SHADOW);
       body.position.set(def.dist, 0, 0);
       const spots = Array.from({ length: def.kind === 'earth' ? 7 : 8 }, () => { // craters, or Earth's continents (merged: one draw call)

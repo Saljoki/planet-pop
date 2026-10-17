@@ -31,7 +31,8 @@ describe('missions', () => {
         seen.set(key, {
           cities: planet.cities.sites.length, airports: planet.airports.list.length,
           volcanoes: planet.volcanoes.length, theme: planet.theme.id, storms: planet.weather.storms.length,
-          landmarks: planet.landmarks.list.map((l) => l.name),
+          landmarks: planet.landmarks.list.map((l) => l.name), loops: planet.landmarks.list.filter((l) => l.loop).length,
+          ice: planet.rings?.ice.length ?? 0, wind: planet.world?.wind ?? 0,
         });
         planet.dispose();
       }
@@ -40,6 +41,9 @@ describe('missions', () => {
       assert.equal(w.theme, m.planet.world ? worldOf(m.planet.world).theme : m.planet.theme);
       if (m.landmark) assert.ok(w.landmarks.includes(m.landmark), `${m.id}: no ${m.landmark}`);
       if (m.failIf === 'zaps' || m.id === 'dust') assert.ok(w.storms >= 2, `${m.id}: only ${w.storms} storms`);
+      if (m.goal.stat === 'loops') assert.ok(w.loops, `${m.id}: no storm to fly round`);
+      if (m.goal.stat === 'threads') assert.ok(w.ice > 100, `${m.id}: no ring ice`);
+      if (m.id === 'gale') assert.ok(w.wind > 0, 'no wind on Neptune');
       if (m.goal.stat === 'refuels') assert.ok(w.airports > 0, `${m.id}: no airport to refuel at`);
       if (m.eruptions) assert.ok(w.volcanoes >= 2, `${m.id}: only ${w.volcanoes} volcano`);
     }

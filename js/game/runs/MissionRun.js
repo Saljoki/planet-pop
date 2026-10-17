@@ -15,6 +15,7 @@ export const FAIL_REASON = {
   broken: '🥚 The fragile parcel broke.',
   ash: '🌋 You flew into the ash.',
   zaps: '⚡ Struck by lightning.',
+  ice: '🧊 You hit the ring ice.',
   wrecked: '💥 Wrecked.',
 };
 
@@ -111,6 +112,15 @@ export class MissionRun extends DeliveryRun {
     if (stat === 'rings') {
       const ring = this.game.props.rings.reduce((a, b) => (a.position.distanceTo(pl.pos) < b.position.distanceTo(pl.pos) ? a : b));
       return { c: _v.copy(ring.position).normalize(), text: '💍 Next ring' };
+    }
+    const storm = this.game.feats.storm;
+    if (stat === 'loops' && storm) {
+      const round = Math.round((Math.abs(this.game.feats.turned) / (Math.PI * 2)) * 100);
+      return { c: storm.d, text: `🌀 Fly a loop round ${storm.name}${round ? ` · ${round}% round` : ''}` };
+    }
+    if (stat === 'threads' && p.rings?.ice.length) { // to the nearest point of the equator, high up
+      const ax = p.rings.axis, c = _v.copy(pl.up).addScaledVector(ax, -pl.up.dot(ax)).normalize();
+      return { c, text: `💫 Cross the equator through the ring ice${pl.alt < p.rings.inner ? ' · climb higher!' : ''}` };
     }
     return null;
   }

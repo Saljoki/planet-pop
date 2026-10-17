@@ -206,6 +206,94 @@ export default async function space({ page, frames, until, scene, open }) {
     await frames(8);
   });
 
+  await scene('real-jupiter', 'Jupiter: striped cloud, the Great Red Spot swirling, stations hanging from balloons', async () => {
+    await page.evaluate(() => app.hud.info.hide());
+    await open('world=jupiter');
+    await lookAt(page, -10, 40, 15);
+    await frames(4);
+  });
+
+  await scene('jupiter-station', 'A cloud station on Jupiter, held up by balloons, with Io and Europa in the sky', async () => {
+    await visit('city');
+    await until(() => app.rig.mode === 'local');
+    await frames(6);
+  });
+
+  await scene('jupiter-ship', 'Eye of the Storm: the ship heading for the Great Red Spot', async () => {
+    await page.evaluate(async () => {
+      const { MISSIONS } = await import('./js/game/Missions.js');
+      app.game.start({ mission: MISSIONS.find((m) => m.id === 'storm') });
+      const pl = app.game.player, spot = app.game.feats.storm, [u] = spot.basis;
+      pl.place(spot.d.clone().addScaledVector(u, -0.45).normalize(), u);
+      pl.alt = 12;
+    });
+    await until(() => app.rig.mode === 'game');
+    await frames(20);
+  });
+
+  await scene('real-saturn', 'Saturn: pale stripes, the hexagon round the pole, and the rings', async () => {
+    await open('world=saturn');
+    await lookAt(page, 28, -40, 34);
+    await frames(4);
+  });
+
+  await scene('saturn-ringrun', 'Ring Run: up through the ring ice, between the chunks', async () => {
+    await page.evaluate(async () => {
+      const { MISSIONS } = await import('./js/game/Missions.js');
+      app.game.start({ mission: MISSIONS.find((m) => m.id === 'ringrun') });
+      const pl = app.game.player, ax = app.planet.rings.axis, d = new app.camera.position.constructor().crossVectors(ax, app.sky.su).normalize();
+      pl.place(d.clone().addScaledVector(ax, 0.16).normalize(), ax.clone().negate());
+      pl.alt = 14.4;
+      pl.invuln = 99;
+    });
+    await until(() => app.rig.mode === 'game');
+    await frames(16);
+  });
+
+  await scene('real-uranus', 'Uranus: pale blue-green cloud and faint rings', async () => {
+    await page.evaluate(() => app.game.stop());
+    await open('world=uranus');
+    await lookAt(page, 20, -60, 15);
+    await frames(4);
+  });
+
+  await scene('real-neptune', 'Neptune: deep blue, the Great Dark Spot with white clouds round it', async () => {
+    await open('world=neptune');
+    await lookAt(page, -15, 20, 15);
+    await frames(4);
+  });
+
+  await scene('real-io', 'Io: sulphur yellow, dark lava, Pele’s red ring, and Jupiter filling the sky', async () => {
+    await open('world=io');
+    await lookAt(page, -10, 100, 16);
+    await frames(4);
+  });
+
+  await scene('io-volcano', 'Pele erupting a plume of sulphur', async () => {
+    await page.evaluate(() => { const v = app.planet.volcanoes[0]; v.state = 'erupt'; v.timer = 60; });
+    await visit('volcano', 'Pele');
+    await until(() => app.rig.mode === 'local');
+    await frames(30);
+  });
+
+  await scene('real-europa', 'Europa: ice criss-crossed by reddish cracks, with Jupiter hanging overhead', async () => {
+    await open('world=europa');
+    await lookAt(page, 10, 80, 16);
+    await frames(4);
+  });
+
+  await scene('real-titan', 'Titan: thick orange haze, dark dunes, and methane seas in the north', async () => {
+    await open('world=titan');
+    await lookAt(page, 50, -60, 16);
+    await frames(4);
+  });
+
+  await scene('titan-huygens', 'Where Huygens landed on Titan, on the dark dunes', async () => {
+    await visit('landmark', 'The Huygens landing site');
+    await until(() => app.rig.mode === 'local');
+    await frames(6);
+  });
+
   await scene('phone-map', 'The system map on a phone, with a world’s card', async () => {
     await page.evaluate(() => app.hud.info.hide());
     await page.evaluate(() => app.game.stop());

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { frame, tangentBasis } from '../core/Geo.js';
+import { R, frame, tangentBasis } from '../core/Geo.js';
 import { fromLatLon } from '../core/WorldShape.js';
 import { toon } from '../render/Toon.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -11,7 +11,7 @@ const _m = new THREE.Matrix4(), _p = new THREE.Vector3();
 
 /**
  * The named places of a real world (Mount Everest, Tranquility Base, Olympus Mons…): each gets a little flag on the
- * ground and can be found, followed and read about (its note says what's real about it). Tranquility Base also gets
+ * ground (unless it's in a giant's clouds) and can be found, followed and read about (its note says what's real about it). Tranquility Base also gets
  * the lander Apollo 11 left behind, and Pluto's heart its ice hotel. Built on the finished terrain.
  */
 export class Landmarks {
@@ -19,14 +19,15 @@ export class Landmarks {
     this.planet = planet;
     this.list = (planet.world?.landmarks || []).map((l) => ({ ...l, d: new THREE.Vector3(...fromLatLon(l.lat, l.lon)) }));
     this.entities = this.list.map((l) => {
-      const e = new PointEntity(_p.copy(l.d).multiplyScalar(planet.meshR(l.d) + 0.05), 'landmark', l.name, tangentBasis(l.d)[0]);
+      const e = new PointEntity(_p.copy(l.d).multiplyScalar(Math.max(planet.meshR(l.d), R) + 0.05), 'landmark', l.name, tangentBasis(l.d)[0]);
       e.note = l.note;
       return e;
     });
-    if (!this.list.length) return;
-    const pole = addInstanced(planet.root, new THREE.CylinderGeometry(0.004, 0.004, 0.16, 6).translate(0, 0.08, 0), toon('#f4f1ff'), this.list.length, 0.003);
-    const flag = addInstanced(planet.root, new THREE.BoxGeometry(0.002, 0.045, 0.07).translate(0, 0.135, 0.036), toon('#ff5fa2'), this.list.length, 0.003);
-    this.list.forEach((l, i) => {
+    const pinned = this.list.filter((l) => l.pin !== false); // (a storm in a giant's clouds has no flag)
+    if (!pinned.length) return;
+    const pole = addInstanced(planet.root, new THREE.CylinderGeometry(0.004, 0.004, 0.16, 6).translate(0, 0.08, 0), toon('#f4f1ff'), pinned.length, 0.003);
+    const flag = addInstanced(planet.root, new THREE.BoxGeometry(0.002, 0.045, 0.07).translate(0, 0.135, 0.036), toon('#ff5fa2'), pinned.length, 0.003);
+    pinned.forEach((l, i) => {
       frame(_m, _p.copy(l.d).multiplyScalar(planet.meshR(l.d)), l.d, tangentBasis(l.d)[0]);
       pole.setMatrixAt(i, _m);
       flag.setMatrixAt(i, _m);

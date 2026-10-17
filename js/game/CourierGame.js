@@ -3,6 +3,7 @@ import { Progress } from './Progress.js';
 import { dailyParams } from './Daily.js';
 import { CourierProps } from './CourierProps.js';
 import { FlightHazards } from './FlightHazards.js';
+import { Feats } from './Feats.js';
 import { Widget } from '../ui/Widget.js';
 import { keepSaves } from '../core/Store.js';
 import { FlightControls } from './input/FlightControls.js';
@@ -19,7 +20,6 @@ import { MissionBoard } from './screens/MissionBoard.js';
 import { RoadBoard } from './screens/RoadBoard.js';
 
 const RESPAWN = 1.8; // seconds of smoke after a wreck before a fresh vehicle turns up (free modes)
-const LONG_JUMP = 5;  // seconds a rover must stay off the ground for the Giant Leap trophy
 
 /**
  * Sky Courier: fly a little plane (or drive a car, or sail a boat) around the planet. This runs the show: it starts
@@ -49,6 +49,7 @@ export class CourierGame {
     this.controls = new FlightControls(this);
     this.controls.bindBoost(this.hud.dom.boostBtn);
     this.hazards = new FlightHazards(this);
+    this.feats = new Feats(this);
     this.options = new OptionsMenu(app, this);
     this.briefing = new Briefing(app, this);
     this.pauseMenu = new PauseMenu(this);
@@ -124,7 +125,7 @@ export class CourierGame {
     this.player.setCargo(run.cargo);
     this.props = new CourierProps(p, run.rings);
     this.hazards.reset();
-    this.airT = 0; // seconds a rover's been off the ground (for the Giant Leap trophy)
+    this.feats.reset();
     app.rig.setGame(this.player);
     app.hud.setGameMode(true);
     this.layer.show();
@@ -175,14 +176,13 @@ export class CourierGame {
     }
     this.controls.update();
     pl.update(dt);
-    this.airT = pl.kind === 'car' && pl.airborne && this.planet.theme.air ? this.airT + dt : 0; // (a rover: where the air's thin or gone)
-    if (this.airT > LONG_JUMP) app.achievements.unlock('longjump');
     if (pl.crashed) {
       app.haptics?.buzz('crash');
       pl.damage(pl.impact ?? HARM.crash);
       run.crashed();
     }
     this.hazards.update(dt);
+    this.feats.update(dt);
     if (this.planet.ufo?.catchBy(pl.pos)) {
       run.caughtUfo();
       app.achievements.unlock('ufo');

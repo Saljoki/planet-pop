@@ -3,6 +3,7 @@ import { R } from '../core/Geo.js';
 import { toon, WPOS_DECL, WPOS_VERT, WINTER_GLSL } from '../render/Toon.js';
 import { addMesh } from '../render/Outline.js';
 import { SurfaceIndex } from './SurfaceIndex.js';
+import { cloudBandsGlsl } from './CloudBands.js';
 
 const DETAIL = 56;
 
@@ -62,7 +63,7 @@ export class Terrain {
     this.land = addMesh(this.planet.root, g, land, 0.06, { outlineGeometry: hull });
   }
 
-  /** Swelling toon ocean with lighter shallows and comic foam lines rolling toward the shore. */
+  /** Swelling toon ocean with lighter shallows and comic foam lines rolling toward the shore (on a giant, striped cloud). */
   buildOcean(o) {
     const tex = new THREE.DataTexture(o.hmap, o.hmapW, o.hmapH, THREE.RedFormat);
     tex.wrapS = THREE.RepeatWrapping;
@@ -85,11 +86,12 @@ export class Terrain {
           vec3 od = normalize(vWPos);
           vec2 huv = vec2(atan(od.z, od.x) / 6.2831853 + 0.5, asin(clamp(od.y, -1.0, 1.0)) / 3.1415927 + 0.5);
           float hgt = texture2D(uHeight, huv).r * 1.5 - 1.0;
+          ${cloudBandsGlsl(sea)}
           diffuseColor.rgb = mix(diffuseColor.rgb, uShallow, smoothstep(-0.5, -0.04, hgt) * 0.75);
           float foam = step(0.8, sin(hgt * 38.0 - uTime * 2.2)) * smoothstep(-0.32, -0.12, hgt);
           diffuseColor.rgb = mix(diffuseColor.rgb, uFoam, max(foam, step(-0.05, hgt)));
           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.88, 0.95, 1.0), winterCover(od, 0.0, 0.27, 0.012)); // winter sea ice`);
-    }, 'ocean');
+    }, sea.bands ? `ocean:${this.planet.theme.id}` : 'ocean'); // (a giant's stripes are written into its shader)
     mat.userData.tex = tex;
     this.ocean = sea.none ? null : addMesh(this.planet.root, new THREE.SphereGeometry(R, 160, 110), mat, 0.06, { cast: false }); // (dry worlds have no sea)
   }

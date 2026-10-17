@@ -44,6 +44,9 @@ export function position(id, ms, meanAnomaly = null) {
 /** The Moon's mean longitude round Earth (radians) at time `ms`: good enough for where it is in its month. */
 export function moonAngle(ms) { return ((218.316 + 13.176396 * ((ms - J2000) / 86400000)) % 360) * DEG; }
 
+/** Where a moon (Bodies.js: days, L0) is round its planet at time `ms`, in radians: its mean longitude. */
+export function orbitAngle(def, ms) { return (((def.L0 + (360 / def.days) * ((ms - J2000) / 86400000)) % 360) * DEG); }
+
 /**
  * Where a heliocentric position goes on the system map: the same direction, 100 × √(distance in au) out, so the
  * whole system fits a phone. The map's ground plane is the ecliptic (three.js x, -z), north up (+y), squashed.

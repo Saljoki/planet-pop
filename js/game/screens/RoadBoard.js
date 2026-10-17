@@ -9,7 +9,7 @@ export const ROAD_TRIPS = [
   { id: 'sail', icon: '⛵', name: 'Free sail', desc: 'Take a boat out on the open sea.', opts: { drive: 'boat' }, needs: 'sea' },
 ];
 
-/** The road trips: pick one and go. Free sail only shows on worlds with a sea to sail. */
+/** The road trips: pick one and go. Free sail only shows on worlds with a sea to sail, and a giant has none at all. */
 export class RoadBoard extends Overlay {
   constructor(app, onPlay) {
     super({ id: 'roads', html: `
@@ -31,7 +31,11 @@ export class RoadBoard extends Overlay {
   show() { this.render(); super.show(); }
 
   render() {
-    const sea = !!this.app.planet?.theme.sea.boats;
+    const sea = !!this.app.planet?.theme.sea.boats, world = this.app.planet?.world;
+    if (world?.giant) { // (nothing to drive on)
+      this.list.innerHTML = `<p class="note">🌫️ ${world.name} has no ground at all, so there are no roads. Fly to a world with ground for a road trip.</p>`;
+      return;
+    }
     this.list.innerHTML = ROAD_TRIPS.filter((t) => t.needs !== 'sea' || sea).map((t) => `<div class="mission"><span class="icon">${t.icon}</span>
       <div class="info">${t.name}<small>${t.desc}</small></div><button data-trip="${t.id}" class="big">▶ Go</button></div>`).join('');
   }

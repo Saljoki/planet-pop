@@ -1,5 +1,5 @@
 import { Widget } from './Widget.js';
-import { BODIES } from '../space/Bodies.js';
+import { BODIES, bodyOf } from '../space/Bodies.js';
 import { position } from '../space/Orbits.js';
 
 const PLANETS = BODIES.filter((b) => b.orbit && b.id !== 'pluto').map((b) => b.id);
@@ -11,7 +11,7 @@ const num = (n) => n.toLocaleString('en-GB');
 function kindOf(def) {
   if (def.id === 'sun') return 'Our star';
   if (def.id === 'away') return 'A made-up planet, from beyond the solar system';
-  if (def.parent) return 'Earth’s moon';
+  if (def.parent) return `${bodyOf(def.parent).name}’s moon`;
   if (def.id === 'pluto') return 'Dwarf planet, out beyond Neptune';
   return `Planet, ${ORDINAL[PLANETS.indexOf(def.id)]} from the Sun`;
 }
@@ -80,7 +80,7 @@ export class WorldCard extends Widget {
     d.go.textContent = g.text;
     d.go.disabled = !g.act;
     if (!def.orbit) {
-      d.now.textContent = def.parent ? 'About 384,000 km from Earth, going round it once a month.' : '';
+      d.now.textContent = def.around ?? '';
       return;
     }
     const p = position(def.orbit, ms), e = position('earth', ms);

@@ -126,7 +126,7 @@ describe('two players in a room', () => {
     const mars = readHello({ v: PROTOCOL, name: 'Mo', planet: { world: 'mars', seed: 1, land: 45, cities: 2, theme: 'ice' } });
     assert.deepEqual(mars.planet, { world: 'mars', seed: 1976, land: 45, cities: 5, theme: 'mars' }, 'a real world is always itself');
     assert.equal(mars.key, 'world:mars');
-    assert.equal(readHello({ v: PROTOCOL, name: 'Mo', planet: { world: 'jupiter', land: 45 } }), null);
+    assert.equal(readHello({ v: PROTOCOL, name: 'Mo', planet: { world: 'vulcan', land: 45 } }), null);
     assert.equal(planetKey(planetOf({ ...PARAMS, world: 'moon', land: 0.3 })), planetKey(planetOf({ ...PARAMS, world: 'moon' })), 'land doesn’t matter there');
     let went = null;
     b.visitWorld = (id) => { went = id; };

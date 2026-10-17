@@ -1,6 +1,7 @@
 import { Overlay } from '../../ui/Overlay.js';
 import { worldOf } from '../../space/Worlds.js';
 import { clock } from '../../space/SpaceCourier.js';
+import { CRAFT, styleFor } from '../vehicles/Plane.js';
 
 /**
  * 🚀 The space courier's board: the parcel you're carrying (deliver it, fly on with it, or drop it), and three parcels
@@ -17,6 +18,7 @@ export class ParcelBoard extends Overlay {
       <div id="pList"></div>` });
     this.app = app;
     this.courier = courier;
+    this.dom = { job: this.$('pJob'), list: this.$('pList') };
     this.on('pClose', 'click', () => this.hide());
     this.el.addEventListener('click', (e) => {
       const b = e.target.closest?.('button[data-act]');
@@ -42,11 +44,11 @@ export class ParcelBoard extends Overlay {
 
   render() {
     const c = this.courier, job = c.job, air = this.app.planet?.theme.air, here = worldOf(c.here);
-    const jobEl = this.$('pJob'), list = this.$('pList');
+    const { job: jobEl, list } = this.dom;
     if (job) {
       const to = worldOf(job.to);
-      const go = c.due
-        ? `<button data-act="drive" class="big drive">${air ? '🚙 Rover' : '🚗 Car'}</button><button data-act="fly" class="big">${{ none: '🚀 Hopper', thin: '🪂 Glider' }[air] ?? '✈️ Plane'}</button>`
+      const drive = this.app.planet?.world?.giant ? '' : `<button data-act="drive" class="big drive">${air ? '🚙 Rover' : '🚗 Car'}</button>`;
+      const go = c.due ? `${drive}<button data-act="fly" class="big">${CRAFT[styleFor(this.app.planet)]}</button>`
         : '<button data-act="resume" class="big">🚀 Fly there</button>';
       jobEl.innerHTML = `<div class="mission job"><span class="icon">${job.cargo.icon}</span><div class="info">Your parcel → ${to.icon} ${to.name}
         <small></small></div>${go}<button data-act="drop" title="Give up on it">✖</button></div>`;
@@ -56,7 +58,8 @@ export class ParcelBoard extends Overlay {
     list.innerHTML = job ? '<p class="note">One parcel at a time: deliver this one first.</p>'
       : `<p class="note">From ${here ? `${here.icon} ${here.name}` : '🪐 this planet'}${c.streak ? ` · 🔥 on-time streak x${c.streak}` : ''}</p>`
         + offers.map((o, i) => {
-          const to = worldOf(o.to), km = Math.round(o.au * 149.6), far = km >= 1 ? `${km.toLocaleString('en-GB')} million km` : '384,000 km';
+          const to = worldOf(o.to), km = o.au * 149.6e6;
+          const far = km >= 1e6 ? `${Math.round(km / 1e6).toLocaleString('en-GB')} million km` : `${(Math.round(km / 1000) * 1000).toLocaleString('en-GB')} km`;
           return `<div class="mission"><span class="icon">${o.cargo.icon}</span><div class="info"><span data-what="${i}"></span> → ${to.icon} ${to.name}
             <small>${o.cargo.name} (${o.cargo.tip.toLowerCase()}) · ${far} · ⏱ ${clock(o.limit)}</small></div>
             <button data-act="take" data-i="${i}" class="big">🚀 🪙 ${o.pay}</button></div>`;

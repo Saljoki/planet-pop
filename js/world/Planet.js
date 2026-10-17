@@ -13,6 +13,7 @@ import { ForestFloor } from './ForestFloor.js';
 import { Landmarks } from './Landmarks.js';
 import { RollingTown } from './RollingTown.js';
 import { Rafts } from './Rafts.js';
+import { Rings } from './Rings.js';
 import { Airports } from './Airports.js';
 import { Harbours } from './Harbours.js';
 import { Volcano } from './Volcano.js';
@@ -147,6 +148,7 @@ export class Planet {
     this.add('landmarks', new Landmarks(this));
     this.add('rolling', new RollingTown(this));
     this.add('rafts', new Rafts(this));
+    this.add('rings', new Rings(this));
     this.airports.build();
     this.harbours.build();
     this.add('boats', new Boats(this));

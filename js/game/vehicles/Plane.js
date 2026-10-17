@@ -7,6 +7,12 @@ import { Trails } from '../../life/Trails.js';
 import { Vehicle } from './Vehicle.js';
 
 export const SPEED = 1.7;
+
+/** Each style of courier craft in words, for buttons: '✈️ Plane'. */
+export const CRAFT = { plane: '✈️ Plane', glider: '🪂 Glider', hopper: '🚀 Hopper', ship: '🚀 Ship' };
+
+/** What the courier flies on this planet: 'ship' over a giant's clouds, 'hopper' with no air, 'glider' in thin air, or 'plane'. */
+export const styleFor = (planet) => (planet.world?.giant ? 'ship' : { none: 'hopper', thin: 'glider' }[planet.theme.air] ?? 'plane');
 const BOOST = 3.0, TURN = 1.6, CLIMB = 1.4, MIN_ALT = R + 0.4, MAX_ALT = R + 5.5;
 const STALL = 1.4; // seconds the engine splutters after hitting the ground
 const _a = new THREE.Vector3(), _f = new THREE.Vector3(), _u = new THREE.Vector3(), _m = new THREE.Matrix4();
@@ -15,8 +21,8 @@ const BASE_SKIN = { body: '#ffd23f', trim: '#ff4d4d' };
 /**
  * The courier plane (Rex flies one too): flies great circles around the globe at a chosen altitude. Hitting the
  * ground bounces it back up, but it costs health, and the engine splutters and the plane wobbles for a moment.
- * Its look suits the air: a plane, a long-winged glider where the air is thin (Mars), and a rocket hopper where
- * there's none at all for wings (the Moon). They all fly the same.
+ * Its look suits the world: a plane, a long-winged glider where the air is thin (Mars), a rocket hopper where
+ * there's none at all for wings (the Moon), and a little ship with fins over a giant's clouds. They all fly the same.
  */
 export class Plane extends Vehicle {
   constructor(planet, startDir, heading, stats, skin = BASE_SKIN) {
@@ -30,15 +36,16 @@ export class Plane extends Vehicle {
     this.cargoClimb = 1;
     this.paint = { body: skin.body, trim: skin.trim }; // (what friends see it painted)
 
-    this.style = planet.theme.air === 'none' ? 'hopper' : planet.theme.air === 'thin' ? 'glider' : 'plane';
+    this.style = styleFor(planet);
     const g = this.group, body = toon(skin.body), trim = toon(skin.trim);
     addMesh(g, new THREE.CapsuleGeometry(0.08, 0.4, 4, 12).rotateX(Math.PI / 2), body, 0.012);
     addMesh(g, new THREE.SphereGeometry(0.06, 12, 8).scale(1, 0.8, 1.4).translate(0, 0.065, 0.06), toon('#2d2a5a'), 0.006);
     this.crateMat = toon('#c98a4b');
     addMesh(g, new THREE.BoxGeometry(0.09, 0.07, 0.09).translate(0, 0.11, -0.08), this.crateMat, 0.006); // the parcel
-    if (this.style === 'hopper') this.buildHopper(trim);
+    if (this.style === 'hopper' || this.style === 'ship') this.buildHopper(trim, this.style === 'hopper');
     else this.buildWings(trim, this.style === 'glider' ? 1.5 : 1);
-    this.trail = new Trails(planet.root, { max: 200, color: this.style === 'hopper' ? '#ffd8a8' : '#fff4c2', life: 1.6, grow: 2, drag: 0.4 });
+    if (this.style === 'ship') this.buildFins(trim);
+    this.trail = new Trails(planet.root, { max: 200, color: this.style === 'plane' || this.style === 'glider' ? '#fff4c2' : '#ffd8a8', life: 1.6, grow: 2, drag: 0.4 });
     this.trailT = 0;
     this.sync();
   }
@@ -57,19 +64,29 @@ export class Plane extends Vehicle {
     this.prop.position.z = 0.29;
   }
 
-  /** No air for wings: stubby thruster pods, landing legs, and a rocket nozzle with its flame. */
-  buildHopper(trim) {
+  /** No air for wings: stubby thruster pods, landing legs (unless it's a ship), and a rocket nozzle with its flame. */
+  buildHopper(trim, legs = true) {
     const g = this.group;
     addMesh(g, mergeGeometries([
       ...[-1, 1].map((s) => new THREE.CylinderGeometry(0.045, 0.05, 0.26, 10).rotateX(Math.PI / 2).translate(s * 0.2, -0.01, -0.02)),
       new THREE.BoxGeometry(0.36, 0.025, 0.1).translate(0, -0.01, -0.02),
-      ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => new THREE.BoxGeometry(0.014, 0.12, 0.014).rotateZ(sx * 0.4).translate(sx * 0.1, -0.1, sz * 0.12)),
-      ...[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]) => new THREE.CylinderGeometry(0.03, 0.03, 0.01, 10).translate(sx * 0.125, -0.16, sz * 0.12)),
+      ...(legs ? [[-1, -1], [1, -1], [-1, 1], [1, 1]].flatMap(([sx, sz]) => [
+        new THREE.BoxGeometry(0.014, 0.12, 0.014).rotateZ(sx * 0.4).translate(sx * 0.1, -0.1, sz * 0.12),
+        new THREE.CylinderGeometry(0.03, 0.03, 0.01, 10).translate(sx * 0.125, -0.16, sz * 0.12),
+      ]) : []),
     ]), trim, 0.008);
     addMesh(g, new THREE.ConeGeometry(0.07, 0.1, 12, 1, true).rotateX(-Math.PI / 2).translate(0, 0, -0.32), toon('#2a2540'), 0.005);
     this.flame = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.22, 10).rotateX(-Math.PI / 2).translate(0, 0, -0.47), new THREE.MeshBasicMaterial({ color: '#ffb21f' }));
     this.flame.layers.set(LAYER_FX);
     g.add(this.flame);
+  }
+
+  /** A ship's swept fins on its pods and a tail fin on top. */
+  buildFins(trim) {
+    addMesh(this.group, mergeGeometries([
+      ...[-1, 1].map((s) => new THREE.BoxGeometry(0.16, 0.015, 0.12).rotateY(s * 0.5).translate(s * 0.3, -0.02, -0.08)),
+      new THREE.BoxGeometry(0.015, 0.13, 0.12).translate(0, 0.12, -0.2),
+    ]), trim, 0.006);
   }
 
   get speed() { return SPEED * this.stats.speed * this.cargoSpeed * this.engine * (1 - 0.6 * this.stall); }

@@ -5,14 +5,15 @@ strolling the streets, trams and traffic with signals, airports where planes lan
 with ferries, sightseeing helicopters, whales, a train with a tunnel, balloons, bird flocks, weather with
 rainbows, an erupting volcano, midnight fireworks, meteor showers, auroras over the poles, the odd UFO,
 a rocket pad, satellites, a space station, a moon and an ambient soundscape. Planets come in five kinds:
-classic, ice, desert, candy and lava, and there are six real worlds to land on: **Earth** with its real continents,
-**the Moon** and **Mars** mapped from real data, the cloud cities of **Venus**, **Mercury** with its rolling town and
-**Pluto** with its ice hotel, on a 🪐 **map of the solar system** with every planet where it really is today, and
-**rocket trips** between them, with a 🚀 **space courier** taking parcels from world to world. Plus the **Sky Courier**
-mini-game with fifteen missions (five on the real worlds), a daily challenge (on a real world about every other day) and
-free flight, **road trips** (drive any car or steer any boat, taxi, van courier and a race round
+classic, ice, desert, candy and lava, and there are thirteen real worlds to visit: **Earth** with its real continents,
+**the Moon** and **Mars** mapped from real data, the cloud cities of **Venus**, **Mercury** with its rolling town,
+**Pluto** with its ice hotel, the giants **Jupiter**, **Saturn** (rings and all), **Uranus** and **Neptune** with their
+cloud stations, and the moons **Io**, **Europa** and **Titan**, on a 🪐 **map of the solar system** with every planet
+where it really is today, and **rocket trips** between them, with a 🚀 **space courier** taking parcels from world to
+world. Plus the **Sky Courier** mini-game with twenty-two missions (twelve on the real worlds), a daily challenge (on a
+real world about every other day) and free flight, **road trips** (drive any car or steer any boat, taxi, van courier and a race round
 the world) with a 🗺️ mini-map, 👥 playing with friends on the same planet, a 📍 Find menu, a hands-free 📺 tour, a
-photo mode and 51 trophies. It's built for
+photo mode and 54 trophies. It's built for
 phones as much as laptops (touch gestures, a thumbstick, tilt steering), installs as an app and works offline.
 
 Every planet is generated from a seed. The address bar always holds the current planet
@@ -102,6 +103,17 @@ service worker picks up the new version (the tests check this).
   overheats, so keep to the night side. **Pluto** has its heart (Sputnik Planitia, a plain of frozen nitrogen), the
   water-ice Tenzing and Hillary Montes, the ice volcano Wright Mons, the dark Belton Regio, a faint, tiny Sun, Charon
   hanging huge and still in the sky, and the ice hotel on the heart.
+- **The giants** have no ground at all: you visit their cloud tops, where the towns are stations hanging from balloons
+  and you get about by ship (there's nothing to drive on). **Jupiter** is striped, with the Great Red Spot swirling
+  (fly a loop round it) and Io, Europa, Ganymede and Callisto in the sky; **Saturn** has its hexagon round the north
+  pole and its rings across the sky, whose inner edge comes down within reach: chunks of ice to weave through (or
+  crunch into), and ring ice to dodge in the cruise on the way in; **Uranus** is pale blue-green with faint dark rings;
+  **Neptune** has the Great Dark Spot and the fastest winds in the solar system, which carry your ship west.
+- **The moons:** **Io** has over 400 volcanoes; Pele, Prometheus and Tvashtar erupt where they really are, throwing up
+  sulphur, round Loki Patera's lava lake, with Jupiter huge overhead. **Europa** is ice criss-crossed by reddish cracks
+  over a hidden ocean, with Conamara Chaos, Pwyll and a plume of water from the south. **Titan** has thick orange air
+  and low gravity (planes fly beautifully), methane rain, dark dunes, bright Xanadu, boats on the methane seas round
+  the north pole, Saturn in its sky, and the Huygens probe where it landed in 2005.
 - **🚀 Trips:** a world's card has **Travel to …**: board the rocket on your spaceport's pad, 3-2-1, lift off, then
   cruise across the map: steer (drag, arrow keys or WASD) to catch ⭐ fuel stars (a coin each) and miss the rocks
   (thickest in the asteroid belt), and boost (Space, or **🔥 Boost**) with the fuel. The next world is built while you
@@ -168,10 +180,12 @@ the hangar), A / B answer the end-of-run screen.
   in Options moves it to another one.
 - **🎯 Missions** (in the hangar): ten goals played in order, each on its own planet: First Flight, Rush
   Hour, Ring Master, Handle With Care, Pit Stop, Heavy Lifter, Outrun Rex, Night Shift, Close Encounter
-  and Ash Dodger. Five more on the real worlds open up in their own order: One Small Step (a flag to Tranquility
+  and Ash Dodger. Twelve more on the real worlds open up in their own order: One Small Step (a flag to Tranquility
   Base), Dust Storm Medicine on Mars, Acid Rain on Venus (one lightning strike and it's over), Keep to the Shade on
-  Mercury and Room Service at Pluto's ice hotel. The arrow points where a mission needs you (a runway, the next ring,
-  the UFO, a landmark), and each pays coins the first time you complete it.
+  Mercury, Room Service at Pluto's ice hotel, Eye of the Storm (a loop round the Great Red Spot), Ring Run (through
+  Saturn's ring ice without touching any), Cold Chain on Uranus, Gale Force on Neptune, Sulphur Run on Io, Ocean
+  Sample on Europa and a battery for Huygens on Titan. The arrow points where a mission needs you (a runway, the next
+  ring, the UFO, a landmark, the storm, the ring), and each pays coins the first time you complete it.
 - **🚗 Road trips** (in the hangar), in a car on the ground: ↑ / W to go, ↓ / S to brake and reverse (on phones,
   drag up and down on the left). Highways and town streets are quickest (two main streets cross in the middle of
   every town); grass, sand and snow are slower and hills slow you going up, and you get a little air over crests.
@@ -210,13 +224,14 @@ planet-pop/
 │  ├─ world/                  Planet (the module list), Themes, Terrain + TerrainCompute + terrain.worker,
 │  │                          SurfaceIndex (exact ground height), Roads, Cities, Nature, TreeShapes, Railway, Airports,
 │  │                          Harbours, Volcano, Glow, Seasons, ForestFloor (forest-coloured ground), Landmarks,
-│  │                          RollingTown (Mercury's Terminus), Rafts (Venus's balloons), Happenings (what's going
+│  │                          RollingTown (Mercury's Terminus), Rafts (towns on balloons), CloudBands (a giant's
+│  │                          stripes and storms), Rings (Saturn's, with their ice), Happenings (what's going
 │  │                          on, for Find and the tour)
 │  ├─ life/                   Trails, Traffic, People, Trams, Boats, Whales, Balloons, Planes, Helicopters, Birds,
 │  │                          Ufo, Space
 │  ├─ camera/                 CameraRig (modes and swoops), OrbitView, FollowView, ChaseView, Picker (what's under a
 │  │                          tap), Gestures (touch and mouse)
-│  ├─ space/                  Worlds (Earth, the Moon, Mars: shapes, peaks, landmarks), WorldThemes, EarthLand (the
+│  ├─ space/                  Worlds (the real worlds: shapes, peaks, landmarks), WorldThemes, EarthLand (the
 │  │                          land map), Bodies (NASA's numbers), Orbits (JPL elements: where everything is on a date),
 │  │                          SystemMap + SystemScene + MapView + BodyArt (the 🪐 map), Trip + Cruise (rocket trips),
 │  │                          SpaceCourier (parcels between worlds)
@@ -228,7 +243,8 @@ planet-pop/
 │  │                          WakeLock, DebugStats (?debug), SystemBar, MapLabels, WorldCard, CruiseHud, LandedCard
 │  │                          (the system map and trips)
 │  └─ game/                   CourierGame (runs the show), Rival + RoadRival (Rex in the air and on the road), Cargo,
-│     │                       CourierProps (beacon, rings, pads, race arches), FlightHazards (storms, runways, ash, heat),
+│     │                       CourierProps (beacon, rings, pads, race arches), FlightHazards (storms, runways, ash, heat,
+│     │                       ring ice, wind), Feats (trophy moves: long jumps, loops round a storm, threading the ring),
 │     │                       Progress, Settings, Daily, Missions
 │     ├─ vehicles/            Vehicle (health, boost, smoke), Plane, GroundVehicle, Car, Boat, Ground (what's under a
 │     │                       car or boat: roads, water, buildings, mountains, where to start and stop)

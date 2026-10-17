@@ -1,4 +1,5 @@
 import { loadJson, saveJson } from '../core/Store.js';
+import { WORLD_IDS } from '../space/Worlds.js';
 
 const DEFS = [
   ['newworld', '🌍', 'World Builder', 'Generate a new planet'],
@@ -44,17 +45,20 @@ const DEFS = [
   ['racer', '🏁', 'Round the World', 'Beat Rex in the round-the-world race'],
   ['rocketman', '🚀', 'Rocket Man', 'Fly to another world by rocket'],
   ['fuelup', '⭐', 'Fuelled Up', 'Catch 15 fuel stars on one trip'],
-  ['grandtour', '🪐', 'Grand Tour', 'Land on all six worlds'],
+  ['grandtour', '🪐', 'Grand Tour', 'Visit every world in the solar system'],
   ['earthrise', '🌍', 'Earthrise', 'Watch Earth from the Moon'],
   ['longjump', '🦘', 'Giant Leap', 'Keep a rover in the air for 5 seconds'],
   ['terminus', '🚉', 'All Aboard', 'Visit Terminus, the town on rails'],
   ['icehotel', '🛎️', 'Check In', 'Visit the Ice Hotel on Pluto'],
   ['spacecourier', '📦', 'Interplanetary', 'Deliver a parcel to another world'],
   ['spacemissions', '🛰️', 'Mission Control', 'Complete every mission on the real worlds'],
+  ['redspot', '🌀', 'Eye of the Storm', 'Fly a loop round Jupiter’s Great Red Spot'],
+  ['ringrunner', '💫', 'Ring Runner', 'Fly through Saturn’s ring ice without touching any'],
+  ['windrider', '💨', 'Gone with the Wind', 'Let Neptune’s winds carry you a quarter of the way round'],
   ['completionist', '👑', 'Planet Pro', 'Unlock every other trophy'],
 ];
 const KEY = 'planetpop.trophies', WORLDS_KEY = 'planetpop.worlds', WORLD_KINDS = 5;
-const VISITED_KEY = 'planetpop.visited', REAL_WORLDS = 6; // (the real worlds landed on: ids)
+const VISITED_KEY = 'planetpop.visited'; // (the real worlds visited: ids)
 
 export class Achievements {
   constructor(hud) {
@@ -88,7 +92,7 @@ export class Achievements {
     const seen = loadJson(VISITED_KEY, []);
     if (!seen.includes(id)) seen.push(id);
     saveJson(VISITED_KEY, seen);
-    if (seen.length >= REAL_WORLDS) this.unlock('grandtour');
+    if (WORLD_IDS.every((w) => seen.includes(w))) this.unlock('grandtour');
   }
 
   visitCity(name) {

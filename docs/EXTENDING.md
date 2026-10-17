@@ -110,7 +110,7 @@ a new kind of progress kept under a new key should be added there, or it won't m
 
 Add an entry to `MISSIONS` in `js/game/Missions.js`. `goal.stat` names one of the counters in
 `DeliveryRun.tally` (deliveries, urgent, fragile, heavy, broken, rings, refuels, rexStreak, ufo, ash, night, zaps,
-landmark); `failIf` names one that ends the mission when it goes above zero. Setup flags (`rival`, `night`, `dark`,
+landmark, ice, loops, threads); `failIf` names one that ends the mission when it goes above zero. Setup flags (`rival`, `night`, `dark`,
 `ufoIn`, `eruptions`, `cargo`, `landmark`, `carry`, `item`) are applied in `MissionRun.setup()`; a new one goes there. Pick a
 planet that has what the mission needs; `tests/missions.test.mjs` checks that. `planet: { world: 'mars' }` flies it on
 a real world: those missions are a list of their own on the board, opening up in order after the first.
@@ -158,6 +158,17 @@ planets pick it up from there. Add its id to the list of worlds `tests/themes.te
   `FlightHazards`), run a town on rails round its spin axis (`rolling`: `world/RollingTown.js`; towns, the railway
   and new mountains keep off the band) or float its towns on rafts (`floating`: `world/Rafts.js`). Give its body in
   `BODIES` a `world` so the map's card offers a trip there, and add it to the tests in `tests/space.test.mjs`.
+- **A giant** (`giant: true`: Jupiter to Neptune) has no ground: its shape is a cloud sea with a raft for each
+  station (`stations(towns, pad)` in Worlds.js puts the towns exactly on them), no roads, and so no driving (the
+  landed card, parcel board and road trips all check); the courier flies a ship there (`Plane`'s `styleFor`). Its
+  theme's `sea.bands` and `sea.spots` paint the stripes and storms into the sea's shader (`world/CloudBands.js`) and
+  the mini-map; `rafts` sets its balloons. A world can also have `rings` (`world/Rings.js`: Saturn's ice can be hit
+  and threaded) and `wind` (`FlightHazards.wind`). A landmark with `pin: false` sits in the clouds with no flag, and
+  one with `loop` names the trophy for flying round it (`game/Feats.js`).
+- **A moon of another planet** is a body with a `parent` (and `days`, `L0`, `gap`, `au`, `around`: see Bodies.js); the
+  map puts it round its planet, and the space courier prices it by its real distance. A world's `volcanoes` puts
+  named volcanoes where they really are (Io's), and its theme's `volcano` recolours them (sulphur, or Europa's water).
+  A theme's sky `moons` can include a giant planet: `{ kind: 'gas', body: 'jupiter', size, dist }`.
 - **A body on the map** (`js/space/Bodies.js`): NASA's numbers for the card, how it's drawn (`look`: picked up by
   `BodyArt`), and `orbit`, its name in `ORBITS` (`js/space/Orbits.js`, JPL's elements). The map squeezes sizes and
   distances with a square root (`mapSize`, `mapPosition`).

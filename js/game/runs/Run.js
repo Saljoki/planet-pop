@@ -60,6 +60,15 @@ export class Run {
   /** Hit by lightning. */
   zapped() {}
 
+  /** Hit a chunk of a giant's ring ice (the knock has been taken): it counts as a crash. */
+  iced() { this.crashed(); }
+
+  /** Flew a whole loop round a storm (Jupiter's Great Red Spot). */
+  looped() {}
+
+  /** Flew through a giant's ring ice without touching any. */
+  threaded() {}
+
   /** Started skimming a runway. */
   refuelled() {}
 

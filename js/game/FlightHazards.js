@@ -1,13 +1,17 @@
+import * as THREE from 'three';
 import { TAU, tangentBasis } from '../core/Geo.js';
 import { HALF } from '../world/Airports.js';
 import { HARM } from './vehicles/Vehicle.js';
 
 const REFUEL = 0.9, REPAIR = 0.3, ASH_ENGINE = 0.55, HEAT = 1 / 45; // (a full tank of health lasts 45 s in Mercury's sunshine)
 const DUST = 1 / 30; // (and 30 s in a Martian dust storm)
+const WIND_RIDE = Math.PI / 2; // (radians round the planet the wind carries you for the trophy)
+const _q = new THREE.Quaternion();
 
 /**
  * What the planet does to the plane in any run: thunderstorms buffet and zap it (dust storms buffet and sandblast it), runways refuel it, volcanic ash
- * chokes the engine, and on Mercury (world.heat) the sunshine slowly cooks whatever you're in. The effects on the plane happen here; the run hears about them (zapped, refuelled, inAsh) to
+ * chokes the engine, on Mercury (world.heat) the sunshine slowly cooks whatever you're in, Saturn's ring ice knocks
+ * you about like a crash, and Neptune's wind (world.wind) blows you west. The effects on the plane happen here; the run hears about them (zapped, refuelled, inAsh) to
  * score them its own way.
  */
 export class FlightHazards {
@@ -18,7 +22,8 @@ export class FlightHazards {
 
   /** A fresh run: warnings will be shown again. */
   reset() {
-    Object.assign(this, { stormT: 1.2, warnedStorm: false, refuelling: false, warnedAsh: false, ashT: 0, hot: false, warnedHeat: false, heatT: 0 });
+    Object.assign(this, { stormT: 1.2, warnedStorm: false, refuelling: false, warnedAsh: false, ashT: 0, hot: false, warnedHeat: false, heatT: 0,
+      warnedWind: false, warnedIce: false, blown: 0 });
   }
 
   update(dt) {
@@ -26,6 +31,39 @@ export class FlightHazards {
     this.runways(dt);
     this.ash(dt);
     this.heat(dt);
+    this.ice();
+    this.wind(dt);
+  }
+
+  /** A chunk of a giant's ring ice: a knock like a crash (fragile parcels break), then a moment's grace. */
+  ice() {
+    const g = this.game, pl = g.player, rings = g.planet.rings;
+    if (!rings?.ice.length || pl.invuln > 0 || !rings.iceAt(pl.pos)) return;
+    pl.damage(HARM.crash * 0.6);
+    pl.invuln = 1;
+    pl.shake = 1;
+    g.app.haptics?.buzz('crash');
+    g.app.sfx.pop(pl.pos.clone(), 'CRUNCH!', '#cfeaff', 'crash');
+    g.run.iced();
+    if (!this.warnedIce) {
+      this.warnedIce = true;
+      g.app.hud.toast('🧊 Ring ice! Fly above or below the ring, or weave between the chunks.');
+    }
+  }
+
+  /** Neptune's winds, the fastest in the solar system, carry the ship west round the planet, in gusts. */
+  wind(dt) {
+    const g = this.game, pl = g.player, w = g.planet.world?.wind;
+    if (!w || pl.kind !== 'plane') return;
+    const gust = w * (0.75 + 0.25 * Math.sin((g.app.simTime ?? 0) * 0.7)), axis = g.app.sky.axis;
+    _q.setFromAxisAngle(axis, (-gust * dt) / pl.alt);
+    pl.up.applyQuaternion(_q);
+    pl.fwd.applyQuaternion(_q);
+    if ((this.blown += (gust * dt) / pl.alt) > WIND_RIDE) g.app.achievements.unlock('windrider');
+    if (!this.warnedWind) {
+      this.warnedWind = true;
+      g.app.hud.toast('💨 Neptune’s winds blow at 2,000 km/h: they carry you west. Allow for them!');
+    }
   }
 
   /** Inside a thundercloud the plane is buffeted, and every few seconds lightning may hit it. */

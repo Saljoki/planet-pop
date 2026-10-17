@@ -1,5 +1,6 @@
 import { WORLD_IDS, worldOf } from './Worlds.js';
 import { position, mapPosition } from './Orbits.js';
+import { bodyOf } from './Bodies.js';
 import { CARGO } from '../game/Cargo.js';
 import { ParcelBoard } from '../game/screens/ParcelBoard.js';
 
@@ -10,18 +11,22 @@ const AWAY_AU = 50;     // how far a made-up planet "beyond the solar system" co
 const LAST_LEG = 70;    // seconds allowed for launching, landing and the last stretch to the town
 const STREAK_MAX = 3;   // the on-time bonus stops growing here (x1.5)
 
-/** Where a body is on the system map today (the Moon by Earth, a made-up planet far out), for timing a trip. */
+/** The planet a body goes round the Sun with: a moon's planet, or the body itself. */
+const hostOf = (id) => bodyOf(id)?.parent ?? id;
+
+/** Where a body is on the system map today (a moon by its planet, a made-up planet far out), for timing a trip. */
 function mapAt(id, ms) {
   if (id === 'away') return [620, 160, 560];
-  const [x, y, z] = mapPosition(position(id === 'moon' ? 'earth' : id, ms));
-  return id === 'moon' ? [x + 7, y, z] : [x, y, z];
+  const [x, y, z] = mapPosition(position(hostOf(id), ms)), def = bodyOf(id);
+  return def?.parent ? [x + (def.gap ?? 4.2) * 1.6 * 1.5, y, z] : [x, y, z];
 }
 
-/** Real distance between two bodies today, in au (the Moon is next to Earth). */
+/** Real distance between two bodies today, in au (a moon is next to its planet, as far out as it really goes). */
 function distanceAU(a, b, ms) {
   if (a === 'away' || b === 'away') return AWAY_AU;
-  const pa = position(a === 'moon' ? 'earth' : a, ms), pb = position(b === 'moon' ? 'earth' : b, ms);
-  return Math.max(0.00257, Math.hypot(pa[0] - pb[0], pa[1] - pb[1], pa[2] - pb[2]));
+  if (hostOf(a) === hostOf(b)) return Math.max(bodyOf(a).au ?? 0, bodyOf(b).au ?? 0, 0.00257); // (a planet and its moon, or two moons)
+  const pa = position(hostOf(a), ms), pb = position(hostOf(b), ms);
+  return Math.hypot(pa[0] - pb[0], pa[1] - pb[1], pa[2] - pb[2]);
 }
 
 /**
