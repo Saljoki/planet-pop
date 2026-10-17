@@ -647,3 +647,51 @@ describe('Earth’s real towns', () => {
     planet.dispose();
   });
 });
+
+describe('Rex in space', () => {
+  const seq = (...v) => { let i = 0; return () => v[i++ % v.length]; };
+
+  it('races you through the cruise, and takes the parcel if he reaches the town first', async () => {
+    localStorage.clear();
+    const app = await travelApp('earth'), courier = app.spaceCourier, game = app.game;
+    const plain = courier.offer('earth', 'mars', seq(0.1, 0.5, 0.1)), raced = courier.offer('earth', 'mars', seq(0.1, 0.5, 0.9));
+    assert.ok(!plain.rex && raced.rex, 'Rex should want the second one');
+    assert.equal(raced.pay, Math.round((plain.pay * 1.5) / 5) * 5, 'a parcel Rex is after pays half as much again');
+    courier.take(raced);
+    await fly(app, 60, () => app.trip.state === 'cruise');
+    const c = app.map.cruiser;
+    assert.ok(c.rex && c.rexShip.visible, 'no Rex rocket in the cruise');
+    await fly(app, 4);
+    assert.ok(c.rexGap > 0, 'Rex should pull ahead of a ship that never boosts');
+    await fly(app, 120, () => app.trip.state === 'idle' && app.planet.world.id === 'mars');
+    assert.ok(courier.job.rex.lead > 0, 'Rex’s lead from the cruise was lost');
+    assert.match(app.trip.card.dom.note.textContent, /Rex is \d+ s ahead/);
+    game.start({ space: true });
+    assert.ok(game.run.rival, 'no Rex in the last stretch');
+    const pl = game.player;
+    for (let i = 0; i < 20 * 90 && !game.over; i++) { pl.up.copy(game.run.from?.c ?? pl.up); game.update(1 / 20); } // (you dawdle at the spaceport)
+    assert.ok(game.over, 'Rex never got there');
+    assert.match(game.results.dom.title.textContent, /got there first/);
+    assert.equal(courier.job, null);
+    assert.equal(courier.streak, 0);
+    game.stop();
+  });
+
+  it('beat him and it pays its extra, with a trophy', async () => {
+    localStorage.clear();
+    const app = await travelApp('mars'), courier = app.spaceCourier, game = app.game;
+    const offer = courier.offer('earth', 'mars', seq(0.1, 0.5, 0.9));
+    courier.job = { ...offer, left: 80, broken: false, rex: { lead: -30 } };
+    const coins = game.progress.coins;
+    game.start({ space: true });
+    const run = game.run, pl = game.player;
+    assert.ok(run.rival.rest > 25, 'Rex should be waiting his turn');
+    pl.up.copy(run.town.c);
+    pl.alt = app.planet.surfR(run.town.c) + 1;
+    game.update(1 / 60);
+    assert.ok(game.over && game.progress.coins >= coins + offer.pay);
+    assert.match(game.results.dom.result.innerHTML, /beat Rival Rex/);
+    assert.ok(app.unlocked.includes('spacerace'));
+    game.stop();
+  });
+});

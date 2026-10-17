@@ -33,7 +33,8 @@ export class LandedCard extends Widget {
     const courier = this.app.spaceCourier, job = courier?.due && courier.job;
     this.parcel = !!job;
     if (job) job.town = courier.townFor(this.app.planet).name;
-    d.note.textContent = job ? `${job.what} for ${job.town}: ${job.left > 0 ? `${clock(job.left)} left` : 'late, but still wanted'}. Take it to town!`
+    const lead = job?.rex?.lead ?? 0, rex = !job?.rex ? '' : lead > 0.5 ? ` 😈 Rex is ${Math.round(lead)} s ahead!` : lead < -0.5 ? ` 😈 Rex is ${Math.round(-lead)} s behind.` : ' 😈 Rex is right with you!';
+    d.note.textContent = job ? `${job.what} for ${job.town}: ${job.left > 0 ? `${clock(job.left)} left` : 'late, but still wanted'}. Take it to town!${rex}`
       : world.welcome ?? '';
     const style = styleFor(this.app.planet), [icon, name] = CRAFT[style].split(' ');
     d.drive.textContent = job ? (air ? '🚙 By rover' : '🚗 By car') : air ? '🚙 Drive the rover' : '🚗 Take a car';

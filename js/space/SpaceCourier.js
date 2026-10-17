@@ -10,6 +10,7 @@ const KINDS = [[CARGO.standard, 40], [CARGO.urgent, 25], [CARGO.fragile, 20], [C
 const AWAY_AU = 50;     // how far a made-up planet "beyond the solar system" counts as being
 const LAST_LEG = 70;    // seconds allowed for launching, landing and the last stretch to the town
 const STREAK_MAX = 3;   // the on-time bonus stops growing here (x1.5)
+const REX = 0.3, REX_PAY = 1.5; // how many parcels Rex is after too, and how much more they pay
 
 /** The planet a body goes round the Sun with: a moon's planet, or the body itself. */
 const hostOf = (id) => bodyOf(id)?.parent ?? id;
@@ -34,7 +35,9 @@ function distanceAU(a, b, ms) {
  * (ParcelBoard: the hangar, the system map, or after a delivery) and the rocket leaves straight away; the parcel's
  * clock runs through the trip and the last stretch, from the spaceport to its town by rover or by air
  * (runs/SpaceDropRun.js). Pay goes with today's real distance and the kind of parcel; on time pays in full and builds
- * a streak, late pays half, and a broken fragile parcel pays nothing.
+ * a streak, late pays half, and a broken fragile parcel pays nothing. Rival Rex is after some parcels too (job.rex):
+ * they pay more, his rocket races yours in the cruise (Cruise), whatever lead he has carries into the last stretch
+ * (SpaceDropRun), and if he gets to the town first he takes the parcel (lose()).
  */
 export class SpaceCourier {
   constructor(app) {
@@ -69,14 +72,15 @@ export class SpaceCourier {
     const cruise = Math.min(34, Math.max(12, 8 + Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]) / 9)); // (as Cruise times it)
     const pay = Math.round(((15 + 20 * Math.sqrt(au)) * cargo.pay) / 5) * 5; // (the Moon ~15, Mars ~40, Pluto ~130)
     const limit = Math.round((cruise + LAST_LEG) * (cargo.id === 'urgent' ? 0.75 : cargo.id === 'heavy' ? 1.2 : 1));
-    return { from, to, cargo, what: GOODS[Math.floor(rand() * GOODS.length)], pay, limit, au };
+    const what = GOODS[Math.floor(rand() * GOODS.length)], rex = rand() >= 1 - REX;
+    return { from, to, cargo, what, pay: rex ? Math.round((pay * REX_PAY) / 5) * 5 : pay, limit, au, rex };
   }
 
   /** Take a parcel: off by rocket straight away. False if a trip can't start right now. */
   take(offer) {
     const app = this.app;
     if (this.job || !app.trip.go(offer.to)) return false;
-    this.job = { ...offer, left: offer.limit, broken: false };
+    this.job = { ...offer, left: offer.limit, broken: false, rex: offer.rex ? { lead: 0 } : null }; // (lead: seconds Rex is ahead)
     this.offers = null;
     app.hud.toast(`${offer.cargo.icon} ${offer.what} for ${worldOf(offer.to).name}: ${clock(offer.limit)} on the clock!`);
     return true;
@@ -105,6 +109,15 @@ export class SpaceCourier {
     if (this.job && this.app.trip.active && !this.app.paused) this.job.left -= dt;
   }
 
+  /** Rex got the parcel to its town first: no pay, and the streak's gone. Returns the parcel, for the results card. */
+  lose() {
+    const job = this.job;
+    this.job = null;
+    this.offers = null;
+    this.streak = 0;
+    return job;
+  }
+
   /** Handed over: pay up. Returns what happened, for the results card. */
   deliver() {
     const app = this.app, job = this.job, onTime = job.left > 0;
@@ -114,6 +127,7 @@ export class SpaceCourier {
     const coins = job.broken ? 0 : Math.round(job.pay * (onTime ? bonus : 0.5));
     if (coins) app.game.progress.addCoins(coins);
     app.achievements.unlock('spacecourier');
+    if (job.rex && !job.broken) app.achievements.unlock('spacerace');
     this.job = null;
     this.offers = null;
     return { ...job, coins, onTime, streak: this.streak, bonus };

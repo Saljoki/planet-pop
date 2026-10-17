@@ -206,6 +206,18 @@ export default async function space({ page, frames, until, scene, open }) {
     await frames(8);
   });
 
+  await scene('space-race', 'Racing Rival Rex through space for a parcel', async () => {
+    await page.evaluate(() => {
+      app.hud.info.hide();
+      const c = app.spaceCourier, o = { ...c.offer('mars', 'earth'), rex: true };
+      c.take(o);
+      app.timeScale = 4;
+    });
+    await until(() => app.trip.state === 'cruise', 240000);
+    await page.evaluate(() => { app.timeScale = 1; const c = app.map.cruiser; c.s = c.len * 0.3; c.rex.s = c.len * 0.33; c.x = -0.35; });
+    await frames(6);
+  });
+
   await scene('real-jupiter', 'Jupiter: striped cloud, the Great Red Spot swirling, stations hanging from balloons', async () => {
     await page.evaluate(() => app.hud.info.hide());
     await open('world=jupiter');

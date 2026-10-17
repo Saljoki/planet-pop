@@ -51,6 +51,7 @@ const DEFS = [
   ['terminus', '🚉', 'All Aboard', 'Visit Terminus, the town on rails'],
   ['icehotel', '🛎️', 'Check In', 'Visit the Ice Hotel on Pluto'],
   ['spacecourier', '📦', 'Interplanetary', 'Deliver a parcel to another world'],
+  ['spacerace', '🥇', 'Space Race', 'Beat Rival Rex to a parcel on another world'],
   ['spacemissions', '🛰️', 'Mission Control', 'Complete every mission on the real worlds'],
   ['redspot', '🌀', 'Eye of the Storm', 'Fly a loop round Jupiter’s Great Red Spot'],
   ['ringrunner', '💫', 'Ring Runner', 'Fly through Saturn’s ring ice without touching any'],

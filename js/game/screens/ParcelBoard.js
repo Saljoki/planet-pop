@@ -52,7 +52,8 @@ export class ParcelBoard extends Overlay {
         : '<button data-act="resume" class="big">🚀 Fly there</button>';
       jobEl.innerHTML = `<div class="mission job"><span class="icon">${job.cargo.icon}</span><div class="info">Your parcel → ${to.icon} ${to.name}
         <small></small></div>${go}<button data-act="drop" title="Give up on it">✖</button></div>`;
-      jobEl.querySelector('small').textContent = `${job.what} · ${job.left > 0 ? `⏱ ${clock(job.left)} left` : '⏰ late: half pay'}${c.due ? ' · here now: take it to town!' : ''}`;
+      jobEl.querySelector('small').textContent = `${job.what} · ${job.left > 0 ? `⏱ ${clock(job.left)} left` : '⏰ late: half pay'}${
+        job.rex ? ' · 😈 racing Rex' : ''}${c.due ? ' · here now: take it to town!' : ''}`;
     } else jobEl.innerHTML = '';
     const offers = job ? [] : c.currentOffers();
     list.innerHTML = job ? '<p class="note">One parcel at a time: deliver this one first.</p>'
@@ -61,7 +62,7 @@ export class ParcelBoard extends Overlay {
           const to = worldOf(o.to), km = o.au * 149.6e6;
           const far = km >= 1e6 ? `${Math.round(km / 1e6).toLocaleString('en-GB')} million km` : `${(Math.round(km / 1000) * 1000).toLocaleString('en-GB')} km`;
           return `<div class="mission"><span class="icon">${o.cargo.icon}</span><div class="info"><span data-what="${i}"></span> → ${to.icon} ${to.name}
-            <small>${o.cargo.name} (${o.cargo.tip.toLowerCase()}) · ${far} · ⏱ ${clock(o.limit)}</small></div>
+            <small>${o.cargo.name} (${o.cargo.tip.toLowerCase()}) · ${far} · ⏱ ${clock(o.limit)}${o.rex ? ' · 😈 Rex wants it too: beat him for +50%' : ''}</small></div>
             <button data-act="take" data-i="${i}" class="big">🚀 🪙 ${o.pay}</button></div>`;
         }).join('');
     offers.forEach((o, i) => { const el = list.querySelector(`[data-what="${i}"]`); if (el) el.textContent = o.what; });

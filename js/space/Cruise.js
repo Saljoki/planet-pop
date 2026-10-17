@@ -9,6 +9,7 @@ const MAX = 80;                  // fuel stars and rocks, each
 const BELT = [148, 182];         // the asteroid belt's reach from the Sun, on the map
 const RING_ICE = 0.25;           // the share of the route nearest Saturn that's thick with ring ice
 const ROCK = new THREE.Color('#9a8a7c'), ICE = new THREE.Color('#dff2ff');
+const REX_PACE = 1.12;           // Rex's rocket, racing for a parcel, cruises this much faster than yours (but never boosts or hits rocks)
 const KEYS = { ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0], ArrowUp: [0, 1], KeyW: [0, 1], ArrowDown: [0, -1], KeyS: [0, -1] };
 const Y = new THREE.Vector3(0, 1, 0);
 const _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _q2 = new THREE.Quaternion(), _m = new THREE.Matrix4(), _s = new THREE.Vector3();
@@ -17,7 +18,8 @@ const _look = new THREE.Vector3(), _e = new THREE.Euler();
 /**
  * A trip's cruise across the system map: the ship flies the straight route from one world to the next on its own;
  * the player steers it across the route (a lane, ±1 each way, `L` map units wide) to catch fuel stars and miss rocks
- * (most of them in the asteroid belt, and chunks of ring ice near Saturn), and boosts with the fuel. While it's on, CameraRig hands drags here (the
+ * (most of them in the asteroid belt, and chunks of ring ice near Saturn), and boosts with the fuel. With a parcel
+ * Rex is after too, his purple rocket races alongside, and how far ahead he gets there is kept for the last stretch. While it's on, CameraRig hands drags here (the
  * dragVelocity/spin/zoomBy… surface of a camera view), and it flies the map's camera behind the ship.
  */
 export class Cruise {
@@ -28,7 +30,8 @@ export class Cruise {
     this.group = new THREE.Group();
     this.group.visible = false;
     map.scene.scene.add(this.group);
-    this.buildShip();
+    this.ship = this.buildShip('#ff4d6d', '#ffffff');
+    this.rexShip = this.buildShip('#1b1530', '#8f5cff'); // (Rex's colours)
     this.starMesh = new THREE.InstancedMesh(new THREE.OctahedronGeometry(1, 0), new THREE.MeshBasicMaterial({ color: '#ffd23f' }), MAX);
     this.rockMesh = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), toon('#ffffff', { flatShading: true }), MAX); // (coloured per rock: stone or ice)
     for (let i = 0; i < MAX; i++) this.rockMesh.setColorAt(i, ROCK); // (colours from the start, so its shader has them)
@@ -39,20 +42,24 @@ export class Cruise {
     addEventListener('keyup', (e) => this.key(e, false));
   }
 
-  /** A little rocket, nose along +y. */
-  buildShip() {
-    const g = (this.ship = new THREE.Group()), pink = toon('#ff4d6d');
-    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 1, 16), toon('#ffffff')));
+  /** A little rocket, nose along +y, in these colours (trim: nose and fins). Its flame is g.userData.flame. */
+  buildShip(trim, body) {
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 1, 16), toon(body)));
     g.add(new THREE.Mesh(mergeGeometries([
       new THREE.ConeGeometry(0.17, 0.45, 16).translate(0, 0.72, 0),
       ...[0, 1, 2].map((k) => new THREE.BoxGeometry(0.04, 0.34, 0.26).translate(0.22, -0.38, 0).rotateY((k * Math.PI * 2) / 3)),
-    ]), pink));
+    ]), toon(trim)));
     g.add(new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 8).translate(0, 0.2, 0.16), toon('#2d2a5a')));
-    this.flame = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.6, 12).rotateX(Math.PI).translate(0, -0.78, 0), new THREE.MeshBasicMaterial({ color: '#ffb21f' }));
-    this.flame.layers.set(LAYER_FX);
-    g.add(this.flame);
+    const flame = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.6, 12).rotateX(Math.PI).translate(0, -0.78, 0), new THREE.MeshBasicMaterial({ color: '#ffb21f' }));
+    flame.layers.set(LAYER_FX);
+    g.add(flame);
+    g.userData.flame = flame;
     this.group.add(g);
+    return g;
   }
+
+  get flame() { return this.ship.userData.flame; }
 
   /** From body `from` to body `to` (the map's bodies, where they are now); onArrive() once the ship gets there. */
   begin(from, to, onArrive) {
@@ -72,6 +79,8 @@ export class Cruise {
     this.time = clamp(8 + this.len / 9, 12, 34);  // seconds at cruising speed
     this.speed = this.len / this.time;
     Object.assign(this, { s: 0, x: 0, y: 0, vx: 0, vy: 0, fuel: 0.5, stars: 0, rocks: 0, slow: 0, shake: 0, t: 0, arrived: false, boosting: false, held: {} });
+    this.rex = this.app.spaceCourier?.job?.rex ? { s: 0, speed: this.speed * REX_PACE } : null; // (racing Rex for this parcel)
+    this.rexShip.visible = !!this.rex;
     this.lay();
     this.map.view.camera.clearViewOffset();
     this.group.visible = true;
@@ -79,6 +88,9 @@ export class Cruise {
     this.hud.begin(from, to);
     this.update(0);
   }
+
+  /** How many seconds Rex is ahead (below 0: behind), or null when he isn't racing. */
+  get rexGap() { return this.rex ? (this.rex.s - this.s) / this.speed : null; }
 
   end() {
     this.active = false;
@@ -151,9 +163,12 @@ export class Cruise {
       if (Math.abs(it.s - this.s) / this.L < r && Math.hypot(it.x - this.x, it.y - this.y) < r) { it.hit = true; this.hit(it); }
     }
     const stop = this.len - this.to.size * this.to.scale * 2.4;
+    if (this.rex) this.rex.s = Math.min(stop, this.rex.s + this.rex.speed * dt);
     if (!this.arrived && this.s >= stop) {
       this.arrived = true;
       this.s = stop;
+      const job = this.app.spaceCourier?.job;
+      if (this.rex && job?.rex) job.rex.lead = this.t - stop / this.rex.speed; // (seconds he got there before you)
       this.onArrive?.();
     }
     this.place(boost);
@@ -186,6 +201,11 @@ export class Cruise {
     this.ship.quaternion.copy(_q).multiply(_q2.setFromAxisAngle(Y, -this.vx * 0.35));
     this.ship.scale.setScalar(L * 0.45);
     this.flame.scale.set(1, (boost ? 1.8 : 1) * (0.8 + Math.random() * 0.4), 1);
+    if (this.rex) {
+      this.at(this.rex.s, 0.55, 0.3, this.rexShip.position);
+      this.rexShip.quaternion.setFromUnitVectors(Y, this.D);
+      this.rexShip.scale.setScalar(L * 0.45);
+    }
     let ns = 0, nr = 0;
     for (const it of this.items) {
       if (it.hit) continue;
